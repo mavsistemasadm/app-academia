@@ -272,23 +272,20 @@ ao longo do dia
 1. **Gravar os áudios de bem-estar** e colar as URLs em
    `lib/utils/bem-estar.ts` (`AUDIOS`). O player já está pronto e a tela
    trata a lista vazia; é o único vazio de conteúdo que sobrou.
-2. **Configurar em produção**: `NEXT_PUBLIC_VAPID_PUBLIC_KEY`,
-   `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `CRON_SECRET` e
-   `SUPABASE_SERVICE_ROLE_KEY` nas variáveis da Vercel.
-3. **Push e cron nunca rodaram de verdade** — `/api/cron/lembretes` e o envio
+2. **Push e cron nunca rodaram de verdade** — `/api/cron/lembretes` e o envio
    web-push só foram lidos, não exercitados. Precisam de um device real com
    permissão de notificação concedida.
-4. **`supabase/scripts/criar_professor.sql` está truncado** — termina no
-   comentário, sem o SQL. Refazer ou apagar.
-5. **Apagar aluno quebra** — `profiles.id` referencia `auth.users` sem
-   cascata, e `treino_execucoes`, `medicamento_confirmacoes`, `mensagens` e
-   `alertas_professor` apontam para `profiles` também sem cascata. Remover um
-   aluno pelo painel do Supabase falha com erro de chave estrangeira. O
-   caminho correto está em `apagarAluno()` no script de dados de teste;
-   viraria uma migração 005.
+3. **Migrações 005 e 006 precisam ser aplicadas no SQL Editor** (DDL não roda
+   pela service role). 005 trava o papel: o gatilho de cadastro lê `role` de
+   `raw_app_meta_data`, e mudar o papel pelo app levanta exceção — professor
+   novo só por `supabase/scripts/criar_professor.sql`. 006 põe cascata nas
+   chaves para `profiles`/`auth.users`, então apagar usuário pelo painel
+   funciona.
 
-**Já resolvido:** a migração 004 está aplicada, e o banco tem dados de teste
-(veja abaixo).
+**Já resolvido:** projeto na Vercel (time Pro) com as sete variáveis nos três
+ambientes; "esqueci a senha" (`/esqueci-senha` → e-mail →
+`/auth/confirmar` → `/redefinir-senha`). Para os links de e-mail funcionarem,
+o domínio da Vercel precisa estar em Authentication → URL Configuration.
 
 ---
 

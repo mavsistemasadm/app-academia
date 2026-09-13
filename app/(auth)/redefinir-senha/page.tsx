@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
 
@@ -12,12 +11,16 @@ import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 import { traduzirErroAuth } from "@/lib/utils/erros-auth";
 
-export default function LoginPage() {
+/**
+ * Chega-se aqui pelo link do e-mail, já com sessão: `/auth/confirmar` trocou o
+ * código do link por cookies. Sem sessão, o middleware manda para /login.
+ */
+export default function RedefinirSenhaPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [confirmacao, setConfirmacao] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
@@ -25,12 +28,20 @@ export default function LoginPage() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setErro(null);
+
+    if (senha.length < 6) {
+      setErro("A senha precisa ter no mínimo 6 caracteres.");
+      return;
+    }
+
+    if (senha !== confirmacao) {
+      setErro("As duas senhas não são iguais.");
+      return;
+    }
+
     setCarregando(true);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password: senha,
-    });
+    const { data, error } = await supabase.auth.updateUser({ password: senha });
 
     if (error || !data.user) {
       setErro(traduzirErroAuth(error?.message));
@@ -38,17 +49,13 @@ export default function LoginPage() {
       return;
     }
 
-    // O destino depende do papel: professor vai para o painel, aluno para a home.
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", data.user.id)
       .single();
 
-    const destino = profile?.role === "professor" ? "/dashboard" : "/home";
-
-    // `refresh` faz o middleware reler a sessão recém-criada nos cookies.
-    router.replace(destino);
+    router.replace(profile?.role === "professor" ? "/dashboard" : "/home");
     router.refresh();
   }
 
@@ -56,45 +63,24 @@ export default function LoginPage() {
     <Card className="[--card-spacing:--spacing(6)]">
       <CardContent>
         <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="email" className="text-neutral-700">
-              E-mail
-            </Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              inputMode="email"
-              autoComplete="email"
-              autoCapitalize="none"
-              placeholder="voce@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={carregando}
-              className="h-12 rounded-xl px-3.5 text-base"
-            />
+          <div>
+            <p className="text-lg font-semibold text-neutral-900">Crie uma senha nova</p>
+            <p className="mt-1 text-sm text-neutral-500">
+              Depois de salvar, você já entra no app.
+            </p>
           </div>
 
           <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="senha" className="text-neutral-700">
-                Senha
-              </Label>
-              <Link
-                href="/esqueci-senha"
-                className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-              >
-                Esqueci a senha
-              </Link>
-            </div>
+            <Label htmlFor="senha" className="text-neutral-700">
+              Nova senha
+            </Label>
             <div className="relative">
               <Input
                 id="senha"
                 name="senha"
                 type={mostrarSenha ? "text" : "password"}
-                autoComplete="current-password"
-                placeholder="••••••••"
+                autoComplete="new-password"
+                placeholder="Mínimo 6 caracteres"
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
                 required
@@ -116,6 +102,23 @@ export default function LoginPage() {
             </div>
           </div>
 
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="confirmacao" className="text-neutral-700">
+              Repita a nova senha
+            </Label>
+            <Input
+              id="confirmacao"
+              name="confirmacao"
+              type={mostrarSenha ? "text" : "password"}
+              autoComplete="new-password"
+              value={confirmacao}
+              onChange={(e) => setConfirmacao(e.target.value)}
+              required
+              disabled={carregando}
+              className="h-12 rounded-xl px-3.5 text-base"
+            />
+          </div>
+
           {erro && (
             <p
               role="alert"
@@ -134,23 +137,13 @@ export default function LoginPage() {
             {carregando ? (
               <>
                 <Loader2 className="size-5 animate-spin" aria-hidden />
-                Entrando...
+                Salvando...
               </>
             ) : (
-              "Entrar"
+              "Salvar senha e entrar"
             )}
           </Button>
         </form>
-
-        <p className="mt-6 text-center text-sm text-neutral-500">
-          Ainda não tem conta?{" "}
-          <Link
-            href="/cadastro"
-            className="font-semibold text-primary underline-offset-4 hover:underline"
-          >
-            Criar cadastro
-          </Link>
-        </p>
       </CardContent>
     </Card>
   );

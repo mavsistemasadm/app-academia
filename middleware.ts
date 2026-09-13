@@ -28,8 +28,14 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const pathname = request.nextUrl.pathname
 
+  // Link do e-mail (confirmar cadastro, redefinir senha): chega sem sessão e é
+  // justamente ele que cria a sessão. Barrar aqui mandaria para /login.
+  if (pathname.startsWith('/auth/')) {
+    return supabaseResponse
+  }
+
   // Rotas de entrada: quem já está logado não deveria estar aqui.
-  const publicRoutes = ['/login', '/cadastro']
+  const publicRoutes = ['/login', '/cadastro', '/esqueci-senha']
   const isPublic = publicRoutes.some(r => pathname.startsWith(r))
 
   // Não autenticado tentando acessar rota privada

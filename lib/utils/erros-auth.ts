@@ -10,6 +10,8 @@ const MENSAGENS: Array<[RegExp, string]> = [
   [/unable to validate email|invalid format/i, 'E-mail inválido. Verifique o endereço digitado.'],
   [/email rate limit|over_email_send_rate_limit/i, 'Muitas tentativas seguidas. Aguarde alguns minutos.'],
   [/for security purposes.*(\d+) seconds/i, 'Aguarde alguns segundos antes de tentar novamente.'],
+  [/should be different from the old password|same_password/i, 'A nova senha precisa ser diferente da atual.'],
+  [/auth session missing|session.*expired/i, 'O link expirou. Peça um novo em "Esqueci a senha".'],
   [/failed to fetch|network/i, 'Sem conexão com o servidor. Verifique sua internet.'],
 ]
 

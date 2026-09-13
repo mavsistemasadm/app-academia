@@ -74,6 +74,8 @@ export default function CadastroPage() {
       email: email.trim(),
       password: senha,
       options: {
+        // O link de confirmação volta por aqui, que troca o código por sessão.
+        emailRedirectTo: `${window.location.origin}/auth/confirmar?proximo=/home`,
         // Lidos pelo trigger `handle_new_user` ao criar a linha em `profiles`.
         data: {
           nome: nome.trim(),

@@ -412,10 +412,11 @@ function pesoNaSemana(aluno, semana) {
 // ── Limpeza ─────────────────────────────────────────────────────
 
 /*
-  Apagar o aluno não é um DELETE só. `profiles.id` referencia `auth.users`
-  sem cascata, e quatro tabelas apontam para `profiles` também sem cascata —
-  então some primeiro com os filhos órfãos, depois com o perfil (que cascateia
-  o resto), e só então com a conta de autenticação.
+  Com a migração 006, apagar a conta de autenticação já leva tudo junto. Os
+  DELETEs manuais ficam para o script continuar rodando num banco que ainda
+  não tem a 006: lá `profiles.id` referencia `auth.users` sem cascata, e
+  quatro tabelas apontam para `profiles` também sem — então some primeiro com
+  os filhos órfãos, depois com o perfil, e só então com a conta.
 */
 const SEM_CASCATA = [
   'exercicio_execucoes',
