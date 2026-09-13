@@ -3,9 +3,11 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 import { FormularioAnamnese } from "@/components/aluno/FormularioAnamnese";
+import { CabecalhoPagina } from "@/components/shared/CabecalhoPagina";
 import type { Anamnese } from "@/lib/types";
 import { getPerfilAtual } from "@/lib/supabase/perfil";
 import { createClient } from "@/lib/supabase/server";
+import { naAcademia } from "@/lib/utils/datas";
 
 export default async function AnamnesePage() {
   const perfil = await getPerfilAtual();
@@ -21,17 +23,18 @@ export default async function AnamnesePage() {
   const anamnese = (data as Anamnese | null) ?? null;
 
   return (
-    <div className="flex flex-col gap-6 md:gap-8 md:px-8 md:py-8">
-      <header className="rounded-b-3xl bg-primary px-5 pt-6 pb-10 text-white md:rounded-2xl md:px-8 md:py-7">
-        <h1 className="text-3xl font-bold tracking-tight">Anamnese</h1>
-        <p className="mt-2 max-w-xl text-base text-white/90">
-          {anamnese
-            ? `Atualizada em ${format(new Date(anamnese.atualizado_em), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}.`
-            : "Seu histórico de saúde. O professor consulta antes de montar qualquer treino."}
-        </p>
-      </header>
+    <div className="flex flex-col gap-7 pt-0 md:gap-9 md:px-8 md:pt-10">
+      <CabecalhoPagina
+        rotulo="Saúde"
+        titulo="Anamnese"
+        descricao={
+          anamnese
+            ? `Atualizada em ${format(naAcademia(anamnese.atualizado_em), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}. Mudou alguma coisa? É só editar e salvar.`
+            : "Seu histórico de saúde. O professor consulta antes de montar qualquer treino."
+        }
+      />
 
-      <div className="-mt-14 px-5 md:mt-0 md:px-0">
+      <div className="w-full max-w-3xl px-5 md:px-0">
         <FormularioAnamnese alunoId={perfil.id} anamnese={anamnese} />
       </div>
     </div>

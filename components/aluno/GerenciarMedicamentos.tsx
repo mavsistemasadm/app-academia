@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
+import { ChevronRight, Loader2, Pill, Plus, Trash2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +29,8 @@ const NOME_DIA: Record<DiaSemana, string> = {
   sab: "Sáb",
 };
 
+const CAMPO = "h-12 px-3.5 text-base md:text-base";
+
 interface GerenciarMedicamentosProps {
   alunoId: string;
   medicamentos: Medicamento[];
@@ -54,71 +56,90 @@ export function GerenciarMedicamentos({
 
   return (
     <div className="flex flex-col gap-3">
-      {medicamentos.length > 0 && (
-        <ul className="divide-y divide-neutral-100 overflow-hidden rounded-xl border border-neutral-200 bg-white">
+      {medicamentos.length > 0 ? (
+        <ul className="flex flex-col divide-y divide-neutral-200/80 overflow-hidden rounded-2xl bg-card ring-1 ring-neutral-200/90">
           {medicamentos.map((medicamento) => (
-            <li key={medicamento.id} className="flex items-center gap-3 p-3.5">
-              <div className="min-w-0 flex-1">
-                <p
-                  className={cn(
-                    "truncate text-sm font-semibold",
-                    medicamento.ativo ? "text-neutral-900" : "text-neutral-400"
-                  )}
-                >
-                  {medicamento.nome}
-                  {medicamento.dose && (
-                    <span className="font-normal text-neutral-500">
-                      {" "}
-                      · {medicamento.dose}
+            <li key={medicamento.id} className="flex items-center gap-2 py-1 pr-2 pl-4 md:pl-5">
+              <button
+                type="button"
+                onClick={() => setEmEdicao(medicamento)}
+                aria-label={`Editar ${medicamento.nome}`}
+                className="group flex min-h-14 min-w-0 flex-1 items-center gap-2 py-2 text-left"
+              >
+                <div className="min-w-0 flex-1">
+                  <p
+                    className={cn(
+                      "truncate text-[15px] font-semibold",
+                      medicamento.ativo ? "text-neutral-950" : "text-neutral-400"
+                    )}
+                  >
+                    {medicamento.nome}
+                    {medicamento.dose && (
+                      <span className="font-normal text-neutral-500">
+                        {" "}
+                        · {medicamento.dose}
+                      </span>
+                    )}
+                  </p>
+                  <p className="mt-0.5 truncate text-[13px] text-neutral-500">
+                    <span className="numero text-neutral-700">
+                      {(medicamento.horarios ?? [])
+                        .map((h) => h.slice(0, 5))
+                        .join(" · ") || "Sem horário"}
                     </span>
-                  )}
-                </p>
-                <p className="truncate text-xs text-neutral-500">
-                  {(medicamento.horarios ?? [])
-                    .map((h) => h.slice(0, 5))
-                    .join(" · ") || "Sem horário"}
-                  {medicamento.dias_semana?.length
-                    ? ` · ${medicamento.dias_semana.length} dias/semana`
-                    : " · todos os dias"}
-                </p>
-              </div>
+                    {medicamento.dias_semana?.length
+                      ? ` · ${medicamento.dias_semana.length} dias/semana`
+                      : " · todos os dias"}
+                  </p>
+                </div>
+                <ChevronRight
+                  className="size-4 shrink-0 text-neutral-300 transition-transform group-hover:translate-x-0.5"
+                  aria-hidden
+                />
+              </button>
 
               <button
                 type="button"
                 onClick={() => alternarAtivo(medicamento)}
-                className={cn(
-                  "shrink-0 rounded-md px-2 py-0.5 text-xs font-semibold transition-colors",
+                aria-label={
                   medicamento.ativo
-                    ? "bg-saude-verde-light text-saude-verde"
-                    : "bg-neutral-100 text-neutral-500"
-                )}
+                    ? `Pausar ${medicamento.nome}`
+                    : `Reativar ${medicamento.nome}`
+                }
+                className="flex h-11 shrink-0 items-center"
               >
-                {medicamento.ativo ? "Ativo" : "Pausado"}
+                <span
+                  className={cn(
+                    "rounded-full px-2.5 py-0.5 text-[11px] font-semibold transition-colors",
+                    medicamento.ativo
+                      ? "bg-saude-verde-light text-[#15803d]"
+                      : "bg-neutral-100 text-neutral-500"
+                  )}
+                >
+                  {medicamento.ativo ? "Ativo" : "Pausado"}
+                </span>
               </button>
-
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => setEmEdicao(medicamento)}
-                aria-label={`Editar ${medicamento.nome}`}
-              >
-                <Pencil className="size-4" aria-hidden />
-              </Button>
             </li>
           ))}
         </ul>
+      ) : (
+        <div className="flex items-center gap-3.5 rounded-2xl bg-card px-5 py-4 ring-1 ring-neutral-200/90">
+          <Pill className="size-5 shrink-0 text-neutral-400" strokeWidth={1.8} aria-hidden />
+          <p className="text-sm text-neutral-500">
+            Nenhum medicamento cadastrado. Adicione o primeiro e escolha os
+            horários.
+          </p>
+        </div>
       )}
 
-      <Button
+      <button
         type="button"
-        variant="outline"
         onClick={() => setCriando(true)}
-        className="h-12 rounded-xl font-semibold"
+        className="flex h-12 items-center justify-center gap-2 rounded-full bg-grafite text-[15px] font-semibold text-white transition-all duration-200 hover:bg-neutral-800 active:scale-[.98]"
       >
         <Plus className="size-5" aria-hidden />
         Cadastrar medicamento
-      </Button>
+      </button>
 
       <DialogMedicamento
         alunoId={alunoId}
@@ -152,7 +173,7 @@ function DialogMedicamento({
   */
   return (
     <Dialog open={aberto} onOpenChange={(estado) => !estado && onFechar()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-h-[90dvh] overflow-y-auto rounded-[26px] sm:max-w-md">
         <FormularioMedicamento
           key={medicamento?.id ?? "novo"}
           alunoId={alunoId}
@@ -252,12 +273,12 @@ function FormularioMedicamento({
   }
 
   return (
-    <form onSubmit={salvar} className="flex flex-col gap-4" noValidate>
+    <form onSubmit={salvar} className="flex flex-col gap-5" noValidate>
       <DialogHeader>
-        <DialogTitle>
+        <DialogTitle className="font-display text-xl font-semibold tracking-[-0.02em] text-neutral-950">
           {medicamento ? "Editar medicamento" : "Novo medicamento"}
         </DialogTitle>
-        <DialogDescription>
+        <DialogDescription className="text-sm leading-relaxed text-neutral-500">
           O app avisa em cada horário e o professor vê o que ficou pendente.
         </DialogDescription>
       </DialogHeader>
@@ -272,12 +293,12 @@ function FormularioMedicamento({
           onChange={(e) => setNome(e.target.value)}
           placeholder="Metformina"
           disabled={salvando}
-          className="h-12 rounded-xl px-3.5 text-base"
+          className={CAMPO}
         />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-2">
+        <div className="flex min-w-0 flex-col gap-2">
           <Label htmlFor="med-dose" className="text-neutral-700">
             Dose
           </Label>
@@ -287,11 +308,11 @@ function FormularioMedicamento({
             onChange={(e) => setDose(e.target.value)}
             placeholder="850 mg"
             disabled={salvando}
-            className="h-12 rounded-xl px-3.5 text-base"
+            className={CAMPO}
           />
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex min-w-0 flex-col gap-2">
           <Label htmlFor="med-condicao" className="text-neutral-700">
             Para quê
           </Label>
@@ -301,7 +322,7 @@ function FormularioMedicamento({
             onChange={(e) => setCondicao(e.target.value)}
             placeholder="Diabetes"
             disabled={salvando}
-            className="h-12 rounded-xl px-3.5 text-base"
+            className={CAMPO}
           />
         </div>
       </div>
@@ -311,10 +332,13 @@ function FormularioMedicamento({
           Horários
         </legend>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap gap-2">
           {horarios.map((horario, indice) => (
-            <div key={indice} className="flex gap-2">
-              <Input
+            <div
+              key={indice}
+              className="flex h-12 items-center gap-1 rounded-full bg-neutral-50 pr-1 pl-4 ring-1 ring-neutral-200"
+            >
+              <input
                 type="time"
                 value={horario}
                 onChange={(e) =>
@@ -323,47 +347,46 @@ function FormularioMedicamento({
                   )
                 }
                 aria-label={`Horário ${indice + 1}`}
-                className="h-12 flex-1 rounded-xl px-3.5 text-base"
+                className="numero w-[5.5rem] bg-transparent text-lg font-semibold text-neutral-950 outline-none"
               />
-              {horarios.length > 1 && (
-                <Button
+              {horarios.length > 1 ? (
+                <button
                   type="button"
-                  variant="ghost"
-                  size="icon"
                   onClick={() =>
                     setHorarios((atuais) =>
                       atuais.filter((_, i) => i !== indice)
                     )
                   }
                   aria-label={`Remover horário ${indice + 1}`}
-                  className="size-12 shrink-0 text-neutral-400"
+                  className="flex size-10 items-center justify-center rounded-full text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600"
                 >
-                  <X className="size-5" aria-hidden />
-                </Button>
+                  <X className="size-4" aria-hidden />
+                </button>
+              ) : (
+                <span className="w-3" aria-hidden />
               )}
             </div>
           ))}
-        </div>
 
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setHorarios((atuais) => [...atuais, "20:00"])}
-          className="h-11 rounded-xl"
-        >
-          <Plus className="size-4" aria-hidden />
-          Outro horário
-        </Button>
+          <button
+            type="button"
+            onClick={() => setHorarios((atuais) => [...atuais, "20:00"])}
+            className="flex h-12 items-center gap-1.5 rounded-full px-4 text-sm font-semibold text-primary ring-1 ring-neutral-200 transition-colors hover:bg-neutral-50"
+          >
+            <Plus className="size-4" aria-hidden />
+            Outro horário
+          </button>
+        </div>
       </fieldset>
 
       <fieldset className="flex flex-col gap-2" disabled={salvando}>
         <legend className="mb-2 text-sm leading-none font-medium text-neutral-700">
           Dias{" "}
           <span className="font-normal text-neutral-400">
-            (vazio = todos os dias)
+            (nenhum marcado = todos os dias)
           </span>
         </legend>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="grid grid-cols-7 gap-1">
           {DIAS_SEMANA.map((dia) => {
             const marcado = dias.includes(dia);
 
@@ -378,10 +401,10 @@ function FormularioMedicamento({
                 }
                 aria-pressed={marcado}
                 className={cn(
-                  "size-11 rounded-xl border text-sm font-medium transition-colors",
+                  "h-11 rounded-full text-[13px] font-semibold transition-all duration-200",
                   marcado
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50"
+                    ? "bg-grafite text-white"
+                    : "bg-neutral-50 text-neutral-600 hover:bg-neutral-100"
                 )}
               >
                 {NOME_DIA[dia]}
@@ -392,11 +415,7 @@ function FormularioMedicamento({
       </fieldset>
 
       {erro && (
-        <p
-          role="alert"
-          className="flex items-start gap-2 rounded-xl bg-saude-vermelho-light px-3.5 py-3 text-sm text-saude-vermelho"
-        >
-          <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+        <p role="alert" className="text-sm text-saude-vermelho">
           {erro}
         </p>
       )}
@@ -409,7 +428,7 @@ function FormularioMedicamento({
             onClick={excluir}
             disabled={salvando || excluindo}
             aria-label="Excluir medicamento"
-            className="h-12 w-12 shrink-0 rounded-xl text-saude-vermelho"
+            className="h-12 w-12 shrink-0 rounded-full text-saude-vermelho"
           >
             {excluindo ? (
               <Loader2 className="size-5 animate-spin" aria-hidden />
@@ -422,7 +441,7 @@ function FormularioMedicamento({
         <Button
           type="submit"
           disabled={salvando || excluindo}
-          className="h-12 flex-1 rounded-xl text-base font-semibold"
+          className="h-12 flex-1 rounded-full text-[15px] font-semibold"
         >
           {salvando ? (
             <>

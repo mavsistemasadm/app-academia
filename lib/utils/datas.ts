@@ -52,6 +52,17 @@ export function horaAtual(quando = new Date()): string {
   return `${hora}:${minuto}`
 }
 
+/**
+ * Uma `Date` "de parede": os campos locais dela batem com o relógio da
+ * academia, seja qual for o fuso de quem roda (Vercel em UTC, celular em
+ * viagem). Serve só para exibir com o `format` do date-fns — não use para
+ * comparar instantes nem salvar no banco.
+ */
+export function naAcademia(quando: Date | string): Date {
+  const { ano, mes, dia, hora, minuto } = partes(new Date(quando))
+  return new Date(Number(ano), Number(mes) - 1, Number(dia), Number(hora), Number(minuto))
+}
+
 export function horaCheiaAtual(quando = new Date()): number {
   return Number(partes(quando).hora)
 }

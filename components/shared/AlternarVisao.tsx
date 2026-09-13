@@ -26,14 +26,14 @@ export function BotaoVerComoAluno() {
 /** Barra fixa que aparece no topo das telas de aluno quando quem olha é o professor. */
 export function BarraVisaoAluno() {
   return (
-    <div className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-primary/20 bg-primary/10 px-4 py-2.5 backdrop-blur">
-      <span className="flex items-center gap-2 text-sm font-medium text-primary">
-        <Eye className="size-4 shrink-0" aria-hidden />
+    <div className="sticky top-0 z-40 flex items-center justify-between gap-3 bg-grafite px-4 py-2.5 text-white">
+      <span className="flex items-center gap-2 text-sm font-medium text-white/75">
+        <Eye className="size-4 shrink-0 text-ciano" aria-hidden />
         Você está na visão do aluno
       </span>
       <Link
         href="/dashboard"
-        className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-semibold text-primary underline-offset-4 hover:underline"
+        className="flex shrink-0 items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-white/15"
       >
         <ArrowLeftRight className="size-4" aria-hidden />
         Voltar ao painel

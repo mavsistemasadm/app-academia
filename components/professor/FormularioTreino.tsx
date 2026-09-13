@@ -35,6 +35,10 @@ const NOME_DIA: Record<DiaSemana, string> = {
 /** 200 MB — acima disso o upload no celular do professor não termina. */
 const TAMANHO_MAXIMO_VIDEO = 200 * 1024 * 1024;
 
+const CAMPO_BASE =
+  "rounded-[14px] border border-input bg-card text-base transition-colors outline-none hover:border-neutral-300 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-60";
+const TEXTAREA = cn(CAMPO_BASE, "w-full resize-none px-3.5 py-3 placeholder:text-neutral-400");
+
 interface LinhaExercicio {
   /** Id do banco; ausente enquanto o exercício só existe na tela. */
   id?: string;
@@ -222,9 +226,17 @@ export function FormularioTreino({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-6" noValidate>
+    <form
+      onSubmit={handleSubmit}
+      className="grid items-start gap-6 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]"
+      noValidate
+    >
       {/* ── Dados do treino ──────────────────────────────────────── */}
-      <section className="flex flex-col gap-4 rounded-xl border border-neutral-200 bg-white p-4">
+      <section className="flex flex-col gap-5 rounded-2xl bg-card p-5 ring-1 ring-neutral-200/90 md:p-6 lg:sticky lg:top-40">
+        <h2 className="text-lg font-semibold tracking-[-0.02em] text-neutral-950">
+          Dados do treino
+        </h2>
+
         <div className="flex flex-col gap-2">
           <Label htmlFor="aluno" className="text-neutral-700">
             Aluno
@@ -234,7 +246,7 @@ export function FormularioTreino({
             value={alunoId}
             onChange={(e) => setAlunoId(e.target.value)}
             disabled={salvando || Boolean(treino)}
-            className="h-12 rounded-xl border border-input bg-transparent px-3.5 text-base outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-60"
+            className={cn(CAMPO_BASE, "h-12 w-full px-3.5")}
           >
             <option value="">Selecione…</option>
             {alunos.map((aluno) => (
@@ -244,7 +256,7 @@ export function FormularioTreino({
             ))}
           </select>
           {treino && (
-            <p className="text-xs text-neutral-500">
+            <p className="text-[13px] text-neutral-500">
               Para trocar o aluno, crie um treino novo.
             </p>
           )}
@@ -260,7 +272,7 @@ export function FormularioTreino({
             onChange={(e) => setNome(e.target.value)}
             placeholder="Treino A — membros inferiores"
             disabled={salvando}
-            className="h-12 rounded-xl px-3.5 text-base"
+            className="h-12 px-3.5 text-base"
           />
         </div>
 
@@ -276,7 +288,7 @@ export function FormularioTreino({
             onChange={(e) => setDescricao(e.target.value)}
             placeholder="Aquecer 5 minutos na esteira antes de começar."
             disabled={salvando}
-            className="w-full resize-none rounded-xl border border-input bg-transparent px-3.5 py-3 text-base outline-none placeholder:text-neutral-400 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-60"
+            className={TEXTAREA}
           />
         </div>
 
@@ -284,7 +296,7 @@ export function FormularioTreino({
           <legend className="mb-2 text-sm leading-none font-medium text-neutral-700">
             Dias da semana
           </legend>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5">
             {DIAS_SEMANA.map((dia) => {
               const marcado = dias.includes(dia);
 
@@ -301,10 +313,10 @@ export function FormularioTreino({
                   }
                   aria-pressed={marcado}
                   className={cn(
-                    "size-12 rounded-xl border text-sm font-medium transition-colors",
+                    "size-12 rounded-full text-sm font-semibold transition-all duration-200 active:scale-[.96]",
                     marcado
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50"
+                      ? "bg-grafite text-white"
+                      : "bg-neutral-50 text-neutral-600 ring-1 ring-neutral-200 hover:bg-neutral-100"
                   )}
                 >
                   {NOME_DIA[dia]}
@@ -312,13 +324,13 @@ export function FormularioTreino({
               );
             })}
           </div>
-          <p className="text-xs text-neutral-500">
+          <p className="text-[13px] text-neutral-500">
             Sem nenhum dia marcado, o treino vale para todos os dias.
           </p>
         </fieldset>
 
         {treino && (
-          <label className="flex items-center gap-3 rounded-xl border border-neutral-200 px-3.5 py-3">
+          <label className="flex cursor-pointer items-center gap-3 rounded-[14px] px-4 py-3 ring-1 ring-neutral-200 transition-colors hover:bg-neutral-50">
             <input
               type="checkbox"
               checked={ativo}
@@ -334,63 +346,73 @@ export function FormularioTreino({
       </section>
 
       {/* ── Exercícios ───────────────────────────────────────────── */}
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xs font-semibold tracking-wider text-neutral-500 uppercase">
-          Exercícios
-        </h2>
+      <section className="flex flex-col gap-3.5">
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="text-lg font-semibold tracking-[-0.02em] text-neutral-950 md:text-xl">
+            Exercícios
+          </h2>
+          <span className="rotulo text-neutral-400">
+            {linhas.length} {linhas.length === 1 ? "item" : "itens"} · na ordem do treino
+          </span>
+        </div>
 
-        {linhas.map((linha, indice) => (
-          <LinhaExercicioForm
-            key={linha.chave}
-            linha={linha}
-            indice={indice}
-            total={linhas.length}
-            professorId={professorId}
-            desabilitado={salvando}
-            onMudar={(campos) => atualizarLinha(linha.chave, campos)}
-            onRemover={() => removerLinha(linha.chave)}
-            onMover={(direcao) => mover(indice, direcao)}
-          />
-        ))}
+        <ol className="flex flex-col gap-3">
+          {linhas.map((linha, indice) => (
+            <li key={linha.chave}>
+              <LinhaExercicioForm
+                linha={linha}
+                indice={indice}
+                total={linhas.length}
+                professorId={professorId}
+                desabilitado={salvando}
+                onMudar={(campos) => atualizarLinha(linha.chave, campos)}
+                onRemover={() => removerLinha(linha.chave)}
+                onMover={(direcao) => mover(indice, direcao)}
+              />
+            </li>
+          ))}
+        </ol>
 
-        <Button
+        <button
           type="button"
-          variant="outline"
           onClick={() => setLinhas((atuais) => [...atuais, linhaVazia()])}
           disabled={salvando}
-          className="h-12 rounded-xl font-semibold"
+          className="flex h-12 items-center justify-center gap-2 rounded-full border border-dashed border-neutral-300 text-sm font-semibold text-neutral-600 transition-all duration-200 hover:border-neutral-400 hover:bg-card hover:text-neutral-950 active:scale-[.99] disabled:opacity-60"
         >
-          <Plus className="size-5" aria-hidden />
+          <Plus className="size-4" aria-hidden />
           Adicionar exercício
-        </Button>
+        </button>
+
+        {/* ── Salvar ─────────────────────────────────────────────── */}
+        <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+          {erro && (
+            <p
+              role="alert"
+              className="flex items-start gap-2 text-sm text-saude-vermelho sm:mr-auto"
+            >
+              <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+              {erro}
+            </p>
+          )}
+
+          <Button
+            type="submit"
+            disabled={salvando}
+            className="h-12 w-full rounded-full px-8 text-base font-semibold sm:w-auto"
+          >
+            {salvando ? (
+              <>
+                <Loader2 className="size-5 animate-spin" aria-hidden />
+                Salvando...
+              </>
+            ) : treino ? (
+              "Salvar alterações"
+            ) : (
+              "Criar treino"
+            )}
+          </Button>
+        </div>
       </section>
-
-      {erro && (
-        <p
-          role="alert"
-          className="flex items-start gap-2 rounded-xl bg-saude-vermelho-light px-3.5 py-3 text-sm text-saude-vermelho"
-        >
-          <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
-          {erro}
-        </p>
-      )}
-
-      <Button
-        type="submit"
-        disabled={salvando}
-        className="h-12 w-full rounded-xl text-base font-semibold"
-      >
-        {salvando ? (
-          <>
-            <Loader2 className="size-5 animate-spin" aria-hidden />
-            Salvando...
-          </>
-        ) : treino ? (
-          "Salvar alterações"
-        ) : (
-          "Criar treino"
-        )}
-      </Button>
     </form>
   );
 }
@@ -448,58 +470,62 @@ function LinhaExercicioForm({
     setEnviando(false);
   }
 
+  const botaoIcone =
+    "flex size-9 items-center justify-center rounded-full text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-950 disabled:pointer-events-none disabled:opacity-35";
+
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-4">
-      <div className="flex items-center gap-2">
-        <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-xs font-bold text-neutral-500">
+    <div className="flex flex-col gap-4 rounded-2xl bg-card p-4 ring-1 ring-neutral-200/90 md:p-5">
+      <div className="flex items-center gap-3">
+        <span className="numero flex size-8 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-sm font-semibold text-neutral-600">
           {indice + 1}
         </span>
+        <span className="rotulo flex-1 text-neutral-400">
+          Exercício {indice + 1} de {total}
+        </span>
 
-        <Input
-          value={linha.nome}
-          onChange={(e) => onMudar({ nome: e.target.value })}
-          placeholder="Nome do exercício"
-          disabled={desabilitado}
-          aria-label={`Nome do exercício ${indice + 1}`}
-          className="h-11 flex-1 rounded-xl px-3.5 text-base font-medium"
-        />
-
-        <div className="flex shrink-0 gap-1">
-          <Button
+        <div className="flex shrink-0 items-center gap-1">
+          <div className="flex items-center rounded-full p-0.5 ring-1 ring-neutral-200">
+            <button
+              type="button"
+              onClick={() => onMover(-1)}
+              disabled={desabilitado || indice === 0}
+              aria-label="Mover para cima"
+              className={botaoIcone}
+            >
+              <ArrowUp className="size-4" aria-hidden />
+            </button>
+            <button
+              type="button"
+              onClick={() => onMover(1)}
+              disabled={desabilitado || indice === total - 1}
+              aria-label="Mover para baixo"
+              className={botaoIcone}
+            >
+              <ArrowDown className="size-4" aria-hidden />
+            </button>
+          </div>
+          <button
             type="button"
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => onMover(-1)}
-            disabled={desabilitado || indice === 0}
-            aria-label="Mover para cima"
-          >
-            <ArrowUp className="size-4" aria-hidden />
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => onMover(1)}
-            disabled={desabilitado || indice === total - 1}
-            aria-label="Mover para baixo"
-          >
-            <ArrowDown className="size-4" aria-hidden />
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
             onClick={onRemover}
             disabled={desabilitado}
             aria-label="Remover exercício"
-            className="text-saude-vermelho"
+            className="flex size-10 items-center justify-center rounded-full text-neutral-400 transition-colors hover:bg-saude-vermelho-light hover:text-saude-vermelho disabled:opacity-40"
           >
-            <Trash2 className="size-4" aria-hidden />
-          </Button>
+            <Trash2 className="size-4" strokeWidth={1.9} aria-hidden />
+          </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <Input
+        value={linha.nome}
+        onChange={(e) => onMudar({ nome: e.target.value })}
+        placeholder="Nome do exercício"
+        disabled={desabilitado}
+        aria-label={`Nome do exercício ${indice + 1}`}
+        className="h-12 px-3.5 text-base font-medium"
+      />
+
+      <div className="grid grid-cols-2 gap-x-2.5 gap-y-3 sm:grid-cols-4">
         {(
           [
             { campo: "series", rotulo: "Séries", exemplo: "3" },
@@ -508,39 +534,54 @@ function LinhaExercicioForm({
             { campo: "descanso", rotulo: "Descanso", exemplo: "60s" },
           ] as const
         ).map(({ campo, rotulo, exemplo }) => (
-          <div key={campo} className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-neutral-500">
+          <div key={campo} className="flex flex-col gap-1.5">
+            <label
+              htmlFor={`${linha.chave}-${campo}`}
+              className="text-[13px] font-medium text-neutral-500"
+            >
               {rotulo}
             </label>
             <Input
+              id={`${linha.chave}-${campo}`}
               value={linha[campo]}
               onChange={(e) => onMudar({ [campo]: e.target.value })}
               placeholder={exemplo}
               inputMode={campo === "series" ? "numeric" : "text"}
               disabled={desabilitado}
-              className="h-11 rounded-xl px-3 text-base"
+              className="numero h-11 px-3 text-base"
             />
           </div>
         ))}
       </div>
 
-      <div className="flex flex-col gap-2">
-        <label className="text-xs font-medium text-neutral-500">
-          Vídeo de demonstração
-        </label>
-        <div className="flex gap-2">
+      {/* ── Vídeo ────────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-2.5 rounded-2xl border border-dashed border-neutral-300 p-3 md:p-4">
+        <div className="flex items-center justify-between gap-2">
+          <span className="flex items-center gap-1.5 text-[13px] font-medium text-neutral-500">
+            <Video className="size-4 text-neutral-400" strokeWidth={1.8} aria-hidden />
+            Vídeo de demonstração
+          </span>
+          {linha.videoUrl && !erroUpload && (
+            <span className="rounded-full bg-saude-verde-light px-2.5 py-0.5 text-[11px] font-semibold text-[#15803d]">
+              Vídeo vinculado
+            </span>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-2 sm:flex-row">
           <Input
             value={linha.videoUrl}
             onChange={(e) => onMudar({ videoUrl: e.target.value })}
-            placeholder="Cole um link do YouTube ou envie um arquivo"
+            placeholder="Cole um link do YouTube ou Vimeo"
+            aria-label={`Link do vídeo do exercício ${indice + 1}`}
             disabled={desabilitado || enviando}
-            className="h-11 flex-1 rounded-xl px-3.5 text-sm"
+            className="h-11 flex-1 px-3.5 text-sm"
           />
           <Button
             type="button"
             variant="outline"
             disabled={desabilitado || enviando}
-            className="h-11 shrink-0 rounded-xl px-3"
+            className="h-11 shrink-0 cursor-pointer rounded-full px-4"
             render={<label />}
           >
             {enviando ? (
@@ -548,7 +589,7 @@ function LinhaExercicioForm({
             ) : (
               <Upload className="size-4" aria-hidden />
             )}
-            <span className="sr-only">Enviar vídeo</span>
+            {enviando ? "Enviando..." : "Enviar arquivo"}
             <input
               type="file"
               accept="video/*"
@@ -563,14 +604,8 @@ function LinhaExercicioForm({
           </Button>
         </div>
 
-        {linha.videoUrl && !erroUpload && (
-          <p className="flex items-center gap-1.5 text-xs text-saude-verde">
-            <Video className="size-3.5 shrink-0" aria-hidden />
-            Vídeo vinculado
-          </p>
-        )}
         {erroUpload && (
-          <p role="alert" className="text-xs text-saude-vermelho">
+          <p role="alert" className="text-sm text-saude-vermelho">
             {erroUpload}
           </p>
         )}
@@ -582,7 +617,7 @@ function LinhaExercicioForm({
         placeholder="Observação para o aluno (opcional)"
         disabled={desabilitado}
         aria-label="Observação do exercício"
-        className="h-11 rounded-xl px-3.5 text-sm"
+        className="h-11 px-3.5 text-sm"
       />
     </div>
   );

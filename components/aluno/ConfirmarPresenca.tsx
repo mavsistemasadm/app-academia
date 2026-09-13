@@ -46,25 +46,29 @@ export function ConfirmarPresenca({
   }
 
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-wrap gap-2">
       <button
         type="button"
         onClick={() => responder(true)}
         disabled={salvando}
         aria-pressed={confirmado === true}
         className={cn(
-          "flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border text-sm font-semibold transition-colors",
+          "flex h-12 min-w-[8.5rem] flex-1 items-center justify-center gap-2 rounded-full px-5 text-[15px] font-semibold transition-all duration-200 active:scale-[.98] disabled:opacity-70",
           confirmado === true
-            ? "border-saude-verde bg-saude-verde text-white"
-            : "border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50"
+            ? "bg-grafite text-white"
+            : "bg-card text-neutral-700 ring-1 ring-neutral-200 hover:bg-neutral-50"
         )}
       >
         {salvando ? (
           <Loader2 className="size-4 animate-spin" aria-hidden />
         ) : (
-          <Check className="size-4" aria-hidden />
+          <Check
+            className={cn("size-4", confirmado === true ? "text-ciano" : "text-neutral-400")}
+            strokeWidth={2.4}
+            aria-hidden
+          />
         )}
-        Eu vou
+        {confirmado === true ? "Presença confirmada" : "Eu vou"}
       </button>
 
       <button
@@ -73,10 +77,10 @@ export function ConfirmarPresenca({
         disabled={salvando}
         aria-pressed={confirmado === false}
         className={cn(
-          "flex h-11 w-24 items-center justify-center gap-1.5 rounded-xl border text-sm font-medium transition-colors",
+          "flex h-12 items-center justify-center gap-1.5 rounded-full px-5 text-[15px] font-medium transition-all duration-200 active:scale-[.98] disabled:opacity-70",
           confirmado === false
-            ? "border-neutral-400 bg-neutral-100 text-neutral-700"
-            : "border-neutral-200 bg-white text-neutral-500 hover:bg-neutral-50"
+            ? "bg-neutral-100 text-neutral-800 ring-1 ring-neutral-300"
+            : "bg-card text-neutral-500 ring-1 ring-neutral-200 hover:bg-neutral-50"
         )}
       >
         <X className="size-4" aria-hidden />

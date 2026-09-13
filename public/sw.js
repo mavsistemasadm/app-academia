@@ -6,13 +6,15 @@
   a de agora. O que fica offline é só a casca — o resto vai à rede sempre.
 */
 
-const CACHE = 'saude-conectada-v1'
+// v2: ícones trocados pela marca Atitude Vital — o número novo descarta os velhos.
+const CACHE = 'saude-conectada-v2'
 
 // Só o que é estático e nunca muda de significado.
 const ESSENCIAIS = [
   '/offline',
   '/icones/icone-192.png',
   '/icones/icone-512.png',
+  '/marca/logo.png',
 ]
 
 self.addEventListener('install', (evento) => {
@@ -54,7 +56,7 @@ self.addEventListener('fetch', (evento) => {
   }
 
   // Ícones e imagens podem vir do cache; dado nunca.
-  if (url.pathname.startsWith('/icones/')) {
+  if (url.pathname.startsWith('/icones/') || url.pathname.startsWith('/marca/')) {
     evento.respondWith(
       caches.match(request).then((resposta) => resposta ?? fetch(request))
     )

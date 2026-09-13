@@ -100,48 +100,55 @@ export function GerenciarNotificacoes() {
 
   if (estado === "carregando" || estado === "indisponivel") return null;
 
+  const ativo = estado === "ativo";
+  const Icone = ativo ? Bell : BellOff;
+
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-4">
-      <span
-        className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${
-          estado === "ativo"
-            ? "bg-saude-verde-light text-saude-verde"
-            : "bg-neutral-100 text-neutral-400"
-        }`}
-      >
-        {estado === "ativo" ? (
-          <Bell className="size-5" aria-hidden />
-        ) : (
-          <BellOff className="size-5" aria-hidden />
-        )}
-      </span>
+    <div className="flex items-center gap-3.5 px-5 py-4">
+      <Icone className="size-5 shrink-0 text-neutral-400" strokeWidth={1.8} aria-hidden />
 
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-neutral-900">
+        <p id="rotulo-lembretes" className="text-[15px] font-semibold text-neutral-950">
           Lembretes no celular
         </p>
-        <p className="text-xs text-neutral-500">
-          {estado === "ativo"
+        <p className="text-sm text-neutral-500">
+          {ativo
             ? "Você recebe aviso de remédio, água e eventos."
             : estado === "bloqueado"
-              ? "As notificações estão bloqueadas nas configurações do navegador."
+              ? "Bloqueados nas configurações do navegador. Libere por lá para ativar."
               : "Remédio na hora certa, água ao longo do dia e lembrete de evento."}
         </p>
       </div>
 
-      {estado !== "bloqueado" && (
+      {estado === "bloqueado" ? (
+        <span className="shrink-0 rounded-full bg-neutral-100 px-2.5 py-0.5 text-[11px] font-semibold text-neutral-500">
+          Bloqueado
+        </span>
+      ) : (
         <button
           type="button"
-          onClick={estado === "ativo" ? desativar : ativar}
+          role="switch"
+          aria-checked={ativo}
+          aria-labelledby="rotulo-lembretes"
+          onClick={ativo ? desativar : ativar}
           disabled={ocupado}
-          className={`flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl px-3.5 text-sm font-semibold transition-colors ${
-            estado === "ativo"
-              ? "border border-neutral-200 text-neutral-600 hover:bg-neutral-50"
-              : "bg-primary text-white hover:opacity-90"
-          }`}
+          className="flex h-12 shrink-0 items-center pl-2 disabled:opacity-60"
         >
-          {ocupado && <Loader2 className="size-4 animate-spin" aria-hidden />}
-          {estado === "ativo" ? "Desativar" : "Ativar"}
+          <span
+            className={`relative flex h-7 w-12 items-center rounded-full p-0.5 transition-colors duration-200 ${
+              ativo ? "bg-grafite" : "bg-neutral-200"
+            }`}
+          >
+            <span
+              className={`flex size-6 items-center justify-center rounded-full bg-white shadow-[0_1px_3px_rgba(12,18,20,.3)] transition-transform duration-200 ${
+                ativo ? "translate-x-5" : "translate-x-0"
+              }`}
+            >
+              {ocupado && (
+                <Loader2 className="size-3.5 animate-spin text-neutral-500" aria-hidden />
+              )}
+            </span>
+          </span>
         </button>
       )}
     </div>

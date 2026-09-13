@@ -16,7 +16,7 @@ export default async function ChatLayout({
   if (!perfil) redirect("/login");
 
   return (
-    <div className="flex min-h-dvh flex-1 flex-col bg-neutral-100">
+    <div className="flex min-h-dvh flex-1 flex-col bg-background">
       {children}
     </div>
   );

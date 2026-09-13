@@ -51,7 +51,7 @@ export const CONFIG_INDICADORES: Record<IndicadorTipo, ConfigIndicador> = {
     labelCurto: 'Glicemia',
     unidade: 'mg/dL',
     icone: Droplet,
-    corIcone: 'bg-blue-50 text-primary',
+    corIcone: 'text-neutral-400',
     labelPrincipal: 'Glicemia',
     placeholder: '110',
     min: 20,
@@ -64,7 +64,7 @@ export const CONFIG_INDICADORES: Record<IndicadorTipo, ConfigIndicador> = {
     labelCurto: 'Pressão',
     unidade: 'mmHg',
     icone: Heart,
-    corIcone: 'bg-rose-50 text-rose-600',
+    corIcone: 'text-neutral-400',
     labelPrincipal: 'Sistólica (maior)',
     placeholder: '120',
     labelSecundario: 'Diastólica (menor)',
@@ -81,7 +81,7 @@ export const CONFIG_INDICADORES: Record<IndicadorTipo, ConfigIndicador> = {
     labelCurto: 'Peso',
     unidade: 'kg',
     icone: Scale,
-    corIcone: 'bg-emerald-50 text-saude-verde',
+    corIcone: 'text-neutral-400',
     labelPrincipal: 'Peso',
     placeholder: '72,5',
     min: 20,
@@ -94,7 +94,7 @@ export const CONFIG_INDICADORES: Record<IndicadorTipo, ConfigIndicador> = {
     labelCurto: 'Batimentos',
     unidade: 'bpm',
     icone: Activity,
-    corIcone: 'bg-orange-50 text-orange-600',
+    corIcone: 'text-neutral-400',
     labelPrincipal: 'Batimentos por minuto',
     placeholder: '72',
     min: 20,
@@ -107,7 +107,7 @@ export const CONFIG_INDICADORES: Record<IndicadorTipo, ConfigIndicador> = {
     labelCurto: 'Saturação',
     unidade: '%',
     icone: Wind,
-    corIcone: 'bg-sky-50 text-sky-600',
+    corIcone: 'text-neutral-400',
     labelPrincipal: 'Saturação',
     placeholder: '97',
     min: 50,
@@ -180,6 +180,8 @@ export interface RegistroIndicador {
   status: SemaforoStatus
   /** Texto extra do card — hoje só o peso usa, para mostrar o IMC. */
   badge: string
+  /** Só no peso, quando há altura: posiciona a faixa do semáforo. */
+  imc: number | null
   momento: IndicadorMomento | null
   observacao: string | null
   registradoEm: string
@@ -216,6 +218,7 @@ export function resumirIndicador(
       ...base,
       status: imc ? calcularSemaforo('peso', imc) : 'verde',
       badge: imc ? `IMC ${numeroBR(imc)}` : 'Sem altura',
+      imc,
     }
   }
 
@@ -230,5 +233,6 @@ export function resumirIndicador(
         indicador.valor_secundario
       ),
     badge: '',
+    imc: null,
   }
 }

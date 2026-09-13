@@ -129,14 +129,12 @@ export default function CadastroPage() {
     return (
       <Card className="[--card-spacing:--spacing(6)]">
         <CardContent className="flex flex-col items-center gap-4 text-center">
-          <div className="flex size-14 items-center justify-center rounded-2xl bg-saude-verde-light text-saude-verde">
-            <MailCheck className="size-7" aria-hidden />
-          </div>
+          <MailCheck className="mt-2 size-9 text-neutral-400" strokeWidth={1.6} aria-hidden />
           <div>
-            <h2 className="text-lg font-semibold text-neutral-900">
+            <h2 className="text-xl font-semibold tracking-tight text-neutral-900">
               Confirme seu e-mail
             </h2>
-            <p className="mt-1.5 text-sm text-neutral-500">
+            <p className="mt-1.5 text-[15px] leading-relaxed text-neutral-500">
               Enviamos um link de confirmação para{" "}
               <span className="font-medium text-neutral-700">{email.trim()}</span>.
               Depois de confirmar, é só entrar.
@@ -147,7 +145,7 @@ export default function CadastroPage() {
             // O elemento é um <a> de verdade: sem isso a Base UI reclama
             // que perdeu a semântica nativa de <button>.
             nativeButton={false}
-            className="h-12 w-full rounded-xl text-base font-semibold"
+            className="h-12 w-full rounded-full text-base font-semibold"
           >
             Ir para o login
           </Button>
@@ -160,6 +158,15 @@ export default function CadastroPage() {
     <Card className="[--card-spacing:--spacing(6)]">
       <CardContent>
         <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
+          <div>
+            <p className="text-xl font-semibold tracking-tight text-neutral-900">
+              Criar sua conta
+            </p>
+            <p className="mt-1 text-sm text-neutral-500">
+              Leva um minuto. O centro usa esses dados para cuidar de você.
+            </p>
+          </div>
+
           <div className="flex flex-col gap-2">
             <Label htmlFor="nome" className="text-neutral-700">
               Nome completo
@@ -174,7 +181,7 @@ export default function CadastroPage() {
               onChange={(e) => setNome(e.target.value)}
               required
               disabled={carregando}
-              className="h-12 rounded-xl px-3.5 text-base"
+              className="h-12 rounded-[14px] px-4 text-base"
             />
           </div>
 
@@ -194,7 +201,7 @@ export default function CadastroPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={carregando}
-              className="h-12 rounded-xl px-3.5 text-base"
+              className="h-12 rounded-[14px] px-4 text-base"
             />
           </div>
 
@@ -213,7 +220,7 @@ export default function CadastroPage() {
               onChange={(e) => setTelefone(formatarTelefone(e.target.value))}
               required
               disabled={carregando}
-              className="h-12 rounded-xl px-3.5 text-base"
+              className="h-12 rounded-[14px] px-4 text-base"
             />
           </div>
 
@@ -233,7 +240,7 @@ export default function CadastroPage() {
                 required
                 minLength={SENHA_MINIMA}
                 disabled={carregando}
-                className="h-12 rounded-xl px-3.5 pr-12 text-base"
+                className="h-12 rounded-[14px] px-4 pr-12 text-base"
               />
               <button
                 type="button"
@@ -251,7 +258,7 @@ export default function CadastroPage() {
           </div>
 
           <fieldset className="flex flex-col gap-2" disabled={carregando}>
-            <legend className="mb-2 text-sm leading-none font-medium text-neutral-700">
+            <legend className="mb-2.5 text-sm leading-none font-medium text-neutral-700">
               Condição clínica
             </legend>
 
@@ -267,14 +274,14 @@ export default function CadastroPage() {
                     aria-pressed={marcada}
                     title={opcao.descricao}
                     className={cn(
-                      "flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-sm transition-colors",
+                      "flex h-11 items-center gap-2 rounded-full px-4 text-sm font-medium transition-all duration-200 active:scale-[.98]",
                       marcada
-                        ? "border-primary bg-primary/10 font-medium text-primary"
-                        : "border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50",
+                        ? "bg-grafite text-white"
+                        : "bg-neutral-50 text-neutral-700 ring-1 ring-neutral-200 hover:bg-neutral-100",
                       carregando && "opacity-60"
                     )}
                   >
-                    <span className="text-base" aria-hidden>
+                    <span className="text-base leading-none" aria-hidden>
                       {opcao.emoji}
                     </span>
                     {opcao.label}
@@ -283,17 +290,14 @@ export default function CadastroPage() {
               })}
             </div>
 
-            <p className="text-xs text-neutral-500">
+            <p className="text-[13px] text-neutral-500">
               Pode marcar mais de uma. É por elas que o centro personaliza seu
               treino e seus indicadores.
             </p>
           </fieldset>
 
           {erro && (
-            <p
-              role="alert"
-              className="flex items-start gap-2 rounded-xl bg-saude-vermelho-light px-3.5 py-3 text-sm text-saude-vermelho"
-            >
+            <p role="alert" className="flex items-start gap-2 text-sm text-saude-vermelho">
               <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
               {erro}
             </p>
@@ -302,7 +306,7 @@ export default function CadastroPage() {
           <Button
             type="submit"
             disabled={carregando}
-            className="h-12 w-full rounded-xl text-base font-semibold"
+            className="h-12 w-full rounded-full text-base font-semibold"
           >
             {carregando ? (
               <>

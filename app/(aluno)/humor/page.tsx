@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Flame, Smile } from "lucide-react";
 
 import { RegistroHumor } from "@/components/aluno/RegistroHumor";
+import { CabecalhoPagina } from "@/components/shared/CabecalhoPagina";
 import type { HumorTipo } from "@/lib/types";
 import { getHumorAluno } from "@/lib/supabase/humor";
 import { getPerfilAtual } from "@/lib/supabase/perfil";
@@ -32,63 +32,55 @@ export default async function HumorPage() {
     .sort((a, b) => resumo.contagem[b] - resumo.contagem[a])[0];
 
   return (
-    <div className="flex flex-col gap-6 md:gap-8 md:px-8 md:py-8">
-      <header className="rounded-b-3xl bg-primary px-5 pt-6 pb-10 text-white md:rounded-2xl md:px-8 md:py-7">
-        <h1 className="text-3xl font-bold tracking-tight">Meu humor</h1>
-        <p className="mt-2 max-w-xl text-base text-white/90">
-          {resumo.diasRegistrados === 0
+    <div className="flex flex-col gap-7 pt-0 md:gap-9 md:px-8 md:pt-10">
+      <CabecalhoPagina
+        rotulo="Bem-estar"
+        titulo="Meu humor"
+        descricao={
+          resumo.diasRegistrados === 0
             ? "Registre como você se sente. Em um mês isso vira um retrato."
-            : `${resumo.diasRegistrados} ${resumo.diasRegistrados === 1 ? "dia registrado" : "dias registrados"} nos últimos ${DIAS} dias.`}
-        </p>
-      </header>
+            : `${resumo.diasRegistrados} ${resumo.diasRegistrados === 1 ? "dia registrado" : "dias registrados"} nos últimos ${DIAS} dias.`
+        }
+      />
 
       <div className="flex flex-col gap-6 px-5 md:gap-8 md:px-0">
         {/* ── Registro de hoje ───────────────────────────────────── */}
-        <div className="-mt-14 md:mt-0">
-          <RegistroHumor
-            alunoId={perfil.id}
-            hoje={hoje}
-            humorInicial={resumo.humorHoje}
-          />
-        </div>
+        <RegistroHumor
+          alunoId={perfil.id}
+          hoje={hoje}
+          humorInicial={resumo.humorHoje}
+        />
 
         {/* ── Números do mês ─────────────────────────────────────── */}
-        <section className="grid grid-cols-3 gap-3">
+        <section className="grid grid-cols-3 divide-x divide-neutral-200/80 rounded-2xl bg-card ring-1 ring-neutral-200/90">
           <Numero
             valor={String(resumo.sequencia)}
             label={resumo.sequencia === 1 ? "dia seguido" : "dias seguidos"}
-            icone={<Flame className="size-5" aria-hidden />}
-            cor="bg-orange-50 text-orange-600"
           />
-          <Numero
-            valor={String(resumo.diasBons)}
-            label="dias bons"
-            icone={<Smile className="size-5" aria-hidden />}
-            cor="bg-emerald-50 text-saude-verde"
-          />
+          <Numero valor={String(resumo.diasBons)} label="dias bons" />
           <Numero
             valor={maisFrequente ? HUMOR_CONFIG[maisFrequente].emoji : "—"}
             label={
               maisFrequente ? HUMOR_CONFIG[maisFrequente].label : "sem registro"
             }
-            cor="bg-blue-50 text-primary"
           />
         </section>
 
         {/* ── Calendário ─────────────────────────────────────────── */}
-        <section className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold tracking-wider text-neutral-500 uppercase">
+        <section className="flex flex-col gap-3.5">
+          <h2 className="text-lg font-semibold tracking-[-0.02em] text-neutral-950 md:text-xl">
             Últimos {DIAS} dias
           </h2>
 
-          <div className="flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-4">
-            <div className="grid grid-cols-10 gap-1.5">
+          <div className="flex flex-col gap-5 rounded-2xl bg-card p-4 ring-1 ring-neutral-200/90 md:p-5">
+            <div className="grid grid-cols-6 gap-1.5 sm:grid-cols-10 md:gap-2">
               {janela.map((dia) => {
                 const registro = porData.get(dia);
                 const config = registro ? HUMOR_CONFIG[registro.humor] : null;
                 const rotulo = format(new Date(`${dia}T12:00:00Z`), "dd/MM", {
                   locale: ptBR,
                 });
+                const ehHoje = dia === hoje;
 
                 return (
                   <div
@@ -96,12 +88,23 @@ export default async function HumorPage() {
                     title={
                       config ? `${rotulo} — ${config.label}` : `${rotulo} — sem registro`
                     }
-                    className="flex aspect-square items-center justify-center rounded-md text-sm"
-                    style={{
-                      backgroundColor: config ? `${config.cor}22` : "#F5F5F5",
-                    }}
+                    className={`relative flex aspect-square items-center justify-center rounded-xl text-lg ${
+                      config ? "" : "bg-neutral-50"
+                    } ${ehHoje ? "ring-2 ring-grafite" : ""}`}
+                    style={
+                      config ? { backgroundColor: `${config.cor}1F` } : undefined
+                    }
                   >
-                    <span aria-hidden>{config?.emoji ?? ""}</span>
+                    {config ? (
+                      <span aria-hidden>{config.emoji}</span>
+                    ) : (
+                      <span
+                        aria-hidden
+                        className="numero text-[11px] font-medium text-neutral-300"
+                      >
+                        {dia.slice(8, 10)}
+                      </span>
+                    )}
                     <span className="sr-only">
                       {config
                         ? `${rotulo}: ${config.label}`
@@ -113,73 +116,81 @@ export default async function HumorPage() {
             </div>
 
             {/* ── Distribuição ─────────────────────────────────── */}
-            <ul className="flex flex-col gap-2 border-t border-neutral-100 pt-3">
-              {tipos
-                .filter((t) => resumo.contagem[t] > 0)
-                .sort((a, b) => resumo.contagem[b] - resumo.contagem[a])
-                .map((tipo) => {
-                  const quantidade = resumo.contagem[tipo];
-                  const proporcao = Math.round(
-                    (quantidade / Math.max(1, resumo.diasRegistrados)) * 100
-                  );
+            <div className="flex flex-col gap-3 border-t border-neutral-200/80 pt-4">
+              <p className="rotulo text-neutral-400">Como foram os dias</p>
 
-                  return (
-                    <li key={tipo} className="flex items-center gap-3">
-                      <span className="w-6 shrink-0 text-center" aria-hidden>
-                        {HUMOR_CONFIG[tipo].emoji}
-                      </span>
-                      <span className="w-28 shrink-0 truncate text-sm text-neutral-600">
-                        {HUMOR_CONFIG[tipo].label}
-                      </span>
-                      <span className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-neutral-100">
-                        <span
-                          className="block h-full rounded-full"
-                          style={{
-                            width: `${proporcao}%`,
-                            backgroundColor: HUMOR_CONFIG[tipo].cor,
-                          }}
-                        />
-                      </span>
-                      <span className="w-10 shrink-0 text-right text-sm text-neutral-500 tabular-nums">
-                        {quantidade}
-                      </span>
-                    </li>
-                  );
-                })}
+              <ul className="flex flex-col gap-3">
+                {tipos
+                  .filter((t) => resumo.contagem[t] > 0)
+                  .sort((a, b) => resumo.contagem[b] - resumo.contagem[a])
+                  .map((tipo) => {
+                    const quantidade = resumo.contagem[tipo];
+                    const proporcao = Math.round(
+                      (quantidade / Math.max(1, resumo.diasRegistrados)) * 100
+                    );
 
-              {resumo.diasRegistrados === 0 && (
-                <li className="text-sm text-neutral-500">
-                  Nada registrado ainda neste período.
-                </li>
-              )}
-            </ul>
+                    return (
+                      <li key={tipo} className="flex flex-col gap-1.5">
+                        <div className="flex items-baseline justify-between gap-3">
+                          <span className="flex min-w-0 items-center gap-2 text-sm font-medium text-neutral-700">
+                            <span aria-hidden>{HUMOR_CONFIG[tipo].emoji}</span>
+                            <span className="truncate">{HUMOR_CONFIG[tipo].label}</span>
+                          </span>
+                          <span className="numero shrink-0 text-[15px] font-semibold text-neutral-950">
+                            {quantidade}
+                            <span className="ml-1 font-sans text-xs font-medium tracking-normal text-neutral-400">
+                              {quantidade === 1 ? "dia" : "dias"}
+                            </span>
+                          </span>
+                        </div>
+                        <span className="h-1.5 overflow-hidden rounded-full bg-neutral-100">
+                          <span
+                            className="block h-full rounded-full"
+                            style={{
+                              width: `${proporcao}%`,
+                              backgroundColor: HUMOR_CONFIG[tipo].cor,
+                            }}
+                          />
+                        </span>
+                      </li>
+                    );
+                  })}
+
+                {resumo.diasRegistrados === 0 && (
+                  <li className="text-sm text-neutral-500">
+                    Ainda sem registros neste período. Marque como você está
+                    hoje, logo acima.
+                  </li>
+                )}
+              </ul>
+            </div>
           </div>
         </section>
 
         {/* ── Anotações ──────────────────────────────────────────── */}
         {resumo.registros.some((r) => r.observacao) && (
-          <section className="flex flex-col gap-3">
-            <h2 className="text-xs font-semibold tracking-wider text-neutral-500 uppercase">
+          <section className="flex flex-col gap-3.5">
+            <h2 className="text-lg font-semibold tracking-[-0.02em] text-neutral-950 md:text-xl">
               Suas anotações
             </h2>
 
-            <ul className="divide-y divide-neutral-100 overflow-hidden rounded-xl border border-neutral-200 bg-white">
+            <ul className="flex flex-col divide-y divide-neutral-200/80 overflow-hidden rounded-2xl bg-card ring-1 ring-neutral-200/90">
               {resumo.registros
                 .filter((r) => r.observacao)
                 .map((registro) => (
-                  <li key={registro.data} className="flex gap-3 p-3.5">
+                  <li key={registro.data} className="flex gap-3.5 px-5 py-4">
                     <span className="text-xl leading-none" aria-hidden>
                       {HUMOR_CONFIG[registro.humor].emoji}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs text-neutral-500">
+                      <p className="rotulo text-neutral-400">
                         {format(
                           new Date(`${registro.data}T12:00:00Z`),
                           "EEEE, dd 'de' MMMM",
                           { locale: ptBR }
                         )}
                       </p>
-                      <p className="mt-0.5 text-sm text-neutral-700">
+                      <p className="mt-1 text-[15px] leading-relaxed text-neutral-700">
                         {registro.observacao}
                       </p>
                     </div>
@@ -193,30 +204,13 @@ export default async function HumorPage() {
   );
 }
 
-function Numero({
-  valor,
-  label,
-  icone,
-  cor,
-}: {
-  valor: string;
-  label: string;
-  icone?: React.ReactNode;
-  cor: string;
-}) {
+function Numero({ valor, label }: { valor: string; label: string }) {
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-neutral-200 bg-white p-4">
-      {icone && (
-        <span
-          className={`flex size-9 items-center justify-center rounded-lg ${cor}`}
-        >
-          {icone}
-        </span>
-      )}
-      <p className="text-2xl leading-tight font-bold tracking-tight text-neutral-900">
+    <div className="flex min-w-0 flex-col gap-1.5 px-3 py-4 md:px-5">
+      <p className="numero text-[28px] leading-none font-semibold text-neutral-950">
         {valor}
       </p>
-      <p className="text-xs text-neutral-500">{label}</p>
+      <p className="truncate text-[13px] text-neutral-500">{label}</p>
     </div>
   );
 }

@@ -3,30 +3,27 @@ import { notFound, redirect } from "next/navigation";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
+  AlertTriangle,
   ArrowLeft,
+  ArrowRight,
+  ChevronRight,
   ClipboardList,
-  Dumbbell,
+  ClipboardPlus,
+  MessageCircle,
   Phone,
-  Pill,
   Stethoscope,
   UserRound,
 } from "lucide-react";
 
-import type { SemaforoStatus } from "@/lib/types";
+import { CardIndicador, CHIP_SEMAFORO } from "@/components/aluno/CardIndicador";
 import { cn } from "@/lib/utils";
 import { getDetalheAluno } from "@/lib/supabase/painel-professor";
 import { getPerfilAtual } from "@/lib/supabase/perfil";
-import { rotularCondicoes } from "@/lib/utils/avatares";
+import { AVATAR_CONFIG } from "@/lib/utils/avatares";
 import { hojeISO, horaAtual } from "@/lib/utils/datas";
 import { CONFIG_INDICADORES } from "@/lib/utils/indicadores";
 import { HUMOR_CONFIG } from "@/lib/utils/saudacao";
-import { SEMAFORO_CONFIG } from "@/lib/utils/semaforo";
-
-const CORES_SEMAFORO: Record<SemaforoStatus, string> = {
-  verde: "bg-saude-verde-light text-saude-verde",
-  amarelo: "bg-saude-amarelo-light text-saude-amarelo",
-  vermelho: "bg-saude-vermelho-light text-saude-vermelho",
-};
+import { calcularSemaforo } from "@/lib/utils/semaforo";
 
 function telefoneBonito(digitos?: string) {
   if (!digitos) return null;
@@ -34,6 +31,46 @@ function telefoneBonito(digitos?: string) {
   if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
   if (d.length === 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
   return digitos;
+}
+
+const CARD = "rounded-2xl bg-card ring-1 ring-neutral-200/90";
+
+function TituloSecao({
+  children,
+  acao,
+}: {
+  children: React.ReactNode;
+  acao?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-baseline justify-between gap-3">
+      <h2 className="text-lg font-semibold tracking-[-0.02em] text-neutral-950 md:text-xl">
+        {children}
+      </h2>
+      {acao}
+    </div>
+  );
+}
+
+function LinkSecao({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link href={href} className="group flex shrink-0 items-center gap-1 text-sm font-semibold text-primary">
+      {children}
+      <ArrowRight
+        className="size-3.5 transition-transform group-hover:translate-x-0.5"
+        aria-hidden
+      />
+    </Link>
+  );
+}
+
+function Vazio({ icone: Icone, children }: { icone: typeof ClipboardList; children: React.ReactNode }) {
+  return (
+    <div className={cn(CARD, "flex items-start gap-3 px-5 py-5")}>
+      <Icone className="mt-0.5 size-5 shrink-0 text-neutral-400" strokeWidth={1.8} aria-hidden />
+      <p className="text-sm leading-relaxed text-neutral-500">{children}</p>
+    </div>
+  );
 }
 
 export default async function DetalheAlunoPage({
@@ -53,6 +90,8 @@ export default async function DetalheAlunoPage({
 
   const hoje = hojeISO();
   const inicial = perfil.nome.charAt(0).toUpperCase();
+  const condicoes = perfil.avatar_condicao ?? [];
+  const telefone = telefoneBonito(perfil.telefone);
 
   // O mais recente de cada tipo, para a régua de indicadores do topo.
   const ultimos = new Map<string, (typeof indicadores)[number]>();
@@ -70,131 +109,187 @@ export default async function DetalheAlunoPage({
 
   const ultimaAvaliacao = avaliacoes[0];
 
+  const anamnese = detalhe.anamnese
+    ? (
+        [
+          ["Objetivo", detalhe.anamnese.objetivo],
+          ["Doenças", detalhe.anamnese.doencas?.join(", ")],
+          ["Lesões", detalhe.anamnese.lesoes],
+          ["Cirurgias", detalhe.anamnese.cirurgias],
+          ["Alergias", detalhe.anamnese.alergias],
+          ["Medicamentos em uso", detalhe.anamnese.medicamentos_uso],
+          ["Restrições médicas", detalhe.anamnese.restricoes_medicas],
+          [
+            "Liberado por médico",
+            detalhe.anamnese.liberado_por_medico === undefined
+              ? undefined
+              : detalhe.anamnese.liberado_por_medico
+                ? "Sim"
+                : "Não",
+          ],
+        ] as const
+      ).filter(([, valor]) => valor)
+    : null;
+
+  const contatos = [
+    { rotulo: "Familiar", nome: perfil.familiar_nome, telefone: perfil.familiar_telefone },
+    { rotulo: "Médico", nome: perfil.medico_nome, telefone: perfil.medico_telefone },
+  ].filter((c) => c.nome || c.telefone);
+
   return (
-    <main className="flex flex-1 flex-col gap-6 px-5 py-6">
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-7 px-4 py-6 md:gap-9 md:px-6 md:py-8">
       <Link
         href="/alunos"
-        className="flex w-fit items-center gap-1.5 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900"
+        className="-mb-3 flex w-fit items-center gap-1.5 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-950 md:-mb-5"
       >
         <ArrowLeft className="size-4" aria-hidden />
         Alunos
       </Link>
 
-      {/* ── Identificação ──────────────────────────────────────────── */}
-      <header className="flex items-start gap-4 rounded-xl border border-neutral-200 bg-white p-4">
-        <span className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-100 text-xl font-semibold text-neutral-500">
-          {perfil.foto_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={perfil.foto_url}
-              alt=""
-              className="size-full object-cover"
-            />
-          ) : (
-            inicial || <UserRound className="size-6" aria-hidden />
-          )}
-        </span>
-
-        <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-semibold tracking-tight text-neutral-900">
-            {perfil.nome}
-          </h1>
-          <p className="mt-0.5 text-sm text-neutral-500">
-            {rotularCondicoes(perfil.avatar_condicao)}
-            {idade !== null && ` · ${idade} anos`}
-          </p>
-
-          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-            {telefoneBonito(perfil.telefone) && (
-              <a
-                href={`tel:${perfil.telefone}`}
-                className="flex items-center gap-1.5 text-primary underline-offset-4 hover:underline"
-              >
-                <Phone className="size-3.5" aria-hidden />
-                {telefoneBonito(perfil.telefone)}
-              </a>
+      {/* ── Identificação ────────────────────────────────────────────── */}
+      <header className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+        <div className="flex min-w-0 items-center gap-4 md:gap-5">
+          <span className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-100 text-2xl font-semibold text-neutral-500 ring-4 ring-white md:size-24">
+            {perfil.foto_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={perfil.foto_url} alt="" className="size-full object-cover" />
+            ) : (
+              inicial || <UserRound className="size-7" aria-hidden />
             )}
-            <Link
-              href={`/chat/${perfil.id}`}
-              className="text-primary underline-offset-4 hover:underline"
-            >
-              Enviar mensagem
-            </Link>
+          </span>
+
+          <div className="min-w-0">
+            <p className="rotulo text-primary">
+              Ficha do aluno{idade !== null && ` · ${idade} anos`}
+            </p>
+            <h1 className="mt-1.5 text-[28px] leading-[1.1] font-semibold tracking-[-0.03em] text-neutral-950 md:text-[34px]">
+              {perfil.nome}
+            </h1>
+            <div className="mt-2.5 flex flex-wrap gap-1.5">
+              {condicoes.length === 0 ? (
+                <span className="text-sm text-neutral-400">Sem condição informada</span>
+              ) : (
+                condicoes.map((c) => (
+                  <span
+                    key={c}
+                    className="rounded-full bg-card px-2.5 py-0.5 text-[12px] font-semibold text-neutral-600 ring-1 ring-neutral-200"
+                  >
+                    {AVATAR_CONFIG[c]?.label ?? c}
+                  </span>
+                ))
+              )}
+            </div>
           </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={`/chat/${perfil.id}`}
+            className="flex h-11 items-center gap-2 rounded-full bg-grafite px-4 text-sm font-semibold text-white transition-all duration-200 hover:bg-neutral-800 active:scale-[.98]"
+          >
+            <MessageCircle className="size-4" strokeWidth={1.9} aria-hidden />
+            Mensagem
+          </Link>
+          <Link
+            href={`/alunos/${perfil.id}/avaliacao`}
+            className="flex h-11 items-center gap-2 rounded-full bg-card px-4 text-sm font-semibold text-neutral-950 ring-1 ring-neutral-200 transition-all duration-200 hover:bg-neutral-50 active:scale-[.98]"
+          >
+            <ClipboardPlus className="size-4 text-neutral-500" strokeWidth={1.9} aria-hidden />
+            Nova avaliação
+          </Link>
+          {telefone && (
+            <a
+              href={`tel:${perfil.telefone}`}
+              className="flex h-11 items-center gap-2 rounded-full bg-card px-4 text-sm font-semibold text-neutral-950 ring-1 ring-neutral-200 transition-all duration-200 hover:bg-neutral-50 active:scale-[.98]"
+            >
+              <Phone className="size-4 text-neutral-500" strokeWidth={1.9} aria-hidden />
+              <span className="numero">{telefone}</span>
+            </a>
+          )}
         </div>
       </header>
 
       {perfil.observacoes_clinicas && (
-        <p className="rounded-xl border border-saude-amarelo/40 bg-saude-amarelo-light/40 px-4 py-3 text-sm text-neutral-800">
-          <span className="font-semibold">Observação do aluno: </span>
-          {perfil.observacoes_clinicas}
-        </p>
+        <div className="flex items-start gap-3 rounded-2xl bg-saude-amarelo-light px-5 py-4">
+          <AlertTriangle
+            className="mt-0.5 size-5 shrink-0 text-saude-amarelo"
+            strokeWidth={1.9}
+            aria-hidden
+          />
+          <div>
+            <p className="rotulo text-[#b45309]">Observação do aluno</p>
+            <p className="mt-1 text-[15px] leading-relaxed text-neutral-800">
+              {perfil.observacoes_clinicas}
+            </p>
+          </div>
+        </div>
       )}
 
-      {/* ── Resumo ─────────────────────────────────────────────────── */}
-      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Numero valor={String(detalhe.treinosNoMes)} label="treinos em 30 dias" />
-        <Numero
-          valor={
-            detalhe.esforcoMedio
-              ? `${detalhe.esforcoMedio.toFixed(1)}/10`
-              : "—"
-          }
-          label="esforço médio"
+      {/* ── Resumo ─────────────────────────────────────────────────────── */}
+      <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-neutral-200/90 ring-1 ring-neutral-200/90 md:grid-cols-4">
+        <Metrica
+          valor={String(detalhe.treinosNoMes)}
+          unidade={detalhe.treinosNoMes === 1 ? "treino" : "treinos"}
+          label="Últimos 30 dias"
         />
-        <Numero
+        <Metrica
+          valor={detalhe.esforcoMedio ? detalhe.esforcoMedio.toFixed(1).replace(".", ",") : "—"}
+          unidade={detalhe.esforcoMedio ? "/10" : undefined}
+          label="Esforço médio"
+        />
+        <Metrica
           valor={
             detalhe.ultimaPresenca
-              ? formatDistanceToNow(
-                  new Date(`${detalhe.ultimaPresenca}T12:00:00Z`),
-                  { locale: ptBR }
-                )
-              : "nunca"
+              ? formatDistanceToNow(new Date(`${detalhe.ultimaPresenca}T12:00:00Z`), {
+                  locale: ptBR,
+                })
+              : "Nunca"
           }
-          label="última presença"
+          label="Última presença"
+          pequeno
         />
-        <Numero
+        <Metrica
           valor={String(medicamentos.filter((m) => m.ativo).length)}
-          label="medicamentos ativos"
+          unidade="ativos"
+          label="Medicamentos"
         />
-      </section>
+      </dl>
 
-      {/* ── Indicadores ────────────────────────────────────────────── */}
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xs font-semibold tracking-wider text-neutral-500 uppercase">
-          Últimos indicadores
-        </h2>
+      {/* ── Indicadores ────────────────────────────────────────────────── */}
+      <section id="indicadores" className="flex scroll-mt-40 flex-col gap-3.5">
+        <TituloSecao>Últimos indicadores</TituloSecao>
 
         {ultimos.size === 0 ? (
-          <p className="rounded-xl border border-dashed border-neutral-300 bg-white px-4 py-6 text-center text-sm text-neutral-500">
-            O aluno ainda não registrou nenhuma medição.
-          </p>
+          <Vazio icone={Stethoscope}>
+            O aluno ainda não registrou nenhuma medição. Vale lembrar na próxima aula —
+            o portão pré-treino também pede.
+          </Vazio>
         ) : (
-          <ul className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-5">
             {Array.from(ultimos.values()).map((registro) => {
-              const config =
-                CONFIG_INDICADORES[
-                  registro.tipo as keyof typeof CONFIG_INDICADORES
-                ];
+              const config = CONFIG_INDICADORES[registro.tipo];
+              const faixa =
+                registro.tipo === "peso"
+                  ? registro.imc
+                    ? { tipo: "peso" as const, valor: registro.imc }
+                    : undefined
+                  : {
+                      tipo: registro.tipo,
+                      valor: registro.valorPrincipal,
+                      valorSecundario: registro.valorSecundario,
+                    };
 
               return (
-                <li
-                  key={registro.id}
-                  className="flex flex-col gap-1.5 rounded-xl border border-neutral-200 bg-white p-3.5"
-                >
-                  <p className="text-lg leading-tight font-bold text-neutral-900 tabular-nums">
-                    {registro.valorFormatado}
-                  </p>
-                  <p className="text-xs text-neutral-500">{config.labelCurto}</p>
-                  <span
-                    className={cn(
-                      "w-fit rounded-md px-2 py-0.5 text-xs font-semibold",
-                      CORES_SEMAFORO[registro.status]
-                    )}
-                  >
-                    {registro.badge || SEMAFORO_CONFIG[registro.status].label}
-                  </span>
-                  <p className="text-xs text-neutral-400">
+                <li key={registro.id} className="flex flex-col gap-1.5">
+                  <CardIndicador
+                    icone={config.icone}
+                    label={config.labelCurto}
+                    valor={registro.valorFormatado.replace(" kg", "")}
+                    unidade={config.unidade}
+                    status={registro.status}
+                    badge={registro.badge || undefined}                    faixa={faixa}
+                  />
+                  <p className="rotulo px-1 text-neutral-400">
                     {formatDistanceToNow(new Date(registro.registradoEm), {
                       addSuffix: true,
                       locale: ptBR,
@@ -207,94 +302,123 @@ export default async function DetalheAlunoPage({
         )}
       </section>
 
-      {/* ── Anamnese ───────────────────────────────────────────────── */}
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xs font-semibold tracking-wider text-neutral-500 uppercase">
-          Anamnese
-        </h2>
+      <div className="grid items-start gap-7 lg:grid-cols-2 lg:gap-6">
+        {/* ── Anamnese ─────────────────────────────────────────────────── */}
+        <section className="flex flex-col gap-3.5">
+          <TituloSecao>Anamnese</TituloSecao>
 
-        {detalhe.anamnese ? (
-          <dl className="flex flex-col gap-2.5 rounded-xl border border-neutral-200 bg-white p-4">
-            {(
-              [
-                ["Objetivo", detalhe.anamnese.objetivo],
-                ["Doenças", detalhe.anamnese.doencas?.join(", ")],
-                ["Lesões", detalhe.anamnese.lesoes],
-                ["Cirurgias", detalhe.anamnese.cirurgias],
-                ["Alergias", detalhe.anamnese.alergias],
-                ["Medicamentos em uso", detalhe.anamnese.medicamentos_uso],
-                ["Restrições médicas", detalhe.anamnese.restricoes_medicas],
-                [
-                  "Liberado por médico",
-                  detalhe.anamnese.liberado_por_medico === undefined
-                    ? undefined
-                    : detalhe.anamnese.liberado_por_medico
-                      ? "Sim"
-                      : "Não",
-                ],
-              ] as const
-            )
-              .filter(([, valor]) => valor)
-              .map(([rotulo, valor]) => (
-                <div key={rotulo} className="flex flex-col gap-0.5">
-                  <dt className="text-xs font-medium text-neutral-500">
-                    {rotulo}
-                  </dt>
-                  <dd className="text-sm text-neutral-800">{valor}</dd>
+          {anamnese ? (
+            <dl className={cn(CARD, "divide-y divide-neutral-200/80 px-5")}>
+              {anamnese.map(([rotulo, valor]) => (
+                <div
+                  key={rotulo}
+                  className="grid gap-0.5 py-3 sm:grid-cols-[160px_minmax(0,1fr)] sm:gap-4"
+                >
+                  <dt className="text-[13px] font-medium text-neutral-500">{rotulo}</dt>
+                  <dd className="text-[15px] leading-relaxed text-neutral-950">{valor}</dd>
                 </div>
               ))}
-          </dl>
-        ) : (
-          <div className="flex items-center gap-3 rounded-xl border border-dashed border-neutral-300 bg-white p-4">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-400">
-              <ClipboardList className="size-5" aria-hidden />
-            </span>
-            <p className="text-sm text-neutral-500">
-              O aluno ainda não preencheu a anamnese. Peça antes de prescrever
-              o treino.
-            </p>
-          </div>
-        )}
-      </section>
+            </dl>
+          ) : (
+            <Vazio icone={ClipboardList}>
+              O aluno ainda não preencheu a anamnese. Peça antes de prescrever o treino.
+            </Vazio>
+          )}
+        </section>
 
-      {/* ── Treinos e medicamentos ─────────────────────────────────── */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <section className="flex flex-col gap-3">
-          <div className="flex items-baseline justify-between gap-3">
-            <h2 className="text-xs font-semibold tracking-wider text-neutral-500 uppercase">
-              Treinos
-            </h2>
-            <Link
-              href="/treinos/novo"
-              className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-            >
-              Novo treino
-            </Link>
-          </div>
+        {/* ── Avaliação física ─────────────────────────────────────────── */}
+        <section className="flex flex-col gap-3.5">
+          <TituloSecao acao={<LinkSecao href={`/alunos/${perfil.id}/avaliacao`}>Nova avaliação</LinkSecao>}>
+            Avaliação física
+          </TituloSecao>
+
+          {!ultimaAvaliacao ? (
+            <Vazio icone={Stethoscope}>
+              Sem avaliação lançada. Sem a altura, o peso do aluno não vira IMC.
+            </Vazio>
+          ) : (
+            <ul className={cn(CARD, "divide-y divide-neutral-200/80 overflow-hidden")}>
+              {avaliacoes.slice(0, 4).map((avaliacao) => {
+                const statusImc = avaliacao.imc ? calcularSemaforo("peso", avaliacao.imc) : null;
+
+                return (
+                  <li key={avaliacao.id} className="flex flex-col gap-2.5 px-5 py-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-[15px] font-semibold text-neutral-950">
+                        {format(new Date(`${avaliacao.data}T12:00:00Z`), "d 'de' MMMM 'de' yyyy", {
+                          locale: ptBR,
+                        })}
+                      </p>
+                      {statusImc && avaliacao.imc && (
+                        <span
+                          className={cn(
+                            "shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
+                            CHIP_SEMAFORO[statusImc]
+                          )}
+                        >
+                          IMC {String(avaliacao.imc).replace(".", ",")}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-x-6 gap-y-2">
+                      {(
+                        [
+                          ["Peso", avaliacao.peso, "kg"],
+                          ["Altura", avaliacao.altura, "m"],
+                          ["Gordura", avaliacao.percentual_gordura, "%"],
+                        ] as const
+                      )
+                        .filter(([, valor]) => valor)
+                        .map(([rotulo, valor, unidade]) => (
+                          <div key={rotulo}>
+                            <p className="rotulo text-neutral-400">{rotulo}</p>
+                            <p className="numero mt-0.5 text-lg leading-tight font-semibold text-neutral-950">
+                              {String(valor).replace(".", ",")}
+                              <span className="ml-0.5 font-sans text-xs font-medium tracking-normal text-neutral-400">
+                                {unidade}
+                              </span>
+                            </p>
+                          </div>
+                        ))}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+
+        {/* ── Treinos ──────────────────────────────────────────────────── */}
+        <section className="flex flex-col gap-3.5">
+          <TituloSecao acao={<LinkSecao href="/treinos/novo">Novo treino</LinkSecao>}>
+            Treinos
+          </TituloSecao>
 
           {treinos.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-neutral-300 bg-white px-4 py-6 text-center text-sm text-neutral-500">
-              Nenhum treino montado.
-            </p>
+            <Vazio icone={ClipboardList}>
+              Nenhum treino montado para este aluno. Monte o primeiro e ele aparece na
+              tela dele na hora.
+            </Vazio>
           ) : (
-            <ul className="divide-y divide-neutral-100 overflow-hidden rounded-xl border border-neutral-200 bg-white">
+            <ul className={cn(CARD, "divide-y divide-neutral-200/80 overflow-hidden")}>
               {treinos.map((treino) => (
                 <li key={treino.id}>
                   <Link
                     href={`/treinos/${treino.id}`}
-                    className="flex items-center gap-3 p-3.5 transition-colors hover:bg-neutral-50"
+                    className="group flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-neutral-50"
                   >
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-primary">
-                      <Dumbbell className="size-4" aria-hidden />
-                    </span>
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-neutral-900">
+                    <span className="min-w-0 flex-1 truncate text-[15px] font-semibold text-neutral-950">
                       {treino.nome}
                     </span>
                     {!treino.ativo && (
-                      <span className="shrink-0 text-xs text-neutral-400">
+                      <span className="shrink-0 rounded-full bg-neutral-100 px-2.5 py-0.5 text-[11px] font-semibold text-neutral-500">
                         Inativo
                       </span>
                     )}
+                    <ChevronRight
+                      className="size-4 shrink-0 text-neutral-300 transition-transform group-hover:translate-x-0.5"
+                      aria-hidden
+                    />
                   </Link>
                 </li>
               ))}
@@ -302,43 +426,29 @@ export default async function DetalheAlunoPage({
           )}
         </section>
 
-        <section className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold tracking-wider text-neutral-500 uppercase">
-            Medicamentos
-          </h2>
+        {/* ── Medicamentos ─────────────────────────────────────────────── */}
+        <section className="flex flex-col gap-3.5">
+          <TituloSecao>Medicamentos</TituloSecao>
 
           {medicamentos.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-neutral-300 bg-white px-4 py-6 text-center text-sm text-neutral-500">
-              Nenhum medicamento cadastrado.
-            </p>
+            <Vazio icone={ClipboardList}>O aluno não cadastrou nenhum medicamento.</Vazio>
           ) : (
-            <ul className="divide-y divide-neutral-100 overflow-hidden rounded-xl border border-neutral-200 bg-white">
+            <ul className={cn(CARD, "divide-y divide-neutral-200/80 overflow-hidden")}>
               {medicamentos.map((medicamento) => (
-                <li
-                  key={medicamento.id}
-                  className="flex items-center gap-3 p-3.5"
-                >
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
-                    <Pill className="size-4" aria-hidden />
-                  </span>
+                <li key={medicamento.id} className="flex items-center gap-3 px-5 py-3.5">
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-neutral-900">
+                    <p className="truncate text-[15px] font-semibold text-neutral-950">
                       {medicamento.nome}
                       {medicamento.dose && (
-                        <span className="font-normal text-neutral-500">
-                          {" "}
-                          · {medicamento.dose}
-                        </span>
+                        <span className="font-normal text-neutral-500"> · {medicamento.dose}</span>
                       )}
                     </p>
-                    <p className="truncate text-xs text-neutral-500">
-                      {(medicamento.horarios ?? [])
-                        .map((h) => h.slice(0, 5))
-                        .join(" · ")}
+                    <p className="rotulo mt-1 truncate text-neutral-400">
+                      {(medicamento.horarios ?? []).map((h) => h.slice(0, 5)).join(" · ")}
                     </p>
                   </div>
                   {!medicamento.ativo && (
-                    <span className="shrink-0 text-xs text-neutral-400">
+                    <span className="shrink-0 rounded-full bg-neutral-100 px-2.5 py-0.5 text-[11px] font-semibold text-neutral-500">
                       Pausado
                     </span>
                   )}
@@ -347,151 +457,99 @@ export default async function DetalheAlunoPage({
             </ul>
           )}
         </section>
-      </div>
 
-      {/* ── Humor ──────────────────────────────────────────────────── */}
-      {humores.length > 0 && (
-        <section className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold tracking-wider text-neutral-500 uppercase">
-            Humor nos últimos 30 dias
-          </h2>
+        {/* ── Humor ────────────────────────────────────────────────────── */}
+        {humores.length > 0 && (
+          <section className="flex flex-col gap-3.5">
+            <TituloSecao>Humor em 30 dias</TituloSecao>
 
-          <div className="flex flex-wrap gap-1.5 rounded-xl border border-neutral-200 bg-white p-4">
-            {humores
-              .slice()
-              .reverse()
-              .map((registro) => (
-                <span
-                  key={registro.data}
-                  title={`${format(new Date(`${registro.data}T12:00:00Z`), "dd/MM")} — ${HUMOR_CONFIG[registro.humor].label}`}
-                  className="flex size-9 items-center justify-center rounded-md text-lg"
-                  style={{
-                    backgroundColor: `${HUMOR_CONFIG[registro.humor].cor}22`,
-                  }}
-                >
-                  <span aria-hidden>{HUMOR_CONFIG[registro.humor].emoji}</span>
-                  <span className="sr-only">
-                    {format(new Date(`${registro.data}T12:00:00Z`), "dd/MM")}:{" "}
-                    {HUMOR_CONFIG[registro.humor].label}
+            <div className={cn(CARD, "flex flex-wrap gap-1.5 p-4 md:p-5")}>
+              {humores
+                .slice()
+                .reverse()
+                .map((registro) => (
+                  <span
+                    key={registro.data}
+                    title={`${format(new Date(`${registro.data}T12:00:00Z`), "dd/MM")} — ${HUMOR_CONFIG[registro.humor].label}`}
+                    className="flex size-9 items-center justify-center rounded-full text-lg"
+                    style={{ backgroundColor: `${HUMOR_CONFIG[registro.humor].cor}1f` }}
+                  >
+                    <span aria-hidden>{HUMOR_CONFIG[registro.humor].emoji}</span>
+                    <span className="sr-only">
+                      {format(new Date(`${registro.data}T12:00:00Z`), "dd/MM")}:{" "}
+                      {HUMOR_CONFIG[registro.humor].label}
+                    </span>
                   </span>
-                </span>
-              ))}
-          </div>
-        </section>
-      )}
-
-      {/* ── Avaliação física ───────────────────────────────────────── */}
-      <section className="flex flex-col gap-3">
-        <div className="flex items-baseline justify-between gap-3">
-          <h2 className="text-xs font-semibold tracking-wider text-neutral-500 uppercase">
-            Avaliação física
-          </h2>
-          <Link
-            href={`/alunos/${perfil.id}/avaliacao`}
-            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-          >
-            Nova avaliação
-          </Link>
-        </div>
-
-        {!ultimaAvaliacao ? (
-          <div className="flex items-center gap-3 rounded-xl border border-dashed border-neutral-300 bg-white p-4">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-400">
-              <Stethoscope className="size-5" aria-hidden />
-            </span>
-            <p className="text-sm text-neutral-500">
-              Sem avaliação lançada. Sem a altura, o peso do aluno não vira IMC.
-            </p>
-          </div>
-        ) : (
-          <ul className="divide-y divide-neutral-100 overflow-hidden rounded-xl border border-neutral-200 bg-white">
-            {avaliacoes.slice(0, 4).map((avaliacao) => (
-              <li key={avaliacao.id} className="flex flex-col gap-1 p-3.5">
-                <p className="text-sm font-medium text-neutral-900">
-                  {format(
-                    new Date(`${avaliacao.data}T12:00:00Z`),
-                    "dd 'de' MMMM 'de' yyyy",
-                    { locale: ptBR }
-                  )}
-                </p>
-                <p className="text-xs text-neutral-500">
-                  {[
-                    avaliacao.peso && `${avaliacao.peso} kg`,
-                    avaliacao.altura && `${avaliacao.altura} m`,
-                    avaliacao.imc && `IMC ${avaliacao.imc}`,
-                    avaliacao.percentual_gordura &&
-                      `${avaliacao.percentual_gordura}% gordura`,
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </p>
-              </li>
-            ))}
-          </ul>
+                ))}
+            </div>
+          </section>
         )}
-      </section>
 
-      {/* ── Contatos de emergência ─────────────────────────────────── */}
-      {(perfil.familiar_nome || perfil.medico_nome) && (
-        <section className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold tracking-wider text-neutral-500 uppercase">
-            Em caso de emergência
-          </h2>
+        {/* ── Contatos de emergência ───────────────────────────────────── */}
+        {contatos.length > 0 && (
+          <section className="flex flex-col gap-3.5">
+            <TituloSecao>Em caso de emergência</TituloSecao>
 
-          <ul className="divide-y divide-neutral-100 overflow-hidden rounded-xl border border-neutral-200 bg-white">
-            {[
-              {
-                rotulo: "Familiar",
-                nome: perfil.familiar_nome,
-                telefone: perfil.familiar_telefone,
-              },
-              {
-                rotulo: "Médico",
-                nome: perfil.medico_nome,
-                telefone: perfil.medico_telefone,
-              },
-            ]
-              .filter((c) => c.nome || c.telefone)
-              .map((contato) => (
-                <li
-                  key={contato.rotulo}
-                  className="flex items-center gap-3 p-3.5"
-                >
+            <ul className={cn(CARD, "divide-y divide-neutral-200/80 overflow-hidden")}>
+              {contatos.map((contato) => (
+                <li key={contato.rotulo} className="flex items-center gap-3 px-5 py-3.5">
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs text-neutral-500">{contato.rotulo}</p>
-                    <p className="truncate text-sm font-medium text-neutral-900">
-                      {contato.nome ?? "—"}
+                    <p className="rotulo text-neutral-400">{contato.rotulo}</p>
+                    <p className="mt-0.5 truncate text-[15px] font-semibold text-neutral-950">
+                      {contato.nome ?? "Nome não informado"}
                     </p>
                   </div>
                   {contato.telefone && (
                     <a
                       href={`tel:${contato.telefone}`}
-                      className="flex items-center gap-1.5 text-sm font-medium text-primary underline-offset-4 hover:underline"
+                      className="flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold text-primary ring-1 ring-neutral-200 transition-colors hover:bg-neutral-50"
                     >
-                      <Phone className="size-3.5" aria-hidden />
-                      {telefoneBonito(contato.telefone)}
+                      <Phone className="size-3.5" strokeWidth={1.9} aria-hidden />
+                      <span className="numero">{telefoneBonito(contato.telefone)}</span>
                     </a>
                   )}
                 </li>
               ))}
-          </ul>
-        </section>
-      )}
+            </ul>
+          </section>
+        )}
+      </div>
 
-      <p className="text-xs text-neutral-400">
+      <p className="rotulo text-neutral-400">
         Atualizado às {horaAtual()} · fuso da academia
       </p>
     </main>
   );
 }
 
-function Numero({ valor, label }: { valor: string; label: string }) {
+function Metrica({
+  valor,
+  unidade,
+  label,
+  pequeno,
+}: {
+  valor: string;
+  unidade?: string;
+  label: string;
+  /** Texto longo ("há 3 dias") não cabe no tamanho de número. */
+  pequeno?: boolean;
+}) {
   return (
-    <div className="flex flex-col gap-1 rounded-xl border border-neutral-200 bg-white p-4">
-      <p className="text-xl leading-tight font-bold tracking-tight text-neutral-900">
+    <div className="flex flex-col gap-2 bg-card px-4 py-4 md:px-5 md:py-5">
+      <dt className="text-[13px] font-medium text-neutral-500">{label}</dt>
+      <dd
+        className={cn(
+          "numero leading-none font-semibold text-neutral-950 first-letter:uppercase",
+          pequeno ? "text-xl md:text-2xl" : "text-[28px] md:text-[32px]"
+        )}
+      >
         {valor}
-      </p>
-      <p className="text-xs text-neutral-500">{label}</p>
+        {unidade && (
+          <span className="ml-1 font-sans text-xs font-medium tracking-normal text-neutral-400">
+            {unidade}
+          </span>
+        )}
+      </dd>
     </div>
   );
 }

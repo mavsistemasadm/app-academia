@@ -2,15 +2,7 @@
 
 import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import {
-  AlertCircle,
-  Check,
-  CheckCircle2,
-  Clock,
-  Loader2,
-  Repeat,
-  Weight,
-} from "lucide-react";
+import { AlertCircle, Check, CheckCircle2, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -169,47 +161,55 @@ export function ExecucaoTreino({ alunoId, treino, hoje }: ExecucaoTreinoProps) {
   const tudoFeito = feitas.size >= total && total > 0;
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
       {/* ── Progresso ────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-20 flex flex-col gap-2.5 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
-        <div className="flex items-baseline justify-between gap-3">
-          <p className="text-sm font-semibold text-neutral-900">
-            {concluido ? "Treino concluído" : "Seu progresso"}
-          </p>
-          <p className="text-sm text-neutral-500 tabular-nums">
-            {feitas.size} de {total} séries
-          </p>
-        </div>
+      <div className="sticky top-0 z-20 flex items-center gap-4 rounded-2xl bg-card p-4 ring-1 ring-neutral-200/90 shadow-[0_10px_30px_-18px_rgba(12,18,20,.3)]">
+        <AnelProgresso progresso={progresso} concluido={concluido} />
 
-        <div
-          role="progressbar"
-          aria-valuenow={progresso}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-label="Progresso do treino"
-          className="h-2 overflow-hidden rounded-full bg-neutral-100"
-        >
+        <div className="min-w-0 flex-1">
+          <p className="text-[15px] font-semibold text-neutral-950">
+            {concluido
+              ? "Treino concluído"
+              : feitas.size === 0
+                ? "Toque em cada série ao terminar"
+                : tudoFeito
+                  ? "Todas as séries feitas"
+                  : "Seu progresso"}
+          </p>
+          <p className="mt-0.5 text-[13px] text-neutral-500">
+            <span className="numero font-semibold text-neutral-950">
+              {feitas.size}
+            </span>{" "}
+            de <span className="numero">{total}</span> séries
+          </p>
+
           <div
-            className={cn(
-              "h-full rounded-full transition-[width] duration-300",
-              concluido ? "bg-saude-verde" : "bg-primary"
-            )}
-            style={{ width: `${progresso}%` }}
-          />
-        </div>
+            role="progressbar"
+            aria-valuenow={progresso}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label="Progresso do treino"
+            className="mt-2 h-1.5 overflow-hidden rounded-full bg-neutral-200"
+          >
+            <div
+              className="h-full rounded-full bg-ciano transition-[width] duration-300"
+              style={{ width: `${progresso}%` }}
+            />
+          </div>
 
-        {concluido && esforcoSalvo != null && (
-          <p className="flex items-center gap-1.5 text-sm text-saude-verde">
-            <CheckCircle2 className="size-4 shrink-0" aria-hidden />
-            Esforço {esforcoSalvo}/10 registrado. Bom trabalho!
-          </p>
-        )}
+          {concluido && esforcoSalvo != null && (
+            <p className="mt-2 flex items-center gap-1.5 text-[13px] font-medium text-saude-verde">
+              <CheckCircle2 className="size-4 shrink-0" aria-hidden />
+              Esforço {esforcoSalvo}/10 registrado. Bom trabalho!
+            </p>
+          )}
+        </div>
       </div>
 
       {erro && (
         <p
           role="alert"
-          className="flex items-start gap-2 rounded-xl bg-saude-vermelho-light px-3.5 py-3 text-sm text-saude-vermelho"
+          className="flex items-start gap-2 px-1 text-sm text-saude-vermelho"
         >
           <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
           {erro}
@@ -227,70 +227,74 @@ export function ExecucaoTreino({ alunoId, treino, hoje }: ExecucaoTreinoProps) {
           const completo = seriesFeitas.length === exercicio.series;
 
           const detalhes = [
+            { rotulo: "Séries", valor: String(exercicio.series) },
             exercicio.repeticoes && {
-              icone: Repeat,
-              texto: `${exercicio.repeticoes} reps`,
+              rotulo: "Repetições",
+              valor: exercicio.repeticoes,
             },
-            exercicio.carga && { icone: Weight, texto: exercicio.carga },
+            exercicio.carga && { rotulo: "Carga", valor: exercicio.carga },
             exercicio.descanso && {
-              icone: Clock,
-              texto: `${exercicio.descanso} de descanso`,
+              rotulo: "Descanso",
+              valor: exercicio.descanso,
             },
-          ].filter(Boolean) as { icone: typeof Repeat; texto: string }[];
+          ].filter(Boolean) as { rotulo: string; valor: string }[];
 
           return (
             <li
               key={exercicio.id}
-              className={cn(
-                "flex flex-col gap-3 rounded-xl border bg-white p-4 transition-colors",
-                completo
-                  ? "border-saude-verde/40 bg-saude-verde-light/30"
-                  : "border-neutral-200"
-              )}
+              className="flex flex-col gap-4 rounded-2xl bg-card p-4 ring-1 ring-neutral-200/90 transition-all duration-200 md:p-5"
             >
               <div className="flex items-start gap-3">
                 <span
                   className={cn(
-                    "flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                    "numero flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold transition-colors",
                     completo
-                      ? "bg-saude-verde text-white"
+                      ? "bg-grafite text-ciano"
                       : "bg-neutral-100 text-neutral-500"
                   )}
                   aria-hidden
                 >
-                  {completo ? <Check className="size-4" /> : indice + 1}
+                  {completo ? (
+                    <Check className="size-4" strokeWidth={2.5} />
+                  ) : (
+                    indice + 1
+                  )}
                 </span>
 
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-base font-bold text-neutral-900">
-                    {exercicio.nome}
-                  </h3>
-
-                  {detalhes.length > 0 && (
-                    <ul className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
-                      {detalhes.map(({ icone: Icone, texto }) => (
-                        <li
-                          key={texto}
-                          className="flex items-center gap-1 text-sm text-neutral-500"
-                        >
-                          <Icone className="size-3.5 shrink-0" aria-hidden />
-                          {texto}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="pt-0.5 text-lg leading-snug font-semibold tracking-[-0.02em] text-neutral-950">
+                      {exercicio.nome}
+                    </h3>
+                    {completo && (
+                      <span className="mt-1 shrink-0 rounded-full bg-grafite px-2.5 py-0.5 text-[11px] font-semibold text-white">
+                        Feito
+                      </span>
+                    )}
+                  </div>
 
                   {exercicio.observacoes && (
-                    <p className="mt-1.5 text-sm text-neutral-600 italic">
+                    <p className="mt-1 text-[15px] leading-relaxed text-neutral-500">
                       {exercicio.observacoes}
                     </p>
                   )}
                 </div>
               </div>
 
+              <dl className="flex flex-wrap gap-x-6 gap-y-3">
+                {detalhes.map(({ rotulo, valor }) => (
+                  <div key={rotulo} className="min-w-0">
+                    <dt className="rotulo text-neutral-400">{rotulo}</dt>
+                    <dd className="numero mt-1 truncate text-xl leading-none font-semibold text-neutral-950">
+                      {valor}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+
               <VideoExercicio url={exercicio.videoUrl} nome={exercicio.nome} />
 
-              {/* Uma bolinha por série — o toque é grande de propósito. */}
+              {/* Um botão por série — o toque é grande de propósito. */}
               <div className="flex flex-wrap gap-2">
                 {Array.from({ length: exercicio.series }, (_, i) => i + 1).map(
                   (serie) => {
@@ -304,13 +308,19 @@ export function ExecucaoTreino({ alunoId, treino, hoje }: ExecucaoTreinoProps) {
                         aria-pressed={marcada}
                         aria-label={`Série ${serie} de ${exercicio.nome}`}
                         className={cn(
-                          "flex h-12 min-w-14 items-center justify-center gap-1.5 rounded-xl border px-3 text-sm font-semibold transition-colors",
+                          "numero flex h-12 min-w-16 items-center justify-center gap-1.5 rounded-full px-4 text-base font-semibold transition-all duration-200 active:scale-[.98]",
                           marcada
-                            ? "border-saude-verde bg-saude-verde text-white"
-                            : "border-neutral-200 bg-white text-neutral-500 hover:bg-neutral-50"
+                            ? "bg-grafite text-white"
+                            : "bg-neutral-50 text-neutral-600 ring-1 ring-neutral-200 hover:bg-neutral-100"
                         )}
                       >
-                        {marcada && <Check className="size-4" aria-hidden />}
+                        {marcada && (
+                          <Check
+                            className="size-4 text-ciano"
+                            strokeWidth={2.5}
+                            aria-hidden
+                          />
+                        )}
                         {serie}ª
                       </button>
                     );
@@ -328,7 +338,7 @@ export function ExecucaoTreino({ alunoId, treino, hoje }: ExecucaoTreinoProps) {
           type="button"
           onClick={() => setDialogoAberto(true)}
           disabled={feitas.size === 0}
-          className="h-14 w-full rounded-xl text-base font-semibold"
+          className="mt-2 h-12 w-full rounded-full bg-grafite text-[15px] font-semibold text-white hover:bg-neutral-800"
         >
           {tudoFeito ? "Finalizar treino" : "Encerrar treino por aqui"}
         </Button>
@@ -345,13 +355,59 @@ export function ExecucaoTreino({ alunoId, treino, hoje }: ExecucaoTreinoProps) {
   );
 }
 
-const ESFORCOS = [
-  { valor: 2, label: "Muito leve" },
-  { valor: 4, label: "Leve" },
-  { valor: 6, label: "Moderado" },
-  { valor: 8, label: "Puxado" },
-  { valor: 10, label: "Máximo" },
-];
+/** Anel de progresso em SVG, no mesmo desenho do card de treino da home. */
+function AnelProgresso({
+  progresso,
+  concluido,
+}: {
+  progresso: number;
+  concluido: boolean;
+}) {
+  const raio = 23;
+  const circunferencia = 2 * Math.PI * raio;
+  const preenchido = concluido ? 100 : progresso;
+
+  return (
+    <div className="relative size-14 shrink-0" aria-hidden>
+      <svg viewBox="0 0 56 56" className="size-14 -rotate-90">
+        <circle
+          cx="28"
+          cy="28"
+          r={raio}
+          fill="none"
+          stroke="var(--color-neutral-200)"
+          strokeWidth="5"
+        />
+        <circle
+          cx="28"
+          cy="28"
+          r={raio}
+          fill="none"
+          stroke="var(--ciano)"
+          strokeWidth="5"
+          strokeLinecap="round"
+          strokeDasharray={circunferencia}
+          strokeDashoffset={circunferencia * (1 - preenchido / 100)}
+          className="transition-[stroke-dashoffset] duration-500"
+        />
+      </svg>
+      <span className="numero absolute inset-0 flex items-center justify-center text-[13px] font-semibold text-neutral-950">
+        {concluido ? <Check className="size-5" strokeWidth={2.5} /> : `${progresso}%`}
+      </span>
+    </div>
+  );
+}
+
+/** Escala de 1 a 10; a palavra ajuda quem não pensa em número. */
+const ESFORCOS = Array.from({ length: 10 }, (_, i) => i + 1);
+
+function descreverEsforco(valor: number): string {
+  if (valor <= 2) return "Muito leve";
+  if (valor <= 4) return "Leve";
+  if (valor <= 6) return "Moderado";
+  if (valor <= 8) return "Puxado";
+  return "Máximo";
+}
 
 function DialogEsforco({
   aberto,
@@ -388,45 +444,64 @@ function DialogEsforco({
 
   return (
     <Dialog open={aberto} onOpenChange={onAbertoChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="gap-5 rounded-2xl p-5 sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Como foi o treino?</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-xl font-semibold tracking-[-0.02em] text-neutral-950">
+            Como foi o treino?
+          </DialogTitle>
+          <DialogDescription className="text-[15px] leading-relaxed text-neutral-500">
             {parcial
-              ? `Faltaram ${restantes} ${restantes === 1 ? "série" : "séries"}. Sem problema — registre o esforço do que você fez.`
+              ? `Faltaram ${restantes} ${restantes === 1 ? "série" : "séries"}. Sem problema — conte o esforço do que você fez.`
               : "Seu professor usa essa nota para ajustar a próxima semana."}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-2">
-          {ESFORCOS.map(({ valor, label }) => (
-            <button
-              key={valor}
-              type="button"
-              onClick={() => setEsforco(valor)}
-              aria-pressed={esforco === valor}
-              disabled={salvando}
-              className={cn(
-                "flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left transition-colors",
-                esforco === valor
-                  ? "border-primary bg-primary/10"
-                  : "border-neutral-200 hover:bg-neutral-50"
+        <fieldset className="flex flex-col gap-2.5">
+          <legend className="sr-only">Esforço de 1 a 10</legend>
+
+          <div className="flex items-baseline justify-between gap-3">
+            <span className="rotulo text-neutral-400">Esforço</span>
+            <span className="text-sm text-neutral-500">
+              {esforco === null ? (
+                "Escolha de 1 a 10"
+              ) : (
+                <>
+                  <span className="numero text-lg font-semibold text-neutral-950">
+                    {esforco}
+                  </span>
+                  <span className="text-neutral-400">/10</span> ·{" "}
+                  {descreverEsforco(esforco)}
+                </>
               )}
-            >
-              <span
+            </span>
+          </div>
+
+          <div className="grid grid-cols-5 gap-2">
+            {ESFORCOS.map((valor) => (
+              <button
+                key={valor}
+                type="button"
+                onClick={() => setEsforco(valor)}
+                aria-pressed={esforco === valor}
+                aria-label={`${valor} de 10 — ${descreverEsforco(valor)}`}
+                disabled={salvando}
                 className={cn(
-                  "text-sm font-medium",
-                  esforco === valor ? "text-primary" : "text-neutral-700"
+                  "numero flex h-12 items-center justify-center rounded-full text-base font-semibold transition-all duration-200 active:scale-[.98] disabled:opacity-60",
+                  esforco === valor
+                    ? "bg-grafite text-white"
+                    : "bg-neutral-50 text-neutral-600 ring-1 ring-neutral-200 hover:bg-neutral-100"
                 )}
               >
-                {label}
-              </span>
-              <span className="text-sm font-bold text-neutral-400 tabular-nums">
-                {valor}/10
-              </span>
-            </button>
-          ))}
-        </div>
+                {valor}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex justify-between px-1 text-[13px] text-neutral-400">
+            <span>Muito leve</span>
+            <span>Máximo</span>
+          </div>
+        </fieldset>
 
         <textarea
           rows={2}
@@ -435,7 +510,7 @@ function DialogEsforco({
           value={observacao}
           onChange={(e) => setObservacao(e.target.value)}
           disabled={salvando}
-          className="w-full resize-none rounded-xl border border-input bg-transparent px-3.5 py-3 text-base outline-none placeholder:text-neutral-400 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-60"
+          className="w-full resize-none rounded-[14px] bg-transparent px-3.5 py-3 text-base ring-1 ring-neutral-200 outline-none placeholder:text-neutral-400 focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-60"
         />
 
         {erro && (
@@ -448,7 +523,7 @@ function DialogEsforco({
           type="button"
           onClick={confirmar}
           disabled={salvando}
-          className="h-12 w-full rounded-xl text-base font-semibold"
+          className="h-12 w-full rounded-full bg-grafite text-[15px] font-semibold text-white hover:bg-neutral-800"
         >
           {salvando ? (
             <>

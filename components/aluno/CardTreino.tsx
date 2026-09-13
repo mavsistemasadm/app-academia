@@ -1,23 +1,52 @@
 import Link from "next/link";
-import { Dumbbell } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 import type { TreinoHoje } from "@/lib/supabase/home-aluno";
-import { Button } from "@/components/ui/button";
 
 interface CardTreinoProps {
   treino: TreinoHoje | null;
 }
 
+/** Anel de progresso em SVG — séries feitas sobre o total do dia. */
+function Anel({ progresso, rotulo }: { progresso: number; rotulo: string }) {
+  const raio = 23;
+  const circunferencia = 2 * Math.PI * raio;
+
+  return (
+    <div className="relative size-14 shrink-0">
+      <svg viewBox="0 0 56 56" className="size-14 -rotate-90" aria-hidden>
+        <circle cx="28" cy="28" r={raio} fill="none" stroke="var(--color-neutral-200)" strokeWidth="5" />
+        <circle
+          cx="28"
+          cy="28"
+          r={raio}
+          fill="none"
+          stroke="var(--ciano)"
+          strokeWidth="5"
+          strokeLinecap="round"
+          strokeDasharray={circunferencia}
+          strokeDashoffset={circunferencia * (1 - progresso / 100)}
+          className="transition-[stroke-dashoffset] duration-500"
+        />
+      </svg>
+      <span className="numero absolute inset-0 flex items-center justify-center text-[13px] font-semibold text-neutral-950">
+        {rotulo}
+      </span>
+    </div>
+  );
+}
+
 export function CardTreino({ treino }: CardTreinoProps) {
   if (!treino) {
     return (
-      <div className="flex flex-col items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-8 text-center">
-        <Dumbbell className="size-6 text-neutral-300" aria-hidden />
-        <p className="text-sm font-semibold text-neutral-900">
-          Nenhum treino para hoje
-        </p>
-        <p className="text-sm text-neutral-500">
+      <div className="flex h-full flex-col justify-center gap-1.5 rounded-2xl bg-card p-5 ring-1 ring-neutral-200/90">
+        <p className="rotulo text-neutral-400">Treino de hoje</p>
+        <h3 className="text-lg font-semibold tracking-[-0.02em] text-neutral-950">
+          Dia sem treino marcado
+        </h3>
+        <p className="text-sm leading-relaxed text-neutral-500">
           Seu professor ainda não montou um treino para este dia da semana.
+          Descanso também conta.
         </p>
       </div>
     );
@@ -33,57 +62,36 @@ export function CardTreino({ treino }: CardTreinoProps) {
     ? "Ver treino"
     : treino.seriesFeitas > 0
       ? "Continuar"
-      : "Iniciar";
+      : "Começar";
 
   const legenda = treino.concluido
-    ? "Treino concluído hoje"
+    ? "Concluído hoje"
     : treino.seriesFeitas > 0
       ? `${treino.seriesFeitas} de ${treino.totalSeries} séries`
-      : `${treino.totalExercicios} ${treino.totalExercicios === 1 ? "exercício" : "exercícios"}`;
+      : `${treino.totalExercicios} ${treino.totalExercicios === 1 ? "exercício" : "exercícios"} · ${treino.totalSeries} séries`;
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-neutral-200 bg-white p-4">
-      <div className="flex items-start justify-between gap-3">
+    <div className="flex h-full flex-col justify-between gap-5 rounded-2xl bg-card p-5 ring-1 ring-neutral-200/90">
+      <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <h3 className="text-base font-bold text-neutral-900">
+          <p className="rotulo text-neutral-400">Treino de hoje</p>
+          <h3 className="mt-1.5 text-lg leading-snug font-semibold tracking-[-0.02em] text-neutral-950">
             {treino.nome}
           </h3>
-          <p className="mt-0.5 text-sm text-neutral-500">
-            {treino.totalExercicios}{" "}
-            {treino.totalExercicios === 1 ? "exercício" : "exercícios"}
-          </p>
+          <p className="mt-0.5 text-sm text-neutral-500">{legenda}</p>
         </div>
-        <span className="shrink-0 rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
-          Hoje
-        </span>
+        <Anel progresso={progresso} rotulo={treino.concluido ? "✓" : `${progresso}%`} />
       </div>
 
-      <div
-        role="progressbar"
-        aria-valuenow={progresso}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label="Progresso do treino de hoje"
-        className="h-2 overflow-hidden rounded-full bg-neutral-100"
+      <Link
+        href="/treino"
+        className="group flex h-12 items-center justify-between rounded-full bg-grafite pr-2 pl-5 text-[15px] font-semibold text-white transition-colors hover:bg-neutral-800"
       >
-        <div
-          className="h-full rounded-full bg-primary transition-[width]"
-          style={{ width: `${progresso}%` }}
-        />
-      </div>
-
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-neutral-500">{legenda}</p>
-        <Button
-          render={<Link href="/treino" />}
-          // O elemento é um <a> de verdade: sem isso a Base UI reclama
-          // que perdeu a semântica nativa de <button>.
-          nativeButton={false}
-          className="h-10 shrink-0 rounded-xl px-4 font-semibold"
-        >
-          {rotuloBotao}
-        </Button>
-      </div>
+        {rotuloBotao}
+        <span className="flex size-9 items-center justify-center rounded-full bg-ciano text-grafite">
+          <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
+        </span>
+      </Link>
     </div>
   );
 }

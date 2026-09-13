@@ -46,6 +46,64 @@ export const FAIXAS_CLINICAS: Record<IndicadorTipo, FaixaClinica> = {
   },
 }
 
+/*
+  Faixa visual do semáforo (a barra verde/amarela/vermelha com um ponto).
+  `cortes` tem um valor a mais que `cores`: cada cor ocupa de um corte ao
+  seguinte, e a largura desenhada é proporcional ao intervalo real — a faixa
+  é uma régua, não três pedaços iguais. As pontas são só onde a régua acaba.
+*/
+interface EscalaFaixa {
+  cortes: number[]
+  cores: SemaforoStatus[]
+}
+
+export const ESCALAS_FAIXA: Record<IndicadorTipo, EscalaFaixa> = {
+  glicemia: { cortes: [40, 70, 126, 200, 280], cores: ['vermelho', 'verde', 'amarelo', 'vermelho'] },
+  // Sistólica desenha a régua; a diastólica é encaixada nos mesmos trechos.
+  pressao: { cortes: [90, 130, 160, 190], cores: ['verde', 'amarelo', 'vermelho'] },
+  fc: { cortes: [35, 50, 91, 101, 140], cores: ['vermelho', 'verde', 'amarelo', 'vermelho'] },
+  saturacao: { cortes: [80, 90, 95, 100], cores: ['vermelho', 'amarelo', 'verde'] },
+  // Peso é posicionado pelo IMC.
+  peso: { cortes: [16, 25, 30, 40], cores: ['verde', 'amarelo', 'vermelho'] },
+}
+
+const CORTES_DIASTOLICA = [50, 85, 100, 120]
+
+/** Em qual trecho da régua o valor cai, e quanto dele já andou (0 a 1). */
+function trecho(cortes: number[], valor: number) {
+  const ultimo = cortes.length - 2
+  for (let i = 0; i <= ultimo; i++) {
+    if (valor < cortes[i + 1] || i === ultimo) {
+      const fracao = (valor - cortes[i]) / (cortes[i + 1] - cortes[i])
+      return { indice: i, fracao: Math.min(1, Math.max(0, fracao)) }
+    }
+  }
+  return { indice: 0, fracao: 0 }
+}
+
+/** Larguras de cada trecho, em fração da régua inteira. */
+export function largurasFaixa(tipo: IndicadorTipo): number[] {
+  const { cortes } = ESCALAS_FAIXA[tipo]
+  const total = cortes[cortes.length - 1] - cortes[0]
+  return cortes.slice(1).map((corte, i) => (corte - cortes[i]) / total)
+}
+
+/** Posição do ponto na faixa, de 0 a 1. Pressão usa a pior das duas medidas. */
+export function posicaoNaFaixa(
+  tipo: IndicadorTipo,
+  valor: number,
+  valorSecundario?: number | null
+): number {
+  const larguras = largurasFaixa(tipo)
+  const paraPosicao = ({ indice, fracao }: { indice: number; fracao: number }) =>
+    larguras.slice(0, indice).reduce((soma, l) => soma + l, 0) + larguras[indice] * fracao
+
+  const principal = paraPosicao(trecho(ESCALAS_FAIXA[tipo].cortes, valor))
+  if (tipo !== 'pressao' || valorSecundario == null) return principal
+
+  return Math.max(principal, paraPosicao(trecho(CORTES_DIASTOLICA, valorSecundario)))
+}
+
 export function calcularSemaforo(
   tipo: IndicadorTipo,
   valorPrincipal: number,

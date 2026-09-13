@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { Loader2, LogOut } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
@@ -21,13 +21,17 @@ export function BotaoSair() {
   return (
     <Button
       variant="ghost"
-      size="icon-lg"
+      size="icon"
       onClick={sair}
       disabled={saindo}
       aria-label="Sair da conta"
-      className="rounded-xl text-neutral-500"
+      className="size-10 rounded-full text-neutral-500 ring-1 ring-neutral-200 hover:bg-neutral-50 hover:text-neutral-950"
     >
-      <LogOut className="size-5" aria-hidden />
+      {saindo ? (
+        <Loader2 className="size-[18px] animate-spin" aria-hidden />
+      ) : (
+        <LogOut className="size-[18px]" strokeWidth={1.8} aria-hidden />
+      )}
     </Button>
   );
 }

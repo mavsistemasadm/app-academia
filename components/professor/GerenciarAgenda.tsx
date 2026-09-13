@@ -9,6 +9,7 @@ import {
   Bell,
   CalendarDays,
   Loader2,
+  Megaphone,
   Plus,
   Trash2,
   Users,
@@ -29,6 +30,13 @@ import type { EventoNaAgenda } from "@/lib/supabase/agenda";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { AVATAR_OPCOES } from "@/lib/utils/avatares";
+import { naAcademia } from "@/lib/utils/datas";
+
+const TEXTAREA =
+  "w-full resize-none rounded-[14px] border border-input bg-card px-3.5 py-3 text-base transition-colors outline-none placeholder:text-neutral-400 hover:border-neutral-300 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-60";
+const TITULO_SECAO = "text-lg font-semibold tracking-[-0.02em] text-neutral-950 md:text-xl";
+const CARD_LISTA =
+  "divide-y divide-neutral-200/80 overflow-hidden rounded-2xl bg-card ring-1 ring-neutral-200/90";
 
 interface GerenciarAgendaProps {
   professorId: string;
@@ -56,12 +64,12 @@ export function GerenciarAgenda({
   const passados = eventos.filter((e) => (e.dataFim ?? e.dataInicio) < agora);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-7">
       <div className="flex flex-wrap gap-2">
         <Button
           type="button"
           onClick={() => setCriandoEvento(true)}
-          className="h-11 rounded-xl px-4 font-semibold"
+          className="h-11 rounded-full px-5 font-semibold"
         >
           <Plus className="size-5" aria-hidden />
           Novo evento
@@ -70,127 +78,150 @@ export function GerenciarAgenda({
           type="button"
           variant="outline"
           onClick={() => setCriandoAviso(true)}
-          className="h-11 rounded-xl px-4 font-semibold"
+          className="h-11 rounded-full px-5 font-semibold"
         >
-          <Bell className="size-5" aria-hidden />
+          <Bell className="size-4" aria-hidden />
           Enviar comunicado
         </Button>
       </div>
 
-      {/* ── Eventos ────────────────────────────────────────────────── */}
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xs font-semibold tracking-wider text-neutral-500 uppercase">
-          Próximos
-        </h2>
+      <div className="grid items-start gap-7 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-6">
+        <div className="flex flex-col gap-7">
+          {/* ── Próximos eventos ─────────────────────────────────── */}
+          <section className="flex flex-col gap-3.5">
+            <div className="flex items-baseline justify-between gap-3">
+              <h2 className={TITULO_SECAO}>Próximos eventos</h2>
+              {proximos.length > 0 && (
+                <span className="rotulo text-neutral-400">{proximos.length} marcados</span>
+              )}
+            </div>
 
-        {proximos.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-neutral-300 bg-white px-6 py-10 text-center">
-            <span className="flex size-11 items-center justify-center rounded-full bg-neutral-100 text-neutral-400">
-              <CalendarDays className="size-5" aria-hidden />
-            </span>
-            <p className="text-sm text-neutral-500">
-              Nenhum evento marcado. Crie um e os alunos confirmam presença no
-              app.
-            </p>
-          </div>
-        ) : (
-          <ul className="flex flex-col gap-2">
-            {proximos.map((evento) => (
-              <li
-                key={evento.id}
-                className="flex items-start gap-3 rounded-xl border border-neutral-200 bg-white p-4"
-              >
-                <span className="flex size-11 shrink-0 flex-col items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <span className="text-xs leading-none font-medium uppercase">
-                    {format(new Date(evento.dataInicio), "MMM", {
-                      locale: ptBR,
-                    })}
-                  </span>
-                  <span className="text-base leading-tight font-bold">
-                    {format(new Date(evento.dataInicio), "dd")}
-                  </span>
-                </span>
-
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-neutral-900">
-                    {evento.titulo}
-                  </p>
-                  <p className="text-xs text-neutral-500">
-                    {format(new Date(evento.dataInicio), "dd/MM 'às' HH:mm")}
-                    {" · "}
-                    {evento.paraTodos
-                      ? "todos os alunos"
-                      : `${evento.condicoes.length} condições`}
-                  </p>
-                  <p className="mt-1 flex items-center gap-1 text-xs text-neutral-600">
-                    <Users className="size-3.5" aria-hidden />
-                    {evento.totalConfirmados}{" "}
-                    {evento.totalConfirmados === 1
-                      ? "confirmado"
-                      : "confirmados"}
-                  </p>
-                </div>
-
-                <Button
+            {proximos.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 rounded-2xl bg-card px-6 py-10 text-center ring-1 ring-neutral-200/90">
+                <CalendarDays className="size-6 text-neutral-400" strokeWidth={1.8} aria-hidden />
+                <p className="text-[15px] font-semibold text-neutral-950">Nenhum evento marcado</p>
+                <p className="max-w-xs text-sm leading-relaxed text-neutral-500">
+                  Crie um evento e os alunos confirmam presença pelo app.
+                </p>
+                <button
                   type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => excluirEvento(evento.id)}
-                  aria-label={`Excluir ${evento.titulo}`}
-                  className="text-saude-vermelho"
+                  onClick={() => setCriandoEvento(true)}
+                  className="mt-1 text-sm font-semibold text-primary"
                 >
-                  <Trash2 className="size-4" aria-hidden />
-                </Button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+                  Criar evento →
+                </button>
+              </div>
+            ) : (
+              <ul className={CARD_LISTA}>
+                {proximos.map((evento) => (
+                  <li key={evento.id} className="flex items-center gap-4 px-4 py-4 md:px-5">
+                    <div className="flex w-12 shrink-0 flex-col items-center border-r border-neutral-200/80 pr-4">
+                      <span className="rotulo text-primary">
+                        {format(naAcademia(evento.dataInicio), "MMM", { locale: ptBR })}
+                      </span>
+                      <span className="numero text-[26px] leading-none font-semibold text-neutral-950">
+                        {format(naAcademia(evento.dataInicio), "dd")}
+                      </span>
+                    </div>
 
-      {passados.length > 0 && (
-        <section className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold tracking-wider text-neutral-500 uppercase">
-            Já aconteceram
-          </h2>
-          <ul className="divide-y divide-neutral-100 overflow-hidden rounded-xl border border-neutral-200 bg-white">
-            {passados.slice(0, 10).map((evento) => (
-              <li key={evento.id} className="flex items-center gap-3 p-3.5">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm text-neutral-600">
-                    {evento.titulo}
-                  </p>
-                  <p className="text-xs text-neutral-400">
-                    {format(new Date(evento.dataInicio), "dd/MM/yyyy")} ·{" "}
-                    {evento.totalConfirmados} confirmaram
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[15px] font-semibold text-neutral-950">{evento.titulo}</p>
+                      <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className="rotulo text-neutral-400">
+                          {format(naAcademia(evento.dataInicio), "EEE 'às' HH:mm", { locale: ptBR })}
+                        </span>
+                        <span className="rounded-full bg-neutral-100 px-2.5 py-0.5 text-[11px] font-semibold text-neutral-600">
+                          {evento.paraTodos
+                            ? "Todos os alunos"
+                            : `${evento.condicoes.length} ${evento.condicoes.length === 1 ? "condição" : "condições"}`}
+                        </span>
+                      </p>
+                      <p className="mt-1.5 flex items-center gap-1.5 text-[13px] text-neutral-500">
+                        <Users className="size-3.5 text-neutral-400" strokeWidth={1.8} aria-hidden />
+                        <span className="numero font-semibold text-neutral-950">
+                          {evento.totalConfirmados}
+                        </span>
+                        {evento.totalConfirmados === 1 ? "confirmado" : "confirmados"}
+                      </p>
+                    </div>
 
-      {/* ── Comunicados ────────────────────────────────────────────── */}
-      {notificacoes.length > 0 && (
-        <section className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold tracking-wider text-neutral-500 uppercase">
-            Comunicados enviados
-          </h2>
-          <ul className="divide-y divide-neutral-100 overflow-hidden rounded-xl border border-neutral-200 bg-white">
-            {notificacoes.map((aviso) => (
-              <li key={aviso.id} className="flex flex-col gap-0.5 p-3.5">
-                <p className="text-sm font-medium text-neutral-900">
-                  {aviso.titulo}
+                    <button
+                      type="button"
+                      onClick={() => excluirEvento(evento.id)}
+                      aria-label={`Excluir ${evento.titulo}`}
+                      className="flex size-10 shrink-0 items-center justify-center rounded-full text-neutral-400 ring-1 ring-neutral-200 transition-all duration-200 hover:bg-saude-vermelho-light hover:text-saude-vermelho hover:ring-transparent active:scale-[.96]"
+                    >
+                      <Trash2 className="size-4" strokeWidth={1.9} aria-hidden />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {passados.length > 0 && (
+            <section className="flex flex-col gap-3.5">
+              <h2 className={TITULO_SECAO}>Já aconteceram</h2>
+              <ul className={CARD_LISTA}>
+                {passados.slice(0, 10).map((evento) => (
+                  <li key={evento.id} className="flex items-center gap-3 px-4 py-3 md:px-5">
+                    <p className="min-w-0 flex-1 truncate text-sm text-neutral-600">
+                      {evento.titulo}
+                    </p>
+                    <span className="rotulo shrink-0 text-neutral-400">
+                      {format(naAcademia(evento.dataInicio), "dd/MM/yy")}
+                    </span>
+                    <span className="numero w-16 shrink-0 text-right text-sm font-semibold text-neutral-950">
+                      {evento.totalConfirmados}
+                      <span className="ml-1 font-sans text-[11px] font-medium tracking-normal text-neutral-400">
+                        vieram
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </div>
+
+        {/* ── Comunicados ────────────────────────────────────────── */}
+        <section className="flex flex-col gap-3.5">
+          <h2 className={TITULO_SECAO}>Comunicados enviados</h2>
+
+          {notificacoes.length === 0 ? (
+            <div className="flex items-start gap-3 rounded-2xl bg-card px-5 py-5 ring-1 ring-neutral-200/90">
+              <Megaphone className="mt-0.5 size-5 shrink-0 text-neutral-400" strokeWidth={1.8} aria-hidden />
+              <div>
+                <p className="text-sm leading-relaxed text-neutral-500">
+                  Nenhum comunicado ainda. Avisos de feriado, mudança de horário ou
+                  aula especial chegam na agenda de todos os alunos.
                 </p>
-                <p className="text-sm text-neutral-600">{aviso.corpo}</p>
-                <p className="text-xs text-neutral-400">
-                  {format(new Date(aviso.created_at), "dd/MM 'às' HH:mm")}
-                </p>
-              </li>
-            ))}
-          </ul>
+                <button
+                  type="button"
+                  onClick={() => setCriandoAviso(true)}
+                  className="mt-1.5 text-sm font-semibold text-primary"
+                >
+                  Escrever comunicado →
+                </button>
+              </div>
+            </div>
+          ) : (
+            <ul className={CARD_LISTA}>
+              {notificacoes.map((aviso) => (
+                <li key={aviso.id} className="flex flex-col gap-1 px-4 py-4 md:px-5">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <p className="text-[15px] font-semibold text-neutral-950">{aviso.titulo}</p>
+                    <span className="rotulo shrink-0 text-neutral-400">
+                      {format(naAcademia(aviso.created_at), "dd/MM HH:mm")}
+                    </span>
+                  </div>
+                  <p className="text-sm leading-relaxed text-neutral-500">{aviso.corpo}</p>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
-      )}
+      </div>
 
       <DialogEvento
         professorId={professorId}
@@ -255,7 +286,7 @@ function DialogEvento({
 
     setSalvando(false);
 
-    if (error) return setErro("Não conseguimos criar o evento.");
+    if (error) return setErro("Não conseguimos criar o evento. Tente de novo.");
 
     setTitulo("");
     setDescricao("");
@@ -288,7 +319,7 @@ function DialogEvento({
               onChange={(e) => setTitulo(e.target.value)}
               placeholder="Aula de alongamento para 60+"
               disabled={salvando}
-              className="h-12 rounded-xl px-3.5 text-base"
+              className="h-12 px-3.5 text-base"
             />
           </div>
 
@@ -303,11 +334,11 @@ function DialogEvento({
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
               disabled={salvando}
-              className="w-full resize-none rounded-xl border border-input bg-transparent px-3.5 py-3 text-base outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-60"
+              className={TEXTAREA}
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2">
             <div className="flex flex-col gap-2">
               <Label htmlFor="ev-inicio" className="text-neutral-700">
                 Início
@@ -318,7 +349,7 @@ function DialogEvento({
                 value={inicio}
                 onChange={(e) => setInicio(e.target.value)}
                 disabled={salvando}
-                className="h-12 rounded-xl px-3 text-sm"
+                className="h-12 px-3 text-sm"
               />
             </div>
             <div className="flex flex-col gap-2">
@@ -332,12 +363,12 @@ function DialogEvento({
                 value={fim}
                 onChange={(e) => setFim(e.target.value)}
                 disabled={salvando}
-                className="h-12 rounded-xl px-3 text-sm"
+                className="h-12 px-3 text-sm"
               />
             </div>
           </div>
 
-          <label className="flex items-center gap-3 rounded-xl border border-neutral-200 px-3.5 py-3">
+          <label className="flex cursor-pointer items-center gap-3 rounded-[14px] px-4 py-3 ring-1 ring-neutral-200 transition-colors hover:bg-neutral-50">
             <input
               type="checkbox"
               checked={paraTodos}
@@ -351,7 +382,7 @@ function DialogEvento({
           </label>
 
           {!paraTodos && (
-            <fieldset className="flex flex-wrap gap-2" disabled={salvando}>
+            <fieldset className="flex flex-wrap gap-1.5" disabled={salvando}>
               <legend className="mb-2 w-full text-sm leading-none font-medium text-neutral-700">
                 Só para estas condições
               </legend>
@@ -371,10 +402,10 @@ function DialogEvento({
                     }
                     aria-pressed={marcada}
                     className={cn(
-                      "rounded-xl border px-3 py-2 text-sm transition-colors",
+                      "h-9 rounded-full px-3.5 text-sm font-medium transition-all duration-200 active:scale-[.98]",
                       marcada
-                        ? "border-primary bg-primary/10 font-medium text-primary"
-                        : "border-neutral-200 bg-white text-neutral-600"
+                        ? "bg-grafite text-white"
+                        : "bg-neutral-50 text-neutral-600 ring-1 ring-neutral-200 hover:bg-neutral-100"
                     )}
                   >
                     {opcao.label}
@@ -385,10 +416,7 @@ function DialogEvento({
           )}
 
           {erro && (
-            <p
-              role="alert"
-              className="flex items-start gap-2 rounded-xl bg-saude-vermelho-light px-3.5 py-3 text-sm text-saude-vermelho"
-            >
+            <p role="alert" className="flex items-start gap-2 text-sm text-saude-vermelho">
               <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
               {erro}
             </p>
@@ -397,7 +425,7 @@ function DialogEvento({
           <Button
             type="submit"
             disabled={salvando}
-            className="h-12 w-full rounded-xl text-base font-semibold"
+            className="h-12 w-full rounded-full text-base font-semibold"
           >
             {salvando ? (
               <>
@@ -449,7 +477,7 @@ function DialogComunicado({
 
     setSalvando(false);
 
-    if (error) return setErro("Não conseguimos enviar.");
+    if (error) return setErro("Não conseguimos enviar. Tente de novo.");
 
     setTitulo("");
     setCorpo("");
@@ -474,7 +502,7 @@ function DialogComunicado({
             placeholder="Título"
             aria-label="Título do comunicado"
             disabled={salvando}
-            className="h-12 rounded-xl px-3.5 text-base"
+            className="h-12 px-3.5 text-base"
           />
 
           <textarea
@@ -484,7 +512,7 @@ function DialogComunicado({
             placeholder="Escreva o aviso para os alunos."
             aria-label="Mensagem do comunicado"
             disabled={salvando}
-            className="w-full resize-none rounded-xl border border-input bg-transparent px-3.5 py-3 text-base outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-60"
+            className={TEXTAREA}
           />
 
           {erro && (
@@ -496,7 +524,7 @@ function DialogComunicado({
           <Button
             type="submit"
             disabled={salvando}
-            className="h-12 w-full rounded-xl text-base font-semibold"
+            className="h-12 w-full rounded-full text-base font-semibold"
           >
             {salvando ? (
               <>

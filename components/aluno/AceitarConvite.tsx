@@ -59,15 +59,15 @@ export function AceitarConvite({ familiarId }: { familiarId: string }) {
   return (
     <form
       onSubmit={aceitar}
-      className="flex flex-col gap-4 rounded-xl border border-neutral-200 bg-white p-4"
+      className="flex flex-col gap-5 rounded-2xl bg-card p-5 ring-1 ring-neutral-200/90 md:p-7"
       noValidate
     >
       <div>
-        <h2 className="text-base font-bold text-neutral-900">
+        <h2 className="text-lg font-semibold tracking-[-0.02em] text-neutral-950 md:text-xl">
           Recebeu um código?
         </h2>
-        <p className="mt-0.5 text-sm text-neutral-500">
-          Digite o código de 6 letras que seu familiar gerou no app dele.
+        <p className="mt-1 text-[15px] leading-relaxed text-neutral-500">
+          Digite as 6 letras e números que seu familiar gerou no app dele.
         </p>
       </div>
 
@@ -84,15 +84,12 @@ export function AceitarConvite({ familiarId }: { familiarId: string }) {
           autoCapitalize="characters"
           autoComplete="off"
           disabled={salvando}
-          className="h-14 rounded-xl px-3.5 text-center text-2xl font-bold tracking-[0.3em] tabular-nums"
+          className="numero h-16 rounded-[14px] px-4 text-center text-[28px] font-semibold tracking-[0.3em] placeholder:text-neutral-300 md:text-[28px]"
         />
       </div>
 
       {erro && (
-        <p
-          role="alert"
-          className="flex items-start gap-2 rounded-xl bg-saude-vermelho-light px-3.5 py-3 text-sm text-saude-vermelho"
-        >
+        <p role="alert" className="flex items-start gap-2 text-sm text-saude-vermelho">
           <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
           {erro}
         </p>
@@ -101,7 +98,7 @@ export function AceitarConvite({ familiarId }: { familiarId: string }) {
       <Button
         type="submit"
         disabled={salvando}
-        className="h-12 w-full rounded-xl text-base font-semibold"
+        className="h-12 w-full rounded-full text-base font-semibold"
       >
         {salvando ? (
           <>

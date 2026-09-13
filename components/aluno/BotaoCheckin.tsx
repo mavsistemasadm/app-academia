@@ -7,6 +7,7 @@ import { Check, Loader2, LogOut, MapPin } from "lucide-react";
 
 import type { Checkin } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
+import { naAcademia } from "@/lib/utils/datas";
 
 interface BotaoCheckinProps {
   alunoId: string;
@@ -83,68 +84,71 @@ export function BotaoCheckin({
   const dentro = checkin && !checkin.saida;
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-4">
-      <div className="flex items-start gap-3">
+    <div className="flex flex-col gap-2 rounded-2xl bg-card p-3 pl-4 ring-1 ring-neutral-200/90">
+      <div className="flex items-center gap-3">
         <span
-          className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${
+          className={`relative flex size-10 shrink-0 items-center justify-center rounded-full ${
             dentro
               ? "bg-saude-verde-light text-saude-verde"
-              : "bg-neutral-100 text-neutral-400"
+              : "bg-neutral-100 text-neutral-500"
           }`}
         >
-          <MapPin className="size-5" aria-hidden />
+          <MapPin className="size-[18px]" aria-hidden />
+          {dentro && (
+            <span className="absolute top-0 right-0 size-2.5 rounded-full border-2 border-white bg-saude-verde" />
+          )}
         </span>
 
         <div className="min-w-0 flex-1">
-          <p className="text-base font-bold text-neutral-900">
+          <p className="text-[15px] font-semibold text-neutral-950">
             {dentro
               ? "Você está na academia"
               : checkin?.saida
                 ? "Treino de hoje encerrado"
                 : "Chegou na academia?"}
           </p>
-          <p className="text-sm text-neutral-500">
+          <p className="truncate text-[13px] text-neutral-500">
             {dentro
-              ? `Entrada às ${format(new Date(checkin.entrada), "HH:mm")}`
+              ? `Entrada às ${format(naAcademia(checkin.entrada), "HH:mm")}`
               : checkin?.saida
-                ? `${format(new Date(checkin.entrada), "HH:mm")} às ${format(new Date(checkin.saida), "HH:mm")}`
+                ? `${format(naAcademia(checkin.entrada), "HH:mm")} às ${format(naAcademia(checkin.saida), "HH:mm")}`
                 : presentesAgora > 0
                   ? `${presentesAgora} ${presentesAgora === 1 ? "pessoa treinando" : "pessoas treinando"} agora`
                   : "Faça o check-in ao chegar"}
           </p>
         </div>
-      </div>
 
-      {!checkin?.saida &&
-        (dentro ? (
-          <button
-            type="button"
-            onClick={sair}
-            disabled={salvando}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white text-base font-semibold text-neutral-600 transition-colors hover:bg-neutral-50"
-          >
-            {salvando ? (
-              <Loader2 className="size-5 animate-spin" aria-hidden />
-            ) : (
-              <LogOut className="size-5" aria-hidden />
-            )}
-            Estou indo embora
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={entrar}
-            disabled={salvando}
-            className="flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-saude-verde text-base font-semibold text-white transition-opacity hover:opacity-90"
-          >
-            {salvando ? (
-              <Loader2 className="size-5 animate-spin" aria-hidden />
-            ) : (
-              <Check className="size-5" aria-hidden />
-            )}
-            Fazer check-in
-          </button>
-        ))}
+        {!checkin?.saida &&
+          (dentro ? (
+            <button
+              type="button"
+              onClick={sair}
+              disabled={salvando}
+              className="flex h-12 shrink-0 items-center justify-center gap-1.5 rounded-full px-4 text-sm font-semibold text-neutral-600 ring-1 ring-neutral-200 transition-colors hover:bg-neutral-50"
+            >
+              {salvando ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+              ) : (
+                <LogOut className="size-4" aria-hidden />
+              )}
+              Sair
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={entrar}
+              disabled={salvando}
+              className="flex h-12 shrink-0 items-center justify-center gap-1.5 rounded-full bg-primary px-5 text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,.18)] transition-colors hover:bg-[#0b7f91]"
+            >
+              {salvando ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+              ) : (
+                <Check className="size-4" aria-hidden />
+              )}
+              Cheguei
+            </button>
+          ))}
+      </div>
 
       {erro && (
         <p role="alert" className="text-sm text-saude-vermelho">

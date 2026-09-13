@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { AlertCircle, Loader2, MailCheck } from "lucide-react";
 
@@ -19,17 +19,26 @@ export default function EsqueciSenhaPage() {
   const [carregando, setCarregando] = useState(false);
   const [enviado, setEnviado] = useState(false);
 
-  // Lido no efeito, e não com useSearchParams, para a página continuar
-  // estática sem precisar de Suspense.
-  useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("link") === "invalido") {
-      setErro("Esse link expirou ou já foi usado. Peça um novo abaixo.");
-    }
-  }, []);
+  // Lido da URL no cliente, e não com useSearchParams, para a página
+  // continuar estática sem Suspense. No servidor o snapshot é `false`, então
+  // a hidratação não diverge; o aviso aparece logo em seguida.
+  const linkInvalido = useSyncExternalStore(
+    () => () => {},
+    () => new URLSearchParams(window.location.search).get("link") === "invalido",
+    () => false
+  );
+  const [linkDescartado, setLinkDescartado] = useState(false);
+
+  const erroVisivel =
+    erro ??
+    (linkInvalido && !linkDescartado
+      ? "Esse link expirou ou já foi usado. Peça um novo abaixo."
+      : null);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setErro(null);
+    setLinkDescartado(true);
 
     if (!email.trim()) {
       setErro("Digite o e-mail do seu cadastro.");
@@ -58,12 +67,10 @@ export default function EsqueciSenhaPage() {
     return (
       <Card className="[--card-spacing:--spacing(6)]">
         <CardContent className="flex flex-col items-center gap-4 text-center">
-          <span className="flex size-14 items-center justify-center rounded-2xl bg-saude-verde-light text-saude-verde">
-            <MailCheck className="size-7" aria-hidden />
-          </span>
+          <MailCheck className="mt-2 size-9 text-neutral-400" strokeWidth={1.6} aria-hidden />
           <div>
-            <p className="text-lg font-semibold text-neutral-900">Confira seu e-mail</p>
-            <p className="mt-1.5 text-base text-neutral-500">
+            <p className="text-xl font-semibold tracking-tight text-neutral-900">Confira seu e-mail</p>
+            <p className="mt-1.5 text-[15px] leading-relaxed text-neutral-500">
               Se <strong className="text-neutral-700">{email.trim()}</strong> tiver
               cadastro, chega em instantes um link para criar uma senha nova.
               Olhe também a caixa de spam.
@@ -85,7 +92,7 @@ export default function EsqueciSenhaPage() {
       <CardContent>
         <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
           <div>
-            <p className="text-lg font-semibold text-neutral-900">Esqueceu a senha?</p>
+            <p className="text-xl font-semibold tracking-tight text-neutral-900">Esqueceu a senha?</p>
             <p className="mt-1 text-sm text-neutral-500">
               Digite seu e-mail e mandamos um link para você criar outra.
             </p>
@@ -107,24 +114,21 @@ export default function EsqueciSenhaPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={carregando}
-              className="h-12 rounded-xl px-3.5 text-base"
+              className="h-12 rounded-[14px] px-4 text-base"
             />
           </div>
 
-          {erro && (
-            <p
-              role="alert"
-              className="flex items-start gap-2 rounded-xl bg-saude-vermelho-light px-3.5 py-3 text-sm text-saude-vermelho"
-            >
+          {erroVisivel && (
+            <p role="alert" className="flex items-start gap-2 text-sm text-saude-vermelho">
               <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
-              {erro}
+              {erroVisivel}
             </p>
           )}
 
           <Button
             type="submit"
             disabled={carregando}
-            className="h-12 w-full rounded-xl text-base font-semibold"
+            className="h-12 w-full rounded-full text-base font-semibold"
           >
             {carregando ? (
               <>

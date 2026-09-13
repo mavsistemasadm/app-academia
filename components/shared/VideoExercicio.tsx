@@ -25,10 +25,10 @@ export function VideoExercicio({ url, nome }: VideoExercicioProps) {
       <button
         type="button"
         onClick={() => setAberto(true)}
-        className="flex w-full items-center gap-2.5 rounded-xl border border-neutral-200 bg-neutral-50 px-3.5 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100"
+        className="group flex h-12 w-full items-center gap-3 rounded-full bg-neutral-50 pr-5 pl-1.5 text-[15px] font-medium text-neutral-700 ring-1 ring-neutral-200/90 transition-all duration-200 hover:bg-neutral-100 active:scale-[.98]"
       >
-        <span className="flex size-8 items-center justify-center rounded-full bg-primary text-white">
-          <Play className="size-4 fill-current" aria-hidden />
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-grafite text-ciano">
+          <Play className="ml-0.5 size-4 fill-current" aria-hidden />
         </span>
         Ver como se faz
       </button>
@@ -36,7 +36,7 @@ export function VideoExercicio({ url, nome }: VideoExercicioProps) {
   }
 
   return (
-    <div className="overflow-hidden rounded-xl bg-black">
+    <div className="overflow-hidden rounded-2xl bg-grafite">
       {fonte.tipo === "arquivo" ? (
         <video
           src={fonte.url}

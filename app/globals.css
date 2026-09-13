@@ -4,12 +4,36 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+  Linguagem visual Atitude Vital — ver docs/DESIGN.md.
+
+  Os cinzas do Tailwind são trocados por cinzas com um fio de ciano: todo
+  `neutral-*` do app passa a conversar com a logo sem mexer em tela nenhuma.
+*/
+@theme {
+  --color-neutral-50: #f6f8f8;
+  --color-neutral-100: #edf1f2;
+  --color-neutral-200: #dfe6e7;
+  --color-neutral-300: #c4ced0;
+  --color-neutral-400: #93a0a3;
+  --color-neutral-500: #6a787b;
+  --color-neutral-600: #515d60;
+  --color-neutral-700: #3d474a;
+  --color-neutral-800: #273033;
+  --color-neutral-900: #172022;
+  --color-neutral-950: #0c1214;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-sora);
+  --font-display: var(--font-sora);
+  --color-ciano: var(--ciano);
+  --color-grafite: var(--grafite);
+  --color-nevoa: var(--nevoa);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -55,80 +79,81 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: #2563eb;
+  /* Marca */
+  --ciano: #00b4cb;
+  --grafite: #0f1618;
+  --nevoa: #f3f6f6;
+
+  --background: var(--nevoa);
+  --foreground: #0f1618;
+  --card: #ffffff;
+  --card-foreground: #0f1618;
+  --popover: #ffffff;
+  --popover-foreground: #0f1618;
+  /* Ciano puro não segura texto branco; botão e link usam o ciano fundo. */
+  --primary: #0a8fa3;
   --primary-foreground: #ffffff;
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: #2563eb;
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
+  --secondary: #edf1f2;
+  --secondary-foreground: #172022;
+  --muted: #edf1f2;
+  --muted-foreground: #6a787b;
+  --accent: #e3f5f7;
+  --accent-foreground: #0a6f7f;
+  --destructive: #dc2626;
+  --border: #dfe6e7;
+  --input: #dfe6e7;
+  --ring: #00b4cb;
+  --chart-1: #00b4cb;
+  --chart-2: #0a8fa3;
+  --chart-3: #5c6466;
+  --chart-4: #93a0a3;
+  --chart-5: #0f1618;
+  --radius: 0.75rem;
 
   /* Semáforo clínico — ver lib/utils/semaforo.ts */
   --saude-verde: #16a34a;
   --saude-amarelo: #d97706;
   --saude-vermelho: #dc2626;
-  --saude-verde-light: #dcfce7;
-  --saude-amarelo-light: #fef3c7;
-  --saude-vermelho-light: #fee2e2;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --saude-verde-light: #e3f5e9;
+  --saude-amarelo-light: #fcf0dc;
+  --saude-vermelho-light: #fde8e8;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f1618;
+  --sidebar-primary: #0f1618;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #edf1f2;
+  --sidebar-accent-foreground: #172022;
+  --sidebar-border: #dfe6e7;
+  --sidebar-ring: #00b4cb;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: #3b82f6;
-  --primary-foreground: #ffffff;
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: #0b1011;
+  --foreground: #eaf1f2;
+  --card: #131b1d;
+  --card-foreground: #eaf1f2;
+  --popover: #131b1d;
+  --popover-foreground: #eaf1f2;
+  --primary: #2cc4d8;
+  --primary-foreground: #04191c;
+  --secondary: #1c2629;
+  --secondary-foreground: #eaf1f2;
+  --muted: #1c2629;
+  --muted-foreground: #93a0a3;
+  --accent: #10292d;
+  --accent-foreground: #5fd3e2;
+  --destructive: #f87171;
+  --border: #243033;
+  --input: #2b383b;
+  --ring: #00b4cb;
+  --sidebar: #131b1d;
+  --sidebar-foreground: #eaf1f2;
+  --sidebar-primary: #00b4cb;
+  --sidebar-primary-foreground: #04191c;
+  --sidebar-accent: #1c2629;
+  --sidebar-accent-foreground: #eaf1f2;
+  --sidebar-border: #243033;
+  --sidebar-ring: #00b4cb;
 }
 
 @layer base {
@@ -141,6 +166,37 @@
   html {
     @apply font-sans;
   }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+  }
+}
+
+/* Número clínico: fonte de título, dígitos alinhados, espaçamento fechado. */
+@utility numero {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.035em;
+}
+
+/* Rótulo técnico: horário, unidade, seção. */
+@utility rotulo {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /*
@@ -151,7 +207,8 @@
 @media print {
   nav,
   aside,
-  header[class*="sticky"] {
+  header[class*="sticky"],
+  [data-print="ocultar"] {
     display: none !important;
   }
 

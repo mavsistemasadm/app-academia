@@ -89,9 +89,10 @@ export function gerarSaudacao(data: DashboardAlunoData): SaudacaoData {
 
 export const HUMOR_CONFIG = {
   otimo: { emoji: '😄', label: 'Ótimo', cor: '#16A34A' },
-  disposto: { emoji: '😊', label: 'Disposto', cor: '#2563EB' },
+  disposto: { emoji: '😊', label: 'Disposto', cor: '#00B4CB' },
   cansado: { emoji: '😔', label: 'Cansado', cor: '#D97706' },
-  dormiu_mal: { emoji: '😴', label: 'Dormi mal', cor: '#7C3AED' },
+  dormiu_mal: { emoji: '😴', label: 'Dormi mal', cor: '#5C6466' },
   enfermo: { emoji: '🤒', label: 'Com enfermidade', cor: '#DC2626' },
+  // Tom quente de propósito: ansiedade abre alerta para o professor.
   ansioso: { emoji: '😰', label: 'Ansioso', cor: '#EA580C' },
 }

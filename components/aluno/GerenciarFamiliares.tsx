@@ -2,8 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, Check, Copy, Loader2, Plus, UserPlus, X } from "lucide-react";
+import { AlertCircle, Check, Copy, Loader2, Plus, X } from "lucide-react";
 
+import { CHIP_SEMAFORO } from "@/components/aluno/CardIndicador";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { FamiliarAcesso } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 
 /** Mesmo alfabeto do servidor — sem 0/O e 1/I, que confundem no telefone. */
@@ -27,9 +29,9 @@ function gerarCodigo() {
 }
 
 const ROTULO_STATUS = {
-  pendente: { texto: "Aguardando aceite", cor: "text-saude-amarelo" },
-  ativo: { texto: "Acompanhando", cor: "text-saude-verde" },
-  revogado: { texto: "Acesso removido", cor: "text-neutral-400" },
+  pendente: { texto: "Aguardando aceite", cor: CHIP_SEMAFORO.amarelo },
+  ativo: { texto: "Acompanhando", cor: CHIP_SEMAFORO.verde },
+  revogado: { texto: "Acesso removido", cor: "bg-neutral-100 text-neutral-500" },
 };
 
 interface GerenciarFamiliaresProps {
@@ -65,87 +67,103 @@ export function GerenciarFamiliares({
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="rounded-xl border border-neutral-200 bg-white p-4">
-        <h2 className="text-base font-bold text-neutral-900">
-          O que o familiar vê
-        </h2>
-        <ul className="mt-2 flex flex-col gap-1.5 text-sm">
-          <li className="flex items-center gap-2 text-saude-verde">
-            <Check className="size-4 shrink-0" aria-hidden />
-            Seus indicadores de saúde e o semáforo de cada um
-          </li>
-          <li className="flex items-center gap-2 text-saude-verde">
-            <Check className="size-4 shrink-0" aria-hidden />
-            Sua frequência na academia
-          </li>
-          <li className="flex items-center gap-2 text-neutral-400">
-            <X className="size-4 shrink-0" aria-hidden />
-            Nada de treino, chat, humor ou anamnese
-          </li>
-        </ul>
-      </div>
+    <div className="flex flex-col gap-6 md:gap-8">
+      {/* ── Vínculos ─────────────────────────────────────────────── */}
+      <section className="flex flex-col gap-3.5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold tracking-[-0.02em] text-neutral-950 md:text-xl">
+            Quem acompanha você
+          </h2>
+          <Button
+            type="button"
+            variant="escuro"
+            onClick={() => setConvidando(true)}
+            className="h-12 rounded-full px-5 text-[15px]"
+          >
+            <Plus className="size-5" aria-hidden />
+            Convidar familiar
+          </Button>
+        </div>
 
-      {familiares.length > 0 && (
-        <ul className="divide-y divide-neutral-100 overflow-hidden rounded-xl border border-neutral-200 bg-white">
-          {familiares.map((familiar) => {
-            const rotulo = ROTULO_STATUS[familiar.status];
+        {familiares.length === 0 ? (
+          <div className="rounded-2xl bg-card px-5 py-6 ring-1 ring-neutral-200/90">
+            <p className="text-[15px] font-medium text-neutral-950">
+              Ninguém convidado ainda
+            </p>
+            <p className="mt-1 text-[15px] leading-relaxed text-neutral-500">
+              Gere um convite e mande o código para um filho, cônjuge ou
+              cuidador. Ele passa a ver seus indicadores pelo app.
+            </p>
+          </div>
+        ) : (
+          <ul className="flex flex-col divide-y divide-neutral-200/80 overflow-hidden rounded-2xl bg-card ring-1 ring-neutral-200/90">
+            {familiares.map((familiar) => {
+              const rotulo = ROTULO_STATUS[familiar.status];
 
-            return (
-              <li key={familiar.id} className="flex flex-col gap-3 p-3.5">
-                <div className="flex items-center gap-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-neutral-900">
-                      {familiar.nome}
-                      {familiar.parentesco && (
-                        <span className="font-normal text-neutral-500">
-                          {" "}
-                          · {familiar.parentesco}
-                        </span>
-                      )}
-                    </p>
-                    <p className="truncate text-xs text-neutral-500">
-                      {familiar.email}
-                    </p>
-                  </div>
-
-                  <span className={`shrink-0 text-xs font-semibold ${rotulo.cor}`}>
-                    {rotulo.texto}
-                  </span>
-                </div>
-
-                {familiar.status === "pendente" && (
-                  <div className="flex items-center gap-2 rounded-xl bg-neutral-50 px-3 py-2.5">
+              return (
+                <li key={familiar.id} className="flex flex-col gap-4 px-5 py-4">
+                  <div className="flex items-start gap-3">
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs text-neutral-500">
-                        Código para o familiar usar no app
+                      <p className="truncate text-[15px] font-semibold text-neutral-950">
+                        {familiar.nome}
+                        {familiar.parentesco && (
+                          <span className="font-normal text-neutral-500">
+                            {" "}
+                            · {familiar.parentesco}
+                          </span>
+                        )}
                       </p>
-                      <p className="text-lg font-bold tracking-widest text-neutral-900 tabular-nums">
-                        {familiar.codigo}
+                      <p className="truncate text-sm text-neutral-500">
+                        {familiar.email}
                       </p>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => copiar(familiar.codigo)}
-                      aria-label="Copiar código"
-                    >
-                      {copiado === familiar.codigo ? (
-                        <Check className="size-4 text-saude-verde" aria-hidden />
-                      ) : (
-                        <Copy className="size-4" aria-hidden />
-                      )}
-                    </Button>
-                  </div>
-                )}
 
-                <div className="flex gap-2">
+                    <span
+                      className={cn(
+                        "mt-0.5 shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
+                        rotulo.cor
+                      )}
+                    >
+                      {rotulo.texto}
+                    </span>
+                  </div>
+
+                  {familiar.status === "pendente" && (
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-neutral-50 px-4 py-3.5">
+                      <div className="min-w-0">
+                        <p className="rotulo text-neutral-400">Código do convite</p>
+                        <p className="numero mt-1 text-[28px] leading-none font-semibold tracking-[0.22em] text-neutral-950">
+                          {familiar.codigo}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => copiar(familiar.codigo)}
+                        className="flex h-11 shrink-0 items-center gap-2 rounded-full bg-card px-4 text-sm font-semibold text-neutral-700 ring-1 ring-neutral-200 transition-all duration-200 hover:text-neutral-950 active:scale-[.98]"
+                      >
+                        {copiado === familiar.codigo ? (
+                          <>
+                            <Check className="size-4 text-saude-verde" aria-hidden />
+                            Copiado
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="size-4" aria-hidden />
+                            Copiar
+                          </>
+                        )}
+                      </button>
+                      <p className="w-full text-[13px] text-neutral-500">
+                        O familiar digita esse código em Acompanhar, no app dele.
+                      </p>
+                    </div>
+                  )}
+
                   {familiar.status === "ativo" && (
                     <button
                       type="button"
                       onClick={() => alterarStatus(familiar, "revogado")}
-                      className="text-sm font-medium text-saude-vermelho underline-offset-4 hover:underline"
+                      className="w-fit text-sm font-medium text-saude-vermelho underline-offset-4 hover:underline"
                     >
                       Remover acesso
                     </button>
@@ -154,27 +172,38 @@ export function GerenciarFamiliares({
                     <button
                       type="button"
                       onClick={() => alterarStatus(familiar, "ativo")}
-                      className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+                      className="w-fit text-sm font-semibold text-primary underline-offset-4 hover:underline"
                     >
                       Devolver acesso
                     </button>
                   )}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
 
-      <Button
-        type="button"
-        variant="outline"
-        onClick={() => setConvidando(true)}
-        className="h-12 rounded-xl font-semibold"
-      >
-        <Plus className="size-5" aria-hidden />
-        Convidar familiar
-      </Button>
+      {/* ── O que o familiar vê ──────────────────────────────────── */}
+      <section className="flex flex-col gap-3.5">
+        <h2 className="text-lg font-semibold tracking-[-0.02em] text-neutral-950 md:text-xl">
+          O que o familiar vê
+        </h2>
+        <ul className="flex flex-col divide-y divide-neutral-200/80 overflow-hidden rounded-2xl bg-card text-[15px] ring-1 ring-neutral-200/90">
+          <li className="flex items-center gap-3 px-5 py-3.5 text-neutral-700">
+            <Check className="size-5 shrink-0 text-saude-verde" strokeWidth={1.8} aria-hidden />
+            Seus indicadores de saúde e o semáforo de cada um
+          </li>
+          <li className="flex items-center gap-3 px-5 py-3.5 text-neutral-700">
+            <Check className="size-5 shrink-0 text-saude-verde" strokeWidth={1.8} aria-hidden />
+            Sua frequência na academia
+          </li>
+          <li className="flex items-center gap-3 px-5 py-3.5 text-neutral-500">
+            <X className="size-5 shrink-0 text-neutral-400" strokeWidth={1.8} aria-hidden />
+            Nada de treino, chat, humor ou anamnese
+          </li>
+        </ul>
+      </section>
 
       <DialogConvite
         alunoId={alunoId}
@@ -241,10 +270,9 @@ function DialogConvite({
   return (
     <Dialog open={aberto} onOpenChange={(estado) => !estado && onFechar()}>
       <DialogContent className="sm:max-w-md">
-        <form onSubmit={convidar} className="flex flex-col gap-4" noValidate>
+        <form onSubmit={convidar} className="flex flex-col gap-5" noValidate>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <UserPlus className="size-5" aria-hidden />
+            <DialogTitle className="text-lg font-semibold tracking-[-0.02em]">
               Convidar familiar
             </DialogTitle>
             <DialogDescription>
@@ -263,7 +291,7 @@ function DialogConvite({
               onChange={(e) => setNome(e.target.value)}
               placeholder="Maria da Silva"
               disabled={salvando}
-              className="h-12 rounded-xl px-3.5 text-base"
+              className="h-12 rounded-[14px] px-4 text-base"
             />
           </div>
 
@@ -280,7 +308,7 @@ function DialogConvite({
               onChange={(e) => setEmail(e.target.value)}
               placeholder="maria@email.com"
               disabled={salvando}
-              className="h-12 rounded-xl px-3.5 text-base"
+              className="h-12 rounded-[14px] px-4 text-base"
             />
           </div>
 
@@ -295,15 +323,12 @@ function DialogConvite({
               onChange={(e) => setParentesco(e.target.value)}
               placeholder="Filha, esposo, cuidadora…"
               disabled={salvando}
-              className="h-12 rounded-xl px-3.5 text-base"
+              className="h-12 rounded-[14px] px-4 text-base"
             />
           </div>
 
           {erro && (
-            <p
-              role="alert"
-              className="flex items-start gap-2 rounded-xl bg-saude-vermelho-light px-3.5 py-3 text-sm text-saude-vermelho"
-            >
+            <p role="alert" className="flex items-start gap-2 text-sm text-saude-vermelho">
               <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
               {erro}
             </p>
@@ -312,7 +337,7 @@ function DialogConvite({
           <Button
             type="submit"
             disabled={salvando}
-            className="h-12 w-full rounded-xl text-base font-semibold"
+            className="h-12 w-full rounded-full text-base font-semibold"
           >
             {salvando ? (
               <>

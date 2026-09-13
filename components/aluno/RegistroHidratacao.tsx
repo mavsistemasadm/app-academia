@@ -3,9 +3,11 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { Droplets, Loader2, Undo2 } from "lucide-react";
+import { Check, Loader2, Undo2 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
+import { naAcademia } from "@/lib/utils/datas";
 
 /** Os três recipientes que existem na academia. */
 const PORCOES = [
@@ -13,6 +15,14 @@ const PORCOES = [
   { ml: 500, label: "Garrafa", emoji: "🍶" },
   { ml: 1000, label: "Litro", emoji: "🫗" },
 ];
+
+/** Raio do anel em unidades do viewBox (120×120). */
+const RAIO = 52;
+const CIRCUNFERENCIA = 2 * Math.PI * RAIO;
+
+function litros(ml: number) {
+  return (ml / 1000).toFixed(1).replace(".", ",");
+}
 
 interface RegistroHidratacaoProps {
   alunoId: string;
@@ -51,7 +61,7 @@ export function RegistroHidratacao({
 
     if (error || !data) {
       setTotal((atual) => atual - ml);
-      setErro("Não conseguimos registrar. Tente de novo.");
+      setErro("Não conseguimos registrar. Verifique a conexão e tente de novo.");
       return;
     }
 
@@ -77,7 +87,7 @@ export function RegistroHidratacao({
     setSalvando(false);
 
     if (error) {
-      setErro("Não conseguimos desfazer.");
+      setErro("Não conseguimos desfazer. Tente de novo em instantes.");
       return;
     }
 
@@ -90,42 +100,65 @@ export function RegistroHidratacao({
   const bateu = total >= metaMl;
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-neutral-200 bg-white p-4">
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <p className="text-3xl leading-tight font-bold text-neutral-900 tabular-nums">
-            {(total / 1000).toFixed(1).replace(".", ",")} L
-          </p>
-          <p className="text-sm text-neutral-500">
-            de {(metaMl / 1000).toFixed(1).replace(".", ",")} L hoje
-          </p>
+    <div className="flex flex-col gap-5 rounded-2xl bg-card p-5 ring-1 ring-neutral-200/90 md:p-6">
+      <div className="flex items-center gap-5">
+        <div
+          role="progressbar"
+          aria-valuenow={proporcao}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label="Progresso da meta de água de hoje"
+          className="relative size-32 shrink-0 md:size-36"
+        >
+          <svg viewBox="0 0 120 120" className="size-full -rotate-90" aria-hidden>
+            <circle
+              cx="60"
+              cy="60"
+              r={RAIO}
+              fill="none"
+              strokeWidth="10"
+              className="stroke-neutral-100"
+            />
+            <circle
+              cx="60"
+              cy="60"
+              r={RAIO}
+              fill="none"
+              strokeWidth="10"
+              strokeLinecap="round"
+              className="stroke-ciano transition-[stroke-dashoffset] duration-300"
+              strokeDasharray={CIRCUNFERENCIA}
+              strokeDashoffset={CIRCUNFERENCIA * (1 - proporcao / 100)}
+            />
+          </svg>
+          <span className="absolute inset-0 flex flex-col items-center justify-center">
+            {bateu ? (
+              <Check className="size-8 text-primary" strokeWidth={2.4} aria-hidden />
+            ) : (
+              <span className="numero text-[28px] leading-none font-semibold text-neutral-950">
+                {proporcao}
+                <span className="ml-0.5 font-sans text-xs font-medium tracking-normal text-neutral-400">
+                  %
+                </span>
+              </span>
+            )}
+          </span>
         </div>
 
-        <span
-          className={`rounded-md px-2 py-0.5 text-xs font-semibold ${
-            bateu
-              ? "bg-saude-verde-light text-saude-verde"
-              : "bg-blue-50 text-primary"
-          }`}
-        >
-          {bateu ? "Meta batida" : `${proporcao}%`}
-        </span>
-      </div>
-
-      <div
-        role="progressbar"
-        aria-valuenow={proporcao}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label="Progresso da meta de água de hoje"
-        className="h-3 overflow-hidden rounded-full bg-neutral-100"
-      >
-        <div
-          className={`h-full rounded-full transition-[width] duration-300 ${
-            bateu ? "bg-saude-verde" : "bg-primary"
-          }`}
-          style={{ width: `${proporcao}%` }}
-        />
+        <div className="min-w-0">
+          <p className="rotulo text-neutral-400">Hoje</p>
+          <p className="numero mt-1.5 text-[28px] leading-none font-semibold text-neutral-950 md:text-[32px]">
+            {litros(total)}
+            <span className="ml-1 font-sans text-xs font-medium tracking-normal text-neutral-400">
+              de {litros(metaMl)} L
+            </span>
+          </p>
+          <p className="mt-2 text-sm text-neutral-500">
+            {bateu
+              ? "Meta batida. Pode seguir bebendo aos poucos."
+              : `Faltam ${litros(metaMl - total)} L para a meta.`}
+          </p>
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-2">
@@ -135,25 +168,30 @@ export function RegistroHidratacao({
             type="button"
             onClick={() => beber(ml)}
             disabled={salvando}
-            className="flex h-20 flex-col items-center justify-center gap-1 rounded-xl border border-neutral-200 bg-white transition-colors hover:bg-blue-50 disabled:opacity-60"
+            className="flex h-24 flex-col items-center justify-center gap-1 rounded-2xl bg-neutral-50 ring-1 ring-neutral-200/90 transition-all duration-200 hover:bg-neutral-100 active:scale-[.98] disabled:opacity-60"
           >
             <span className="text-2xl leading-none" aria-hidden>
               {emoji}
             </span>
-            <span className="text-sm font-semibold text-neutral-900">
+            <span className="text-[15px] font-semibold text-neutral-950">
               {label}
             </span>
-            <span className="text-xs text-neutral-500">{ml} ml</span>
+            <span className="rotulo text-neutral-400">{ml} ml</span>
           </button>
         ))}
       </div>
 
-      <div className="flex items-center justify-between gap-3">
-        <p className="flex items-center gap-1.5 text-xs text-neutral-500">
-          <Droplets className="size-3.5" aria-hidden />
-          {lista.length}{" "}
-          {lista.length === 1 ? "registro hoje" : "registros hoje"}
-          {lista[0] && ` · último às ${format(new Date(lista[0].hora), "HH:mm")}`}
+      <div className="flex items-center justify-between gap-3 border-t border-neutral-200/80 pt-4">
+        <p className="text-[13px] text-neutral-500">
+          {lista.length === 0
+            ? "Nenhum copo ainda hoje. Comece pelo primeiro."
+            : `${lista.length} ${lista.length === 1 ? "registro" : "registros"} hoje`}
+          {lista[0] && (
+            <span className="text-neutral-400">
+              {" · último às "}
+              <span className="numero">{format(naAcademia(lista[0].hora), "HH:mm")}</span>
+            </span>
+          )}
         </p>
 
         {lista.length > 0 && (
@@ -161,7 +199,10 @@ export function RegistroHidratacao({
             type="button"
             onClick={desfazer}
             disabled={salvando}
-            className="flex items-center gap-1.5 text-sm font-medium text-neutral-500 underline-offset-4 hover:underline"
+            className={cn(
+              "flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-medium text-neutral-600 ring-1 ring-neutral-200 transition-colors hover:bg-neutral-50",
+              salvando && "opacity-60"
+            )}
           >
             {salvando ? (
               <Loader2 className="size-3.5 animate-spin" aria-hidden />

@@ -56,6 +56,15 @@ export default function LoginPage() {
     <Card className="[--card-spacing:--spacing(6)]">
       <CardContent>
         <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
+          <div>
+            <p className="text-xl font-semibold tracking-tight text-neutral-900">
+              Entrar na sua conta
+            </p>
+            <p className="mt-1 text-sm text-neutral-500">
+              Informe seus dados de acesso.
+            </p>
+          </div>
+
           <div className="flex flex-col gap-2">
             <Label htmlFor="email" className="text-neutral-700">
               E-mail
@@ -72,7 +81,7 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={carregando}
-              className="h-12 rounded-xl px-3.5 text-base"
+              className="h-12 rounded-[14px] px-4 text-base"
             />
           </div>
 
@@ -99,7 +108,7 @@ export default function LoginPage() {
                 onChange={(e) => setSenha(e.target.value)}
                 required
                 disabled={carregando}
-                className="h-12 rounded-xl px-3.5 pr-12 text-base"
+                className="h-12 rounded-[14px] px-4 pr-12 text-base"
               />
               <button
                 type="button"
@@ -117,10 +126,7 @@ export default function LoginPage() {
           </div>
 
           {erro && (
-            <p
-              role="alert"
-              className="flex items-start gap-2 rounded-xl bg-saude-vermelho-light px-3.5 py-3 text-sm text-saude-vermelho"
-            >
+            <p role="alert" className="flex items-start gap-2 text-sm text-saude-vermelho">
               <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
               {erro}
             </p>
@@ -129,7 +135,7 @@ export default function LoginPage() {
           <Button
             type="submit"
             disabled={carregando}
-            className="h-12 w-full rounded-xl text-base font-semibold"
+            className="h-12 w-full rounded-full text-base font-semibold"
           >
             {carregando ? (
               <>

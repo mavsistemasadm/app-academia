@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { FormularioAvaliacao } from "@/components/professor/FormularioAvaliacao";
+import { CabecalhoPagina } from "@/components/shared/CabecalhoPagina";
 import { getPerfilAtual } from "@/lib/supabase/perfil";
 import { createClient } from "@/lib/supabase/server";
 
@@ -26,19 +27,22 @@ export default async function NovaAvaliacaoPage({
   if (!aluno) notFound();
 
   return (
-    <main className="flex flex-1 flex-col gap-5 px-5 py-6">
-      <header className="flex flex-col gap-2">
-        <Link
-          href={`/alunos/${id}`}
-          className="flex w-fit items-center gap-1.5 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900"
-        >
-          <ArrowLeft className="size-4" aria-hidden />
-          {aluno.nome}
-        </Link>
-        <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">
-          Nova avaliação física
-        </h1>
-      </header>
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-6 md:gap-8 md:px-6 md:py-8">
+      <Link
+        href={`/alunos/${id}`}
+        className="-mb-3 flex w-fit items-center gap-1.5 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-950 md:-mb-5"
+      >
+        <ArrowLeft className="size-4" aria-hidden />
+        {aluno.nome}
+      </Link>
+
+      <div className="-mx-5 -mt-7 md:m-0">
+        <CabecalhoPagina
+          rotulo="Avaliação física"
+          titulo="Nova avaliação"
+          descricao={`Medidas de ${aluno.nome}. A altura lançada aqui é o que transforma o peso em IMC.`}
+        />
+      </div>
 
       <FormularioAvaliacao
         professorId={professor.id}

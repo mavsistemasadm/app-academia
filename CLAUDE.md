@@ -152,11 +152,13 @@ que a policy usa para saber quem pode escrever onde.
 - Professor vê dados dos seus alunos
 
 ### UX
+**Linguagem visual completa em `docs/DESIGN.md` — leia antes de mexer em tela.**
 - **Mobile-first** — a maioria dos alunos vai usar no celular
-- Design limpo: fundo branco, cards com sombra suave
-- Cores: azul primário `#2563EB`, verde saúde `#16A34A`
-- Semáforo: verde `#16A34A`, amarelo `#D97706`, vermelho `#DC2626`
-- Fonte: Inter
+- Marca Atitude Vital: fundo névoa `#F3F6F6`, cards brancos com contorno de 1px, grafite `#0F1618` como único destaque escuro, ciano `#00B4CB` na marca e `#0A8FA3` em botão/link (`primary`). Nada de azul.
+- Semáforo: verde `#16A34A`, amarelo `#D97706`, vermelho `#DC2626` — mostrado com chip e com a faixa `FaixaSemaforo`
+- Fontes: Sora em títulos e números (utilidade `numero`), Inter no texto, Geist Mono em rótulos e horários (utilidade `rotulo`)
+- Um destaque por tela; sem ícone em quadradinho colorido; telas internas usam `CabecalhoPagina`
+- Logo e ícones saem de `public/Logo.jpg` via `node scripts/gerar_marca.mjs`
 - Para avatar 60+ e cardiopata: fontes maiores, botões grandes, menos elementos por tela
 
 ### Componentes

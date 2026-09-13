@@ -2,36 +2,36 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, Check, Clock, Pill, X } from "lucide-react";
+import { Check, Pill, X } from "lucide-react";
 
 import type { Dose, SituacaoDose } from "@/lib/supabase/remedios";
 import type { MedicamentoStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 
-const ESTILO: Record<SituacaoDose, { card: string; texto: string; rotulo: string }> = {
+const ESTILO: Record<SituacaoDose, { ponto: string; texto: string; rotulo: string }> = {
   tomada: {
-    card: "border-saude-verde/40 bg-saude-verde-light/40",
-    texto: "text-saude-verde",
-    rotulo: "Confirmado",
+    ponto: "",
+    texto: "text-primary",
+    rotulo: "Tomada",
   },
   atrasada: {
-    card: "border-saude-amarelo/40 bg-saude-amarelo-light/40",
-    texto: "text-saude-amarelo",
-    rotulo: "Atrasado",
+    ponto: "bg-saude-amarelo",
+    texto: "text-[#b45309]",
+    rotulo: "Atrasada",
   },
   pulada: {
-    card: "border-saude-vermelho/40 bg-saude-vermelho-light/40",
-    texto: "text-saude-vermelho",
+    ponto: "bg-saude-vermelho",
+    texto: "text-[#b91c1c]",
     rotulo: "Não tomou",
   },
   adiada: {
-    card: "border-neutral-200 bg-white",
+    ponto: "bg-neutral-300",
     texto: "text-neutral-500",
-    rotulo: "Adiado",
+    rotulo: "Adiada",
   },
   aguardando: {
-    card: "border-neutral-200 bg-white",
+    ponto: "bg-neutral-300",
     texto: "text-neutral-400",
     rotulo: "Mais tarde",
   },
@@ -78,7 +78,7 @@ export function DosesDoDia({ alunoId, doses, hoje }: DosesDoDiaProps) {
 
     if (error) {
       setEstado((atual) => ({ ...atual, [chave]: anterior }));
-      setErro("Não conseguimos registrar. Verifique sua conexão.");
+      setErro("Não conseguimos registrar. Verifique sua conexão e tente de novo.");
       return;
     }
 
@@ -87,78 +87,106 @@ export function DosesDoDia({ alunoId, doses, hoje }: DosesDoDiaProps) {
 
   if (doses.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-neutral-300 bg-white px-6 py-10 text-center">
-        <span className="flex size-11 items-center justify-center rounded-full bg-neutral-100 text-neutral-400">
-          <Pill className="size-5" aria-hidden />
-        </span>
-        <p className="text-base font-semibold text-neutral-900">
-          Nenhum remédio para hoje
+      <div className="flex flex-col items-start gap-1.5 rounded-2xl bg-card p-5 ring-1 ring-neutral-200/90">
+        <Pill className="size-5 text-neutral-400" strokeWidth={1.8} aria-hidden />
+        <p className="mt-1.5 text-[15px] font-semibold text-neutral-950">
+          Nenhuma dose para hoje
         </p>
-        <p className="max-w-xs text-sm text-neutral-500">
-          Cadastre seus medicamentos e o app lembra você em cada horário.
+        <p className="max-w-sm text-sm leading-relaxed text-neutral-500">
+          Cadastre seus medicamentos logo abaixo e o app lembra você em cada
+          horário.
         </p>
       </div>
     );
   }
 
+  /*
+    Um destaque só: a primeira dose atrasada ou, se não houver, a próxima.
+    As outras pendentes continuam confirmáveis num toque, só que sem cor.
+  */
+  const destaque =
+    doses.find((d) => situacaoDe(d) === "atrasada") ??
+    doses.find((d) => {
+      const s = situacaoDe(d);
+      return s === "aguardando" || s === "adiada";
+    });
+  const chaveDestaque = destaque
+    ? `${destaque.medicamentoId}:${destaque.horario}`
+    : null;
+
   return (
     <div className="flex flex-col gap-3">
       {erro && (
-        <p
-          role="alert"
-          className="flex items-start gap-2 rounded-xl bg-saude-vermelho-light px-3.5 py-3 text-sm text-saude-vermelho"
-        >
-          <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+        <p role="alert" className="text-sm text-saude-vermelho">
           {erro}
         </p>
       )}
 
-      <ul className="flex flex-col gap-2.5">
+      <ul className="flex flex-col divide-y divide-neutral-200/80 overflow-hidden rounded-2xl bg-card ring-1 ring-neutral-200/90">
         {doses.map((dose) => {
+          const chave = `${dose.medicamentoId}:${dose.horario}`;
           const situacao = situacaoDe(dose);
           const estilo = ESTILO[situacao];
           const resolvida = situacao === "tomada" || situacao === "pulada";
+          const emDestaque = chave === chaveDestaque;
 
           return (
             <li
-              key={`${dose.medicamentoId}:${dose.horario}`}
+              key={chave}
               className={cn(
-                "flex flex-col gap-3 rounded-xl border p-4 transition-colors",
-                estilo.card
+                "flex flex-col gap-3 px-4 py-4 transition-colors duration-200 md:px-5",
+                emDestaque && situacao === "atrasada" && "bg-saude-amarelo-light/40"
               )}
             >
-              <div className="flex items-center gap-3">
-                <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
-                  <Pill className="size-5" aria-hidden />
-                </span>
-
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-base font-bold text-neutral-900">
-                    {dose.nome}
-                  </p>
-                  <p className="flex items-center gap-1.5 text-sm text-neutral-500">
-                    <Clock className="size-3.5 shrink-0" aria-hidden />
-                    {dose.horario}
-                    {dose.dose && ` · ${dose.dose}`}
-                  </p>
-                </div>
-
-                <span
+              <div className="flex items-center gap-3.5">
+                <p
                   className={cn(
-                    "shrink-0 text-xs font-semibold",
-                    estilo.texto
+                    "numero w-[4.75rem] shrink-0 leading-none font-semibold",
+                    emDestaque ? "text-[28px]" : "text-2xl",
+                    situacao === "tomada" ? "text-neutral-400" : "text-neutral-950"
                   )}
                 >
-                  {estilo.rotulo}
-                </span>
+                  {dose.horario}
+                </p>
+
+                <div className="min-w-0 flex-1">
+                  <p
+                    className={cn(
+                      "truncate text-[15px] font-semibold",
+                      situacao === "tomada" ? "text-neutral-500" : "text-neutral-950"
+                    )}
+                  >
+                    {dose.nome}
+                  </p>
+                  <p className="mt-0.5 flex items-center gap-1.5 text-[13px]">
+                    {situacao === "tomada" ? (
+                      <span className="flex size-4 items-center justify-center rounded-full bg-ciano text-white">
+                        <Check className="size-3" strokeWidth={3} aria-hidden />
+                      </span>
+                    ) : (
+                      <span className={cn("size-2 shrink-0 rounded-full", estilo.ponto)} />
+                    )}
+                    <span className={cn("font-medium", estilo.texto)}>
+                      {emDestaque && situacao !== "atrasada" ? "Próxima dose" : estilo.rotulo}
+                    </span>
+                    {dose.dose && (
+                      <span className="truncate text-neutral-400">· {dose.dose}</span>
+                    )}
+                  </p>
+                </div>
               </div>
 
               {!resolvida && (
-                <div className="flex gap-2">
+                <div className="flex gap-2 pl-0 sm:pl-[5.625rem]">
                   <button
                     type="button"
                     onClick={() => registrar(dose, "tomou")}
-                    className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-saude-verde text-base font-semibold text-white transition-opacity hover:opacity-90"
+                    className={cn(
+                      "flex h-12 flex-1 items-center justify-center gap-2 rounded-full text-[15px] font-semibold transition-all duration-200 active:scale-[.98]",
+                      emDestaque
+                        ? "bg-primary text-white hover:bg-[#0b7f91]"
+                        : "bg-neutral-50 text-neutral-950 ring-1 ring-neutral-200 hover:bg-neutral-100"
+                    )}
                   >
                     <Check className="size-5" aria-hidden />
                     Tomei
@@ -167,7 +195,7 @@ export function DosesDoDia({ alunoId, doses, hoje }: DosesDoDiaProps) {
                     type="button"
                     onClick={() => registrar(dose, "nao_tomou")}
                     aria-label={`Não tomei ${dose.nome} das ${dose.horario}`}
-                    className="flex h-12 w-14 shrink-0 items-center justify-center rounded-xl border border-neutral-200 bg-white text-neutral-400 transition-colors hover:bg-neutral-50"
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-neutral-400 ring-1 ring-neutral-200 transition-all duration-200 hover:bg-neutral-50 hover:text-neutral-600 active:scale-[.98]"
                   >
                     <X className="size-5" aria-hidden />
                   </button>
@@ -178,9 +206,9 @@ export function DosesDoDia({ alunoId, doses, hoje }: DosesDoDiaProps) {
                 <button
                   type="button"
                   onClick={() => registrar(dose, "tomou")}
-                  className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+                  className="self-start text-sm font-semibold text-primary underline-offset-4 hover:underline sm:ml-[5.625rem]"
                 >
-                  Tomei agora, corrigir
+                  Tomei agora, corrigir →
                 </button>
               )}
             </li>

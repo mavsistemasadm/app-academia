@@ -23,49 +23,51 @@ export default async function ConversaPage({
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-neutral-200 bg-white px-4 py-3">
-        <Link
-          href="/chat"
-          aria-label="Voltar para as conversas"
-          className="flex size-9 shrink-0 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100"
-        >
-          <ArrowLeft className="size-5" aria-hidden />
-        </Link>
+      <header className="sticky top-0 z-30 border-b border-neutral-200/80 bg-background/85 backdrop-blur-xl">
+        <div className="mx-auto flex w-full max-w-2xl items-center gap-3 px-4 py-3">
+          <Link
+            href="/chat"
+            aria-label="Voltar para as conversas"
+            className="flex size-11 shrink-0 items-center justify-center rounded-full bg-card text-neutral-600 ring-1 ring-neutral-200/90 transition-colors hover:text-neutral-950"
+          >
+            <ArrowLeft className="size-5" strokeWidth={1.9} aria-hidden />
+          </Link>
 
-        <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-100 text-sm font-semibold text-neutral-500">
-          {contato.foto_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={contato.foto_url}
-              alt=""
-              className="size-full object-cover"
-            />
-          ) : (
-            contato.nome.charAt(0).toUpperCase() || (
-              <UserRound className="size-5" aria-hidden />
-            )
-          )}
-        </span>
+          <span className="numero flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-grafite text-sm font-semibold text-white">
+            {contato.foto_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={contato.foto_url}
+                alt=""
+                className="size-full object-cover"
+              />
+            ) : (
+              contato.nome.charAt(0).toUpperCase() || (
+                <UserRound className="size-5" aria-hidden />
+              )
+            )}
+          </span>
 
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-neutral-900">
-            {contato.nome}
-          </p>
-          {perfil.role === "professor" && (
-            <p className="truncate text-xs text-neutral-500">
-              {rotularCondicoes(contato.avatar_condicao)}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[15px] font-semibold tracking-[-0.01em] text-neutral-950">
+              {contato.nome}
             </p>
+            {perfil.role === "professor" && (
+              <p className="truncate text-[13px] text-neutral-500">
+                {rotularCondicoes(contato.avatar_condicao)}
+              </p>
+            )}
+          </div>
+
+          {perfil.role === "professor" && (
+            <Link
+              href={`/alunos/${contato.id}`}
+              className="flex h-9 shrink-0 items-center rounded-full bg-card px-3.5 text-sm font-semibold text-primary ring-1 ring-neutral-200/90 transition-colors hover:bg-neutral-50"
+            >
+              Ver ficha
+            </Link>
           )}
         </div>
-
-        {perfil.role === "professor" && (
-          <Link
-            href={`/alunos/${contato.id}`}
-            className="shrink-0 text-sm font-medium text-primary underline-offset-4 hover:underline"
-          >
-            Ver ficha
-          </Link>
-        )}
       </header>
 
       <JanelaChat

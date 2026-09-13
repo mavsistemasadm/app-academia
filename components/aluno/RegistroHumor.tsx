@@ -57,19 +57,20 @@ export function RegistroHumor({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-4">
+    <div id="humor" className="flex h-full scroll-mt-6 flex-col gap-4 rounded-2xl bg-card p-5 ring-1 ring-neutral-200/90">
       <div>
-        <h3 className="text-base font-bold text-neutral-900">
-          {humor ? "Seu humor de hoje" : "Registre seu humor de hoje"}
+        <p className="rotulo text-neutral-400">Como você está</p>
+        <h3 className="mt-1.5 text-lg font-semibold tracking-[-0.02em] text-neutral-950">
+          {humor ? "Seu humor de hoje" : "Como você acordou hoje?"}
         </h3>
-        {humor && (
-          <p className="mt-0.5 text-sm text-neutral-500">
-            Pode trocar se mudar de ideia.
-          </p>
-        )}
+        <p className="mt-0.5 text-sm text-neutral-500">
+          {humor
+            ? "Pode trocar se mudar de ideia."
+            : "Seu professor vê e ajusta o treino se precisar."}
+        </p>
       </div>
 
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-5 gap-1.5">
         {OPCOES.map(({ humor: opcao, label }) => {
           const selecionado = humor === opcao;
 
@@ -81,10 +82,10 @@ export function RegistroHumor({
               disabled={salvando}
               aria-pressed={selecionado}
               className={cn(
-                "flex flex-col items-center gap-1.5 rounded-xl border px-1 py-3 transition-colors",
+                "flex flex-col items-center gap-1.5 rounded-2xl px-1 py-3 transition-all duration-200",
                 selecionado
-                  ? "border-primary bg-primary/10"
-                  : "border-neutral-200 bg-white hover:bg-neutral-50",
+                  ? "bg-grafite shadow-[0_8px_20px_-10px_rgba(12,18,20,.6)]"
+                  : "bg-neutral-50 hover:bg-neutral-100",
                 salvando && "opacity-60"
               )}
             >
@@ -94,7 +95,7 @@ export function RegistroHumor({
               <span
                 className={cn(
                   "text-center text-[11px] leading-tight font-medium",
-                  selecionado ? "text-primary" : "text-neutral-500"
+                  selecionado ? "text-white" : "text-neutral-500"
                 )}
               >
                 {label}

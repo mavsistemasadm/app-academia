@@ -2,8 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, Check, Loader2 } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 
+import { CHIP_SEMAFORO } from "@/components/aluno/CardIndicador";
+import { FaixaSemaforo } from "@/components/shared/FaixaSemaforo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,12 +22,13 @@ import {
 } from "@/lib/utils/indicadores";
 import { SEMAFORO_CONFIG, getMensagemAlerta } from "@/lib/utils/semaforo";
 
-const ESTILO_SEMAFORO = {
-  verde: "border-saude-verde/30 bg-saude-verde-light text-saude-verde",
-  amarelo: "border-saude-amarelo/30 bg-saude-amarelo-light text-saude-amarelo",
-  vermelho:
-    "border-saude-vermelho/30 bg-saude-vermelho-light text-saude-vermelho",
-} as const;
+const PILULA_BASE =
+  "rounded-full px-4 text-sm font-medium transition-all duration-200 active:scale-[.98]";
+const PILULA_ATIVA = "bg-grafite text-white";
+const PILULA_INATIVA = "bg-neutral-50 text-neutral-600 ring-1 ring-neutral-200 hover:bg-neutral-100";
+
+const CAMPO_NUMERO =
+  "numero h-14 px-4 text-[26px] font-semibold text-neutral-950 placeholder:text-neutral-300 md:text-[26px]";
 
 interface FormularioIndicadorProps {
   alunoId: string;
@@ -124,7 +127,7 @@ export function FormularioIndicador({
     setSalvando(false);
 
     if (error || !data) {
-      setErro("Não conseguimos salvar o registro. Tente de novo.");
+      setErro("Não conseguimos salvar o registro. Confira a conexão e tente de novo.");
       return;
     }
 
@@ -141,14 +144,14 @@ export function FormularioIndicador({
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-5 rounded-xl border border-neutral-200 bg-white p-4 md:p-5"
+      className="flex flex-col gap-5 rounded-2xl bg-card p-5 ring-1 ring-neutral-200/90 md:p-6"
       noValidate
     >
       <div>
-        <h2 className="text-base font-bold text-neutral-900">
+        <h2 className="text-lg font-semibold tracking-[-0.02em] text-neutral-950 md:text-xl">
           Registrar medição
         </h2>
-        <p className="mt-0.5 text-sm text-neutral-500">
+        <p className="mt-1 text-[15px] leading-relaxed text-neutral-500">
           Anote agora — leva menos de um minuto.
         </p>
       </div>
@@ -159,7 +162,7 @@ export function FormularioIndicador({
 
         <div className="flex flex-wrap gap-2">
           {ORDEM_INDICADORES.map((opcao) => {
-            const { labelCurto, icone: Icone } = CONFIG_INDICADORES[opcao];
+            const { labelCurto } = CONFIG_INDICADORES[opcao];
             const ativo = opcao === tipo;
 
             return (
@@ -169,14 +172,12 @@ export function FormularioIndicador({
                 onClick={() => trocarTipo(opcao)}
                 aria-pressed={ativo}
                 className={cn(
-                  "flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-sm font-medium transition-colors",
-                  ativo
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50",
+                  PILULA_BASE,
+                  "h-11",
+                  ativo ? PILULA_ATIVA : PILULA_INATIVA,
                   ocupado && "opacity-60"
                 )}
               >
-                <Icone className="size-4" aria-hidden />
                 {labelCurto}
               </button>
             );
@@ -185,48 +186,54 @@ export function FormularioIndicador({
       </fieldset>
 
       {/* ── Valores ────────────────────────────────────────────── */}
-      <div className={cn("grid gap-4", tipo === "pressao" && "sm:grid-cols-2")}>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="valor" className="text-neutral-700">
-            {config.labelPrincipal}{" "}
-            <span className="font-normal text-neutral-400">
-              ({config.unidade})
-            </span>
+      <div className={cn("grid gap-4", tipo === "pressao" && "grid-cols-2 gap-3")}>
+        <div className="flex min-w-0 flex-col gap-2">
+          <Label htmlFor="valor" className="text-sm font-medium text-neutral-700">
+            {config.labelPrincipal}
           </Label>
-          <Input
-            id="valor"
-            name="valor"
-            type="text"
-            inputMode={config.decimal ? "decimal" : "numeric"}
-            autoComplete="off"
-            placeholder={config.placeholder}
-            value={valor}
-            onChange={(e) => setValor(e.target.value)}
-            disabled={ocupado}
-            required
-            className="h-14 rounded-xl px-3.5 text-2xl font-semibold tabular-nums"
-          />
+          <div className="relative">
+            <Input
+              id="valor"
+              name="valor"
+              type="text"
+              inputMode={config.decimal ? "decimal" : "numeric"}
+              autoComplete="off"
+              placeholder={config.placeholder}
+              value={valor}
+              onChange={(e) => setValor(e.target.value)}
+              disabled={ocupado}
+              required
+              className={cn(CAMPO_NUMERO, "pr-16")}
+            />
+            <span className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-xs font-medium text-neutral-400">
+              {config.unidade}
+            </span>
+          </div>
         </div>
 
         {tipo === "pressao" && (
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="valor2" className="text-neutral-700">
-              {config.labelSecundario}{" "}
-              <span className="font-normal text-neutral-400">(mmHg)</span>
+          <div className="flex min-w-0 flex-col gap-2">
+            <Label htmlFor="valor2" className="text-sm font-medium text-neutral-700">
+              {config.labelSecundario}
             </Label>
-            <Input
-              id="valor2"
-              name="valor2"
-              type="text"
-              inputMode="numeric"
-              autoComplete="off"
-              placeholder={config.placeholderSecundario}
-              value={valor2}
-              onChange={(e) => setValor2(e.target.value)}
-              disabled={ocupado}
-              required
-              className="h-14 rounded-xl px-3.5 text-2xl font-semibold tabular-nums"
-            />
+            <div className="relative">
+              <Input
+                id="valor2"
+                name="valor2"
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                placeholder={config.placeholderSecundario}
+                value={valor2}
+                onChange={(e) => setValor2(e.target.value)}
+                disabled={ocupado}
+                required
+                className={cn(CAMPO_NUMERO, "pr-16")}
+              />
+              <span className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-xs font-medium text-neutral-400">
+                mmHg
+              </span>
+            </div>
           </div>
         )}
       </div>
@@ -234,7 +241,7 @@ export function FormularioIndicador({
       {/* ── Momento da medição ─────────────────────────────────── */}
       {config.momentos.length > 0 && (
         <fieldset className="flex flex-col gap-2" disabled={ocupado}>
-          <legend className="mb-1 text-sm font-medium text-neutral-700">
+          <legend className="mb-2 text-sm font-medium text-neutral-700">
             Quando você mediu?{" "}
             <span className="font-normal text-neutral-400">(opcional)</span>
           </legend>
@@ -251,10 +258,9 @@ export function FormularioIndicador({
                   onClick={() => setMomento(ativo ? null : opcao)}
                   aria-pressed={ativo}
                   className={cn(
-                    "rounded-full border px-3.5 py-2 text-sm transition-colors",
-                    ativo
-                      ? "border-primary bg-primary/10 font-medium text-primary"
-                      : "border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50",
+                    PILULA_BASE,
+                    "h-10",
+                    ativo ? PILULA_ATIVA : PILULA_INATIVA,
                     ocupado && "opacity-60"
                   )}
                 >
@@ -268,7 +274,7 @@ export function FormularioIndicador({
 
       {/* ── Observação ─────────────────────────────────────────── */}
       <div className="flex flex-col gap-2">
-        <Label htmlFor="observacao" className="text-neutral-700">
+        <Label htmlFor="observacao" className="text-sm font-medium text-neutral-700">
           Observação{" "}
           <span className="font-normal text-neutral-400">(opcional)</span>
         </Label>
@@ -281,16 +287,12 @@ export function FormularioIndicador({
           value={observacao}
           onChange={(e) => setObservacao(e.target.value)}
           disabled={ocupado}
-          className="w-full resize-none rounded-xl border border-input bg-transparent px-3.5 py-3 text-base outline-none placeholder:text-neutral-400 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-60"
+          className="w-full resize-none rounded-[14px] border border-input bg-card px-4 py-3 text-base outline-none transition-colors placeholder:text-neutral-400 hover:border-neutral-300 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-60"
         />
       </div>
 
       {erro && (
-        <p
-          role="alert"
-          className="flex items-start gap-2 rounded-xl bg-saude-vermelho-light px-3.5 py-3 text-sm text-saude-vermelho"
-        >
-          <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+        <p role="alert" className="text-sm text-saude-vermelho">
           {erro}
         </p>
       )}
@@ -300,7 +302,7 @@ export function FormularioIndicador({
       <Button
         type="submit"
         disabled={ocupado}
-        className="h-12 w-full rounded-xl text-base font-semibold"
+        className="h-12 w-full rounded-full text-base font-semibold"
       >
         {salvando ? (
           <>
@@ -315,16 +317,10 @@ export function FormularioIndicador({
   );
 }
 
-/** Feedback logo após salvar: cor do semáforo e o que fazer a respeito. */
+/** Feedback logo após salvar: valor, semáforo, faixa e o que fazer a respeito. */
 function ResultadoSemaforo({ registro }: { registro: RegistroIndicador }) {
   const semaforo = SEMAFORO_CONFIG[registro.status];
   const config = CONFIG_INDICADORES[registro.tipo];
-
-  // `valorFormatado` do peso já carrega o "kg".
-  const textoValor =
-    registro.tipo === "peso"
-      ? registro.valorFormatado
-      : `${registro.valorFormatado} ${config.unidade}`;
 
   const mensagem =
     registro.badge === "Sem altura"
@@ -336,20 +332,57 @@ function ResultadoSemaforo({ registro }: { registro: RegistroIndicador }) {
           registro.valorSecundario ?? undefined
         ) || semaforo.mensagem;
 
+  // Peso só ganha faixa quando há IMC; os demais usam o próprio valor.
+  const valorFaixa =
+    registro.tipo === "peso" ? registro.imc : registro.valorPrincipal;
+
   return (
     <div
       role="status"
       className={cn(
-        "flex flex-col gap-1 rounded-xl border px-4 py-3.5",
-        ESTILO_SEMAFORO[registro.status]
+        "flex flex-col gap-3 rounded-2xl p-4",
+        registro.status === "vermelho" ? "bg-saude-vermelho-light" : "bg-neutral-50"
       )}
     >
-      <p className="flex items-center gap-2 text-sm font-semibold">
-        <Check className="size-4 shrink-0" aria-hidden />
-        {config.labelCurto} {textoValor} · {semaforo.label}
-        {registro.badge && ` · ${registro.badge}`}
+      <div className="flex items-center justify-between gap-3">
+        <p className="flex items-center gap-1.5 text-[13px] font-medium text-neutral-500">
+          <Check className="size-4 shrink-0 text-saude-verde" strokeWidth={2.2} aria-hidden />
+          {config.labelCurto} registrada
+        </p>
+        <span
+          className={cn(
+            "shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
+            CHIP_SEMAFORO[registro.status]
+          )}
+        >
+          {registro.badge || semaforo.label}
+        </span>
+      </div>
+
+      <p className="numero text-[32px] leading-none font-semibold text-neutral-950">
+        {registro.valorFormatado.replace(" kg", "")}
+        <span className="ml-1 font-sans text-xs font-medium tracking-normal text-neutral-400">
+          {config.unidade}
+        </span>
       </p>
-      <p className="text-sm">{mensagem}</p>
+
+      {valorFaixa != null && (
+        <FaixaSemaforo
+          tipo={registro.tipo}
+          valor={valorFaixa}
+          valorSecundario={registro.valorSecundario}
+          className="my-1"
+        />
+      )}
+
+      <p
+        className={cn(
+          "text-sm leading-relaxed",
+          registro.status === "vermelho" ? "text-[#b91c1c]" : "text-neutral-600"
+        )}
+      >
+        {mensagem}
+      </p>
     </div>
   );
 }

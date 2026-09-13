@@ -1,22 +1,15 @@
 import { redirect } from "next/navigation";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarCheck, UserRound } from "lucide-react";
 
 import { AceitarConvite } from "@/components/aluno/AceitarConvite";
-import type { SemaforoStatus } from "@/lib/types";
+import { CardIndicador } from "@/components/aluno/CardIndicador";
+import { CabecalhoPagina } from "@/components/shared/CabecalhoPagina";
 import { cn } from "@/lib/utils";
 import { getVisaoFamiliar } from "@/lib/supabase/familiares";
 import { getPerfilAtual } from "@/lib/supabase/perfil";
 import { hojeISO, somarDiasISO } from "@/lib/utils/datas";
 import { CONFIG_INDICADORES } from "@/lib/utils/indicadores";
-import { SEMAFORO_CONFIG } from "@/lib/utils/semaforo";
-
-const CORES_SEMAFORO: Record<SemaforoStatus, string> = {
-  verde: "bg-saude-verde-light text-saude-verde",
-  amarelo: "bg-saude-amarelo-light text-saude-amarelo",
-  vermelho: "bg-saude-vermelho-light text-saude-vermelho",
-};
 
 const DIAS_NO_CALENDARIO = 30;
 
@@ -32,31 +25,32 @@ export default async function AcompanharPage() {
   );
 
   return (
-    <div className="flex flex-col gap-6 md:gap-8 md:px-8 md:py-8">
-      <header className="rounded-b-3xl bg-primary px-5 pt-6 pb-10 text-white md:rounded-2xl md:px-8 md:py-7">
-        <h1 className="text-3xl font-bold tracking-tight">Acompanhar</h1>
-        <p className="mt-2 max-w-xl text-base text-white/90">
-          {acompanhados.length === 0
-            ? "Use o código que seu familiar gerou no app dele."
-            : "Indicadores e frequência de quem você acompanha."}
-        </p>
-      </header>
+    <div className="flex flex-col gap-7 pt-0 md:gap-9 md:px-8 md:pt-10">
+      <CabecalhoPagina
+        rotulo="Família"
+        titulo="Acompanhar"
+        descricao={
+          acompanhados.length === 0
+            ? "Digite o código que seu familiar gerou no app dele e acompanhe a saúde dele daqui."
+            : "Indicadores e frequência de quem você acompanha."
+        }
+      />
 
-      <div className="flex flex-col gap-6 px-5 md:gap-8 md:px-0">
-        <div className="-mt-14 md:mt-0">
-          <AceitarConvite familiarId={perfil.id} />
-        </div>
+      <div className="flex flex-col gap-9 px-5 md:gap-12 md:px-0">
+        {acompanhados.length === 0 && (
+          <div className="w-full max-w-xl">
+            <AceitarConvite familiarId={perfil.id} />
+          </div>
+        )}
 
         {acompanhados.map((pessoa) => {
           const presentes = new Set(pessoa.diasPresentes);
 
           return (
-            <section
-              key={pessoa.aluno.id}
-              className="flex flex-col gap-4 rounded-xl border border-neutral-200 bg-white p-4"
-            >
-              <div className="flex items-center gap-3">
-                <span className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-100 text-base font-semibold text-neutral-500">
+            <section key={pessoa.aluno.id} className="flex flex-col gap-4">
+              {/* ── Quem ───────────────────────────────────────── */}
+              <div className="flex items-center gap-3.5">
+                <span className="numero flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-grafite text-xl font-semibold text-white">
                   {pessoa.aluno.foto_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -65,14 +59,12 @@ export default async function AcompanharPage() {
                       className="size-full object-cover"
                     />
                   ) : (
-                    pessoa.aluno.nome.charAt(0).toUpperCase() || (
-                      <UserRound className="size-5" aria-hidden />
-                    )
+                    pessoa.aluno.nome.charAt(0).toUpperCase() || "?"
                   )}
                 </span>
 
                 <div className="min-w-0 flex-1">
-                  <h2 className="truncate text-base font-bold text-neutral-900">
+                  <h2 className="truncate text-lg font-semibold tracking-[-0.02em] text-neutral-950 md:text-xl">
                     {pessoa.aluno.nome}
                   </h2>
                   <p className="text-sm text-neutral-500">
@@ -89,41 +81,50 @@ export default async function AcompanharPage() {
 
               {/* ── Indicadores ────────────────────────────────── */}
               {pessoa.indicadores.length === 0 ? (
-                <p className="rounded-xl bg-neutral-50 px-3.5 py-3 text-sm text-neutral-500">
-                  Nenhuma medição registrada ainda.
-                </p>
+                <div className="rounded-2xl bg-card px-5 py-5 ring-1 ring-neutral-200/90">
+                  <p className="text-[15px] font-medium text-neutral-950">
+                    Ainda sem medição
+                  </p>
+                  <p className="mt-0.5 text-sm text-neutral-500">
+                    Assim que {pessoa.aluno.nome.split(" ")[0]} registrar um
+                    indicador, ele aparece aqui.
+                  </p>
+                </div>
               ) : (
-                <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+                <ul className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
                   {pessoa.indicadores.map((registro) => {
-                    const config =
-                      CONFIG_INDICADORES[
-                        registro.tipo as keyof typeof CONFIG_INDICADORES
-                      ];
+                    const config = CONFIG_INDICADORES[registro.tipo];
+                    const ehPeso = registro.tipo === "peso";
 
                     return (
-                      <li
-                        key={registro.id}
-                        className="flex flex-col gap-1.5 rounded-xl border border-neutral-200 p-3"
-                      >
-                        <p className="text-lg leading-tight font-bold text-neutral-900 tabular-nums">
-                          {registro.valorFormatado}
-                        </p>
-                        <p className="text-xs text-neutral-500">
-                          {config.labelCurto}
-                        </p>
-                        <span
-                          className={cn(
-                            "w-fit rounded-md px-2 py-0.5 text-xs font-semibold",
-                            CORES_SEMAFORO[registro.status]
-                          )}
-                        >
-                          {SEMAFORO_CONFIG[registro.status].label}
-                        </span>
-                        <p className="text-xs text-neutral-400">
-                          {formatDistanceToNow(
-                            new Date(registro.registradoEm),
-                            { addSuffix: true, locale: ptBR }
-                          )}
+                      <li key={registro.id} className="flex flex-col gap-1.5">
+                        <CardIndicador
+                          icone={config.icone}
+                          valor={
+                            ehPeso
+                              ? registro.valorFormatado.replace(" kg", "")
+                              : registro.valorFormatado
+                          }
+                          unidade={config.unidade}
+                          label={config.labelCurto}
+                          status={registro.status}
+                          badge={registro.badge || undefined}                          faixa={
+                            ehPeso
+                              ? registro.imc
+                                ? { tipo: "peso", valor: registro.imc }
+                                : undefined
+                              : {
+                                  tipo: registro.tipo,
+                                  valor: registro.valorPrincipal,
+                                  valorSecundario: registro.valorSecundario,
+                                }
+                          }
+                        />
+                        <p className="px-1 text-[13px] text-neutral-400">
+                          {formatDistanceToNow(new Date(registro.registradoEm), {
+                            addSuffix: true,
+                            locale: ptBR,
+                          })}
                         </p>
                       </li>
                     );
@@ -132,13 +133,18 @@ export default async function AcompanharPage() {
               )}
 
               {/* ── Frequência ─────────────────────────────────── */}
-              <div className="flex flex-col gap-2">
-                <p className="flex items-center gap-1.5 text-sm text-neutral-600">
-                  <CalendarCheck className="size-4 shrink-0" aria-hidden />
-                  {pessoa.frequenciaNoMes}{" "}
-                  {pessoa.frequenciaNoMes === 1 ? "presença" : "presenças"} neste
-                  mês
-                </p>
+              <div className="flex flex-col gap-4 rounded-2xl bg-card p-5 ring-1 ring-neutral-200/90">
+                <div className="flex items-baseline justify-between gap-3">
+                  <h3 className="text-lg font-semibold tracking-[-0.02em] text-neutral-950">
+                    Frequência
+                  </h3>
+                  <p className="numero text-[28px] leading-none font-semibold text-neutral-950">
+                    {pessoa.frequenciaNoMes}
+                    <span className="ml-1 font-sans text-xs font-medium tracking-normal text-neutral-400">
+                      {pessoa.frequenciaNoMes === 1 ? "presença" : "presenças"} no mês
+                    </span>
+                  </p>
+                </div>
 
                 <div className="grid grid-cols-10 gap-1.5">
                   {janela.map((dia) => {
@@ -150,8 +156,8 @@ export default async function AcompanharPage() {
                         key={dia}
                         title={`${rotulo} — ${veio ? "esteve na academia" : "não veio"}`}
                         className={cn(
-                          "aspect-square rounded-md",
-                          veio ? "bg-saude-verde" : "bg-neutral-100"
+                          "aspect-square rounded-[6px]",
+                          veio ? "bg-ciano" : "bg-neutral-100"
                         )}
                       >
                         <span className="sr-only">
@@ -161,16 +167,22 @@ export default async function AcompanharPage() {
                     );
                   })}
                 </div>
+                <p className="rotulo text-neutral-400">Últimos 30 dias</p>
               </div>
             </section>
           );
         })}
 
         {acompanhados.length > 0 && (
-          <p className="text-xs text-neutral-500">
-            Você vê apenas indicadores e frequência. Treino, humor, conversas e
-            anamnese ficam entre o aluno e o centro.
-          </p>
+          <>
+            <p className="text-sm text-neutral-500">
+              Você vê apenas indicadores e frequência. Treino, humor, conversas e
+              anamnese ficam entre o aluno e o centro.
+            </p>
+            <div className="w-full max-w-xl">
+              <AceitarConvite familiarId={perfil.id} />
+            </div>
+          </>
         )}
       </div>
     </div>

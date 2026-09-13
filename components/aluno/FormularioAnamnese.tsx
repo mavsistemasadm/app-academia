@@ -121,23 +121,60 @@ export function FormularioAnamnese({
     iniciarTransicao(() => router.refresh());
   }
 
+  // Só para a régua de progresso: quantas das 14 perguntas já têm resposta.
+  const respostas = [
+    doencas.length > 0,
+    objetivo.trim(),
+    lesoes.trim(),
+    cirurgias.trim(),
+    alergias.trim(),
+    medicamentos.trim(),
+    historico.trim(),
+    pratica,
+    fumante !== null,
+    alcool,
+    sono,
+    restricoes.trim(),
+    liberado !== null,
+    observacoes.trim(),
+  ];
+  const respondidas = respostas.filter(Boolean).length;
+
   return (
-    <form onSubmit={salvar} className="flex flex-col gap-6" noValidate>
+    <form onSubmit={salvar} className="flex flex-col gap-6 md:gap-8" noValidate>
+      <div className="flex items-center gap-3" aria-live="polite">
+        <div aria-hidden className="h-1.5 flex-1 overflow-hidden rounded-full bg-neutral-200">
+          <div
+            className="h-full rounded-full bg-ciano transition-all duration-200"
+            style={{ width: `${(respondidas / respostas.length) * 100}%` }}
+          />
+        </div>
+        <p className="rotulo shrink-0 text-neutral-400">
+          {respondidas} de {respostas.length} respondidas
+        </p>
+      </div>
+
       <Secao
+        parte={1}
         titulo="Seu objetivo"
-        descricao="A resposta mais importante do formulário."
+        descricao="A resposta mais importante do formulário — é o que guia o treino."
       >
         <textarea
-          rows={2}
+          rows={3}
           value={objetivo}
           onChange={(e) => setObjetivo(e.target.value)}
           placeholder="Controlar a diabetes, ganhar disposição, voltar a subir escada sem cansar…"
           disabled={salvando}
-          className="w-full resize-none rounded-xl border border-input bg-transparent px-3.5 py-3 text-base outline-none placeholder:text-neutral-400 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-60"
+          aria-label="Seu objetivo"
+          className="w-full resize-none rounded-[14px] border border-input bg-card px-4 py-3 text-base transition-colors outline-none placeholder:text-neutral-400 hover:border-neutral-300 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-60"
         />
       </Secao>
 
-      <Secao titulo="Histórico de saúde">
+      <Secao
+        parte={2}
+        titulo="Histórico de saúde"
+        descricao="Deixe em branco o que não se aplica a você."
+      >
         <Escolhas
           rotulo="Você tem alguma dessas condições?"
           opcoes={DOENCAS}
@@ -199,7 +236,7 @@ export function FormularioAnamnese({
         />
       </Secao>
 
-      <Secao titulo="Rotina">
+      <Secao parte={3} titulo="Rotina">
         <Escolhas
           rotulo="Você já praticava atividade física?"
           opcoes={FREQUENCIAS}
@@ -232,7 +269,7 @@ export function FormularioAnamnese({
         />
       </Secao>
 
-      <Secao titulo="Liberação médica">
+      <Secao parte={4} titulo="Liberação médica">
         <SimNao
           rotulo="Seu médico liberou você para atividade física?"
           valor={liberado}
@@ -259,61 +296,68 @@ export function FormularioAnamnese({
         />
       </Secao>
 
-      {erro && (
-        <p
-          role="alert"
-          className="flex items-start gap-2 rounded-xl bg-saude-vermelho-light px-3.5 py-3 text-sm text-saude-vermelho"
+      <div className="flex flex-col gap-3 sm:flex-row-reverse sm:items-center sm:justify-between">
+        <Button
+          type="submit"
+          disabled={salvando}
+          className="h-12 w-full rounded-full px-8 text-base font-semibold sm:w-auto"
         >
-          <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
-          {erro}
-        </p>
-      )}
+          {salvando ? (
+            <>
+              <Loader2 className="size-5 animate-spin" aria-hidden />
+              Salvando...
+            </>
+          ) : anamnese ? (
+            "Atualizar anamnese"
+          ) : (
+            "Enviar anamnese"
+          )}
+        </Button>
 
-      {salvo && !erro && (
-        <p
-          role="status"
-          className="flex items-center gap-2 rounded-xl bg-saude-verde-light px-3.5 py-3 text-sm text-saude-verde"
-        >
-          <Check className="size-4 shrink-0" aria-hidden />
-          Anamnese salva. Seu professor já consegue ver.
-        </p>
-      )}
-
-      <Button
-        type="submit"
-        disabled={salvando}
-        className="h-12 w-full rounded-xl text-base font-semibold"
-      >
-        {salvando ? (
-          <>
-            <Loader2 className="size-5 animate-spin" aria-hidden />
-            Salvando...
-          </>
-        ) : anamnese ? (
-          "Atualizar anamnese"
-        ) : (
-          "Enviar anamnese"
+        {erro && (
+          <p role="alert" className="flex items-start gap-2 text-sm text-saude-vermelho">
+            <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+            {erro}
+          </p>
         )}
-      </Button>
+
+        {salvo && !erro && (
+          <p role="status" className="flex items-center gap-2 text-sm text-saude-verde">
+            <Check className="size-4 shrink-0" aria-hidden />
+            Anamnese salva. Seu professor já consegue ver.
+          </p>
+        )}
+      </div>
     </form>
   );
 }
 
+const PILULA =
+  "rounded-full text-sm font-medium transition-all duration-200 active:scale-[.98]";
+const PILULA_MARCADA = "bg-grafite text-white";
+const PILULA_LIVRE =
+  "bg-neutral-50 text-neutral-700 ring-1 ring-neutral-200 hover:bg-neutral-100";
+
 function Secao({
+  parte,
   titulo,
   descricao,
   children,
 }: {
+  parte: number;
   titulo: string;
   descricao?: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="flex flex-col gap-4 rounded-xl border border-neutral-200 bg-white p-4">
+    <section className="flex flex-col gap-6 rounded-2xl bg-card p-5 ring-1 ring-neutral-200/90 md:p-7">
       <div>
-        <h2 className="text-base font-bold text-neutral-900">{titulo}</h2>
+        <p className="rotulo text-neutral-400">Parte {parte} de 4</p>
+        <h2 className="mt-1.5 text-lg font-semibold tracking-[-0.02em] text-neutral-950 md:text-xl">
+          {titulo}
+        </h2>
         {descricao && (
-          <p className="mt-0.5 text-sm text-neutral-500">{descricao}</p>
+          <p className="mt-1 text-[15px] leading-relaxed text-neutral-500">{descricao}</p>
         )}
       </div>
       {children}
@@ -347,7 +391,7 @@ function Texto({
         onChange={(e) => onMudar(e.target.value)}
         placeholder={placeholder}
         disabled={desabilitado}
-        className="h-12 rounded-xl px-3.5 text-base"
+        className="h-12 rounded-[14px] px-4 text-base"
       />
     </div>
   );
@@ -369,8 +413,8 @@ function Escolhas({
   onAlternar: (valor: string) => void;
 }) {
   return (
-    <fieldset className="flex flex-col gap-2" disabled={desabilitado}>
-      <legend className="mb-2 text-sm leading-none font-medium text-neutral-700">
+    <fieldset className="flex flex-col gap-2.5" disabled={desabilitado}>
+      <legend className="mb-2.5 text-sm leading-snug font-medium text-neutral-700">
         {rotulo}
         {multipla && (
           <span className="font-normal text-neutral-400"> (marque quantas quiser)</span>
@@ -388,10 +432,9 @@ function Escolhas({
               onClick={() => onAlternar(opcao)}
               aria-pressed={marcada}
               className={cn(
-                "rounded-xl border px-3.5 py-2.5 text-sm transition-colors",
-                marcada
-                  ? "border-primary bg-primary/10 font-medium text-primary"
-                  : "border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50"
+                PILULA,
+                "min-h-11 px-4 py-2 text-left",
+                marcada ? PILULA_MARCADA : PILULA_LIVRE
               )}
             >
               {opcao}
@@ -415,8 +458,8 @@ function SimNao({
   desabilitado: boolean;
 }) {
   return (
-    <fieldset className="flex flex-col gap-2" disabled={desabilitado}>
-      <legend className="mb-2 text-sm leading-none font-medium text-neutral-700">
+    <fieldset className="flex flex-col gap-2.5" disabled={desabilitado}>
+      <legend className="mb-2.5 text-sm leading-snug font-medium text-neutral-700">
         {rotulo}
       </legend>
 
@@ -431,10 +474,9 @@ function SimNao({
             onClick={() => onMudar(valor === escolha ? null : escolha)}
             aria-pressed={valor === escolha}
             className={cn(
-              "h-11 w-24 rounded-xl border text-sm transition-colors",
-              valor === escolha
-                ? "border-primary bg-primary/10 font-medium text-primary"
-                : "border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50"
+              PILULA,
+              "h-12 w-24",
+              valor === escolha ? PILULA_MARCADA : PILULA_LIVRE
             )}
           >
             {texto}

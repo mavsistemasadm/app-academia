@@ -1,79 +1,139 @@
 import Link from "next/link";
-import type { LucideIcon } from "lucide-react";
+import { ArrowRight, type LucideIcon } from "lucide-react";
 
-import type { SemaforoStatus } from "@/lib/types";
+import { FaixaSemaforo } from "@/components/shared/FaixaSemaforo";
+import type { IndicadorTipo, SemaforoStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { SEMAFORO_CONFIG } from "@/lib/utils/semaforo";
 
-const CORES_SEMAFORO: Record<SemaforoStatus, string> = {
-  verde: "bg-saude-verde-light text-saude-verde",
-  amarelo: "bg-saude-amarelo-light text-saude-amarelo",
-  vermelho: "bg-saude-vermelho-light text-saude-vermelho",
+export const CHIP_SEMAFORO: Record<SemaforoStatus, string> = {
+  verde: "bg-saude-verde-light text-[#15803d]",
+  amarelo: "bg-saude-amarelo-light text-[#b45309]",
+  vermelho: "bg-saude-vermelho-light text-[#b91c1c]",
 };
 
 interface CardIndicadorProps {
   icone: LucideIcon;
-  /** Cor do quadradinho do ícone — identidade do indicador, não o semáforo. */
-  corIcone: string;
+  /** Mantido por compatibilidade — o card novo não pinta mais o ícone. */
+  corIcone?: string;
   valor: string;
   label: string;
+  unidade?: string;
   status?: SemaforoStatus;
-  /** Sobrescreve o texto do badge. Peso usa para mostrar o IMC. */
+  /** Sobrescreve o texto do chip. Peso usa para mostrar o IMC. */
   badge?: string;
-  href: string;
+  /** Sem href o card é só leitura (ex.: visão do familiar). */
+  href?: string;
+  /** Com tipo e valor numérico, o card desenha a faixa do semáforo. */
+  faixa?: { tipo: IndicadorTipo; valor: number; valorSecundario?: number | null };
+  /** Sem faixa clínica: barra de progresso em trechos (ex.: treinos da semana). */
+  progresso?: { feitos: number; total: number };
 }
 
 export function CardIndicador({
   icone: Icone,
-  corIcone,
   valor,
   label,
+  unidade,
   status,
   badge,
   href,
+  faixa,
+  progresso,
 }: CardIndicadorProps) {
   const semRegistro = status === undefined;
-  const textoBadge = badge || (status ? SEMAFORO_CONFIG[status].label : "");
+  const textoChip = badge || (status ? SEMAFORO_CONFIG[status].label : "");
 
   return (
-    <Link
+    <Raiz
       href={href}
-      className="flex flex-col gap-2 rounded-xl border border-neutral-200 bg-white p-4 transition-shadow hover:shadow-sm"
+      className={cn(
+        "group flex flex-col gap-3 rounded-2xl bg-card p-4 ring-1 ring-neutral-200/90 md:p-5",
+        href &&
+          "transition-all duration-200 hover:shadow-[0_10px_30px_-14px_rgba(12,18,20,.25)] hover:ring-neutral-300"
+      )}
     >
-      <span
-        className={cn(
-          "flex size-9 items-center justify-center rounded-lg",
-          corIcone
+      <div className="flex items-center justify-between gap-2">
+        <span className="flex min-w-0 items-center gap-1.5 text-[13px] font-medium text-neutral-500">
+          <Icone className="size-4 shrink-0 text-neutral-400" strokeWidth={1.9} aria-hidden />
+          <span className="truncate">{label}</span>
+        </span>
+        {!semRegistro && textoChip && (
+          <span
+            className={cn(
+              "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+              CHIP_SEMAFORO[status]
+            )}
+          >
+            {textoChip}
+          </span>
         )}
-      >
-        <Icone className="size-5" aria-hidden />
-      </span>
-
-      <p
-        className={cn(
-          "text-2xl leading-tight font-bold tracking-tight",
-          semRegistro ? "text-neutral-300" : "text-neutral-900"
-        )}
-      >
-        {semRegistro ? "—" : valor}
-      </p>
-
-      <p className="text-sm text-neutral-500">{label}</p>
+      </div>
 
       {semRegistro ? (
-        <span className="w-fit rounded-md bg-neutral-100 px-2 py-0.5 text-xs font-semibold text-neutral-400">
-          Sem registro
-        </span>
-      ) : (
-        <span
-          className={cn(
-            "w-fit rounded-md px-2 py-0.5 text-xs font-semibold",
-            CORES_SEMAFORO[status]
+        <div className="flex flex-1 flex-col justify-end gap-1">
+          <p className="text-[15px] font-medium text-neutral-400">Ainda sem medição</p>
+          {href && (
+            <span className="flex items-center gap-1 text-sm font-semibold text-primary">
+              Registrar
+              <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
+            </span>
           )}
-        >
-          {textoBadge}
-        </span>
+        </div>
+      ) : (
+        <>
+          <p className="numero text-[28px] leading-none font-semibold text-neutral-950 md:text-[32px]">
+            {valor}
+            {unidade && (
+              <span className="ml-1 font-sans text-xs font-medium tracking-normal text-neutral-400">
+                {unidade}
+              </span>
+            )}
+          </p>
+
+          {faixa && (
+            <FaixaSemaforo
+              tipo={faixa.tipo}
+              valor={faixa.valor}
+              valorSecundario={faixa.valorSecundario}
+              className="mt-1"
+            />
+          )}
+
+          {progresso && progresso.total > 0 && (
+            <div aria-hidden className="mt-1 flex h-1.5 gap-[3px]">
+              {Array.from({ length: progresso.total }, (_, i) => (
+                <span
+                  key={i}
+                  className={cn(
+                    "h-full flex-1 rounded-full",
+                    i < progresso.feitos ? "bg-ciano" : "bg-neutral-200"
+                  )}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
+    </Raiz>
+  );
+}
+
+/** Link quando há destino; senão um bloco comum, sem cara de clicável. */
+function Raiz({
+  href,
+  className,
+  children,
+}: {
+  href?: string;
+  className: string;
+  children: React.ReactNode;
+}) {
+  return href ? (
+    <Link href={href} className={className}>
+      {children}
     </Link>
+  ) : (
+    <div className={className}>{children}</div>
   );
 }
