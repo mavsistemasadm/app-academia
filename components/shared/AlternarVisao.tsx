@@ -15,10 +15,12 @@ export function BotaoVerComoAluno() {
       // O elemento é um <a> de verdade: sem isso a Base UI reclama
       // que perdeu a semântica nativa de <button>.
       nativeButton={false}
-      className="h-10 gap-2 rounded-xl px-3.5"
+      aria-label="Ver como aluno"
+      className="h-10 gap-2 rounded-full px-3 sm:px-3.5"
     >
       <Eye className="size-4" aria-hidden />
-      Ver como aluno
+      {/* No celular o cabeçalho é estreito: só o ícone. */}
+      <span className="hidden sm:inline">Ver como aluno</span>
     </Button>
   );
 }

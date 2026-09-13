@@ -50,7 +50,7 @@ export default async function ProfessorLayout({
                   className="hidden h-auto w-32 sm:block"
                 />
               </Link>
-              <div className="min-w-0 border-l border-neutral-200 pl-3">
+              <div className="hidden min-w-0 border-l border-neutral-200 pl-3 sm:block">
                 <p className="rotulo text-neutral-400">Painel do professor</p>
                 <p className="truncate text-sm font-semibold text-neutral-950">
                   {perfil.nome}

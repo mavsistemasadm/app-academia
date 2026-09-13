@@ -230,7 +230,8 @@ export function AlertasRealtime({
                       {detalhe}
                     </span>
                   )}
-                  <span className="rotulo text-neutral-400">
+                  {/* "há 38 minutos" pode virar "há 39" entre o servidor e o navegador. */}
+                  <span className="rotulo text-neutral-400" suppressHydrationWarning>
                     {formatDistanceToNow(new Date(alerta.created_at), {
                       addSuffix: true,
                       locale: ptBR,
