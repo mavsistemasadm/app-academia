@@ -100,7 +100,7 @@ export default async function RelatorioPage({
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <Image
               src="/marca/logo.png"
-              alt="Atitude Vital — centro de treinamento"
+              alt="Atitude Vital, centro de treinamento"
               width={1000}
               height={336}
               priority
@@ -209,12 +209,12 @@ export default async function RelatorioPage({
               valor={
                 relatorio.esforcoMedio
                   ? `${relatorio.esforcoMedio.toFixed(1)}/10`
-                  : "—"
+                  : "-"
               }
               rotulo="esforço percebido médio"
             />
             <Dado
-              valor={adesao !== null ? `${adesao}%` : "—"}
+              valor={adesao !== null ? `${adesao}%` : "-"}
               rotulo="adesão a medicamentos"
             />
           </ul>
@@ -269,18 +269,18 @@ export default async function RelatorioPage({
                         )}
                       </th>
                       <td className={cn(CELULA, "numero whitespace-nowrap")}>
-                        {avaliacao.peso ? `${avaliacao.peso} kg` : "—"}
+                        {avaliacao.peso ? `${avaliacao.peso} kg` : "-"}
                       </td>
-                      <td className={cn(CELULA, "numero")}>{avaliacao.imc ?? "—"}</td>
+                      <td className={cn(CELULA, "numero")}>{avaliacao.imc ?? "-"}</td>
                       <td className={cn(CELULA, "numero")}>
                         {avaliacao.percentual_gordura
                           ? `${avaliacao.percentual_gordura}%`
-                          : "—"}
+                          : "-"}
                       </td>
                       <td className={cn(CELULA, "numero whitespace-nowrap")}>
                         {avaliacao.circunferencia_cintura
                           ? `${avaliacao.circunferencia_cintura} cm`
-                          : "—"}
+                          : "-"}
                       </td>
                     </tr>
                   ))}
@@ -351,7 +351,7 @@ export default async function RelatorioPage({
                         {registro.valorFormatado}
                       </td>
                       <td className="py-1.5 pr-4 text-neutral-500">
-                        {registro.momento ?? "—"}
+                        {registro.momento ?? "Não informado"}
                       </td>
                       <td className="py-1.5">
                         <span

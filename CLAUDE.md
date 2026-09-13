@@ -267,6 +267,24 @@ presença · [x] marca as novas como vistas
 **18. Hidratação** — [x] registro num toque com meta e histórico · [x] push
 ao longo do dia
 
+**19. Exames** — [x] upload de PDF/imagem com tipo e data (`/exames`) ·
+[x] link público com prazo para o médico (`/exames/compartilhado/[token]`) ·
+[~] depende da migração 007
+
+**20. Convite de aluno** — [x] professor convida por nome e e-mail
+(`/alunos/convidar`) · [x] primeira senha em `/definir-senha` · [~] template
+de e-mail a configurar no Supabase
+
+**21. Tour guiado** — [x] abre na primeira visita à home (`TourGuiado`,
+marca `av-tour-visto-v1` no user_metadata) · `?tour=1` reabre
+
+**22. Sininho** — [x] central de notificações do aluno e do professor com
+realtime (`SinoNotificacoes`)
+
+**23. Check-in e treino com energia** — [x] comemoração com confete e
+sequência · [x] cronômetro e duração do treino para o professor ·
+[~] duração exata depende da migração 008
+
 ---
 
 ## O QUE AINDA FALTA
@@ -277,12 +295,21 @@ ao longo do dia
 2. **Push e cron nunca rodaram de verdade** — `/api/cron/lembretes` e o envio
    web-push só foram lidos, não exercitados. Precisam de um device real com
    permissão de notificação concedida.
-3. **Migrações 005 e 006 precisam ser aplicadas no SQL Editor** (DDL não roda
-   pela service role). 005 trava o papel: o gatilho de cadastro lê `role` de
-   `raw_app_meta_data`, e mudar o papel pelo app levanta exceção — professor
-   novo só por `supabase/scripts/criar_professor.sql`. 006 põe cascata nas
-   chaves para `profiles`/`auth.users`, então apagar usuário pelo painel
-   funciona.
+3. **Migrações a aplicar no SQL Editor** (DDL não roda pela service role; com
+   `SUPABASE_ACCESS_TOKEN` no ambiente dá para rodar pela Management API, mas
+   precisa de permissão liberada no Claude Code):
+   - 005 trava o papel (gatilho lê `role` de `raw_app_meta_data`; professor
+     novo só por `supabase/scripts/criar_professor.sql`) e 006 põe cascata nas
+     chaves para `profiles`/`auth.users` — conferir se já estão no banco.
+   - 007 exames: tabelas `exames` e `exames_compartilhamentos` + bucket
+     privado `exames`. Sem ela a tela /exames mostra "sendo ativado".
+   - 008 duração do treino: `iniciado_em`, `concluido_em`, `duracao_segundos`
+     em `treino_execucoes`. Antes dela o tempo é estimado pelas séries.
+   - 009 põe `notificacoes` no Realtime (comunicado chega na hora no sino).
+   - 010 texto do alerta de indicador crítico sem travessão.
+4. **Convite por e-mail** — configurar o template "Invite user" e as Redirect
+   URLs conforme `docs/EMAIL_CONVITE.md`, e desligar "Allow new users to sign
+   up" no Supabase (o cadastro público saiu; /cadastro redireciona ao login).
 
 **Já resolvido:** projeto na Vercel (time Pro) com as sete variáveis nos três
 ambientes; "esqueci a senha" (`/esqueci-senha` → e-mail →

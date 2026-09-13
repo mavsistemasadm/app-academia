@@ -16,6 +16,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Navegação principal"
+      data-tour="navegacao"
       className="fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+10px)] z-50 rounded-[26px] bg-grafite/95 p-1.5 shadow-[0_16px_40px_-12px_rgba(12,18,20,.55)] ring-1 ring-white/5 backdrop-blur-xl md:hidden"
     >
       <ul className="grid grid-cols-5">

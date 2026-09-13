@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Check, HeartPulse, Loader2 } from "lucide-react";
 
 import { CHIP_SEMAFORO } from "@/components/aluno/CardIndicador";
 import { FaixaSemaforo } from "@/components/shared/FaixaSemaforo";
@@ -85,7 +85,7 @@ export function PortaoPreTreino({
     }
     if (principal < config.min || principal > config.max) {
       setErro(
-        `Valor fora do esperado — entre ${config.min} e ${config.max} ${config.unidade}.`
+        `Valor fora do esperado: deve ficar entre ${config.min} e ${config.max} ${config.unidade}.`
       );
       return;
     }
@@ -190,7 +190,7 @@ export function PortaoPreTreino({
               setLiberado(true);
               router.refresh();
             }}
-            className="h-12 w-full rounded-full bg-grafite text-[15px] font-semibold text-white hover:bg-neutral-800"
+            className="h-12 w-full rounded-full bg-white text-[15px] font-semibold text-neutral-950 ring-1 ring-saude-vermelho/25 hover:bg-white/80"
           >
             Já falei com o professor, ver o treino
           </Button>
@@ -217,19 +217,32 @@ export function PortaoPreTreino({
   return (
     <form
       onSubmit={medir}
-      className="flex flex-col gap-5 rounded-2xl bg-card p-5 ring-1 ring-neutral-200/90 md:p-7"
+      className="flex flex-col overflow-hidden rounded-[26px] bg-card ring-1 ring-ciano/20 shadow-[0_20px_44px_-26px_rgba(0,150,170,.7)]"
       noValidate
     >
-      <div>
-        <p className="rotulo text-neutral-400">Prontidão para treinar</p>
-        <h2 className="mt-2 text-[22px] leading-tight font-semibold tracking-[-0.025em] text-neutral-950">
+      <div className="relative overflow-hidden bg-[linear-gradient(135deg,#0a8fa3_0%,#00a9bf_55%,#1cc3d8_100%)] p-5 text-white md:p-7">
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 left-0 w-1/4 animate-brilho bg-gradient-to-r from-transparent via-white/25 to-transparent"
+        />
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -top-16 -right-10 size-44 rounded-full bg-white/15 blur-2xl"
+        />
+        <p className="rotulo relative flex items-center gap-1.5 text-white/80">
+          <HeartPulse className="size-3.5" aria-hidden />
+          Prontidão para treinar
+        </p>
+        <h2 className="relative mt-2 text-[22px] leading-tight font-semibold tracking-[-0.025em] text-white">
           Antes de começar, meça {nomeMedicao}
         </h2>
-        <p className="mt-2 text-[15px] leading-relaxed text-neutral-500">
+        <p className="relative mt-2 text-[15px] leading-relaxed text-white/90">
           Pela sua condição, essa medição diz se o corpo está pronto para o
           treino de hoje. Leva dez segundos.
         </p>
       </div>
+
+      <div className="flex flex-col gap-5 p-5 md:p-7">
 
       <div
         className={cn(
@@ -287,7 +300,7 @@ export function PortaoPreTreino({
         <Button
           type="submit"
           disabled={salvando}
-          className="h-12 w-full rounded-full text-[15px] font-semibold"
+          className="h-12 w-full rounded-full bg-[linear-gradient(135deg,#0a8fa3_0%,#00a9bf_100%)] text-[15px] font-semibold text-white shadow-[0_14px_30px_-16px_rgba(0,150,170,.9)] hover:opacity-95 active:scale-[.98]"
         >
           {salvando ? (
             <>
@@ -306,6 +319,7 @@ export function PortaoPreTreino({
         >
           Não consigo medir agora
         </button>
+      </div>
       </div>
     </form>
   );
@@ -353,33 +367,54 @@ function LeituraPreTreino({
   titulo: string;
   veredito: string;
 }) {
+  const verde = resultado.status === "verde";
+
   return (
-    <div className="flex flex-col gap-4 rounded-2xl bg-card p-4 ring-1 ring-neutral-200/90 md:p-5">
-      <CabecaLeitura resultado={resultado} titulo={titulo} />
-      {resultado.faixa && (
-        <FaixaSemaforo
-          tipo={tipo}
-          valor={resultado.faixa.valor}
-          valorSecundario={resultado.faixa.valorSecundario}
-        />
+    <div
+      className={cn(
+        "flex flex-col overflow-hidden rounded-2xl bg-card ring-1",
+        verde ? "ring-saude-verde/25" : "ring-saude-amarelo/30"
       )}
-      <div className="border-t border-neutral-200/80 pt-3">
-        <p className="flex items-center gap-2 text-[15px] font-semibold text-neutral-950">
-          <span
+    >
+      <div
+        className={cn(
+          "flex animate-surgir items-center gap-3 px-4 py-3.5 md:px-5",
+          verde
+            ? "bg-[linear-gradient(135deg,#15803d_0%,#16a34a_100%)] text-white"
+            : "bg-saude-amarelo-light text-[#92400e]"
+        )}
+      >
+        <span
+          className={cn(
+            "flex size-9 shrink-0 items-center justify-center rounded-full",
+            verde ? "bg-white text-saude-verde" : "bg-white/70 text-saude-amarelo"
+          )}
+        >
+          <Check className="size-5" strokeWidth={3} aria-hidden />
+        </span>
+        <div className="min-w-0">
+          <p className="text-[15px] font-semibold">{veredito}</p>
+          <p
             className={cn(
-              "size-2 shrink-0 rounded-full",
-              resultado.status === "verde"
-                ? "bg-saude-verde"
-                : "bg-saude-amarelo"
+              "text-sm leading-relaxed",
+              verde ? "text-white/90" : "text-[#92400e]"
             )}
+          >
+            {verde
+              ? "Tudo dentro da faixa. Bom treino!"
+              : `${resultado.mensagem}. Pode treinar, mas vá com calma e avise o professor se sentir algo.`}
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-col gap-4 p-4 md:p-5">
+        <CabecaLeitura resultado={resultado} titulo={titulo} />
+        {resultado.faixa && (
+          <FaixaSemaforo
+            tipo={tipo}
+            valor={resultado.faixa.valor}
+            valorSecundario={resultado.faixa.valorSecundario}
           />
-          {veredito}
-        </p>
-        <p className="mt-1 text-sm leading-relaxed text-neutral-500">
-          {resultado.status === "verde"
-            ? "Tudo dentro da faixa. Bom treino!"
-            : `${resultado.mensagem}. Pode treinar, mas vá com calma e avise o professor se sentir algo.`}
-        </p>
+        )}
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import type { TreinoHoje } from "@/lib/supabase/home-aluno";
+import { formatarDuracao } from "@/lib/utils/duracao";
 
 interface CardTreinoProps {
   treino: TreinoHoje | null;
@@ -65,7 +66,9 @@ export function CardTreino({ treino }: CardTreinoProps) {
       : "Começar";
 
   const legenda = treino.concluido
-    ? "Concluído hoje"
+    ? treino.duracaoSegundos != null
+      ? `Concluído em ${formatarDuracao(treino.duracaoSegundos)}`
+      : "Concluído hoje"
     : treino.seriesFeitas > 0
       ? `${treino.seriesFeitas} de ${treino.totalSeries} séries`
       : `${treino.totalExercicios} ${treino.totalExercicios === 1 ? "exercício" : "exercícios"} · ${treino.totalSeries} séries`;
@@ -78,7 +81,15 @@ export function CardTreino({ treino }: CardTreinoProps) {
           <h3 className="mt-1.5 text-lg leading-snug font-semibold tracking-[-0.02em] text-neutral-950">
             {treino.nome}
           </h3>
-          <p className="mt-0.5 text-sm text-neutral-500">{legenda}</p>
+          <p
+            className={
+              treino.concluido
+                ? "mt-0.5 text-sm font-medium text-saude-verde"
+                : "mt-0.5 text-sm text-neutral-500"
+            }
+          >
+            {legenda}
+          </p>
         </div>
         <Anel progresso={progresso} rotulo={treino.concluido ? "✓" : `${progresso}%`} />
       </div>

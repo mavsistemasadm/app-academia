@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
+import { UserPlus } from "lucide-react";
 
 import { ListaAlunos } from "@/components/professor/ListaAlunos";
 import { CabecalhoPagina } from "@/components/shared/CabecalhoPagina";
@@ -18,6 +20,15 @@ export default async function AlunosPage() {
           rotulo="Acompanhamento"
           titulo="Alunos"
           descricao="Quem precisa de atenção aparece primeiro."
+          acao={
+            <Link
+              href="/alunos/convidar"
+              className="inline-flex h-12 items-center gap-2 rounded-full bg-grafite px-5 text-[15px] font-semibold text-white transition-all duration-200 hover:bg-neutral-800 active:scale-[.98]"
+            >
+              <UserPlus className="size-5" strokeWidth={1.8} aria-hidden />
+              Convidar aluno
+            </Link>
+          }
         />
       </div>
 

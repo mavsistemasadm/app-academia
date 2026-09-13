@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     template: "%s · Central de Saúde Conectada",
   },
   description:
-    "Acompanhamento de treino, indicadores clínicos e medicamentos — você cuidado todos os dias pelo centro de treinamento.",
+    "Acompanhamento de treino, indicadores clínicos e medicamentos: você cuidado todos os dias pelo centro de treinamento.",
   applicationName: "Central de Saúde Conectada",
   appleWebApp: {
     capable: true,

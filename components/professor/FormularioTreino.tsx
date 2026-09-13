@@ -270,7 +270,7 @@ export function FormularioTreino({
             id="nome"
             value={nome}
             onChange={(e) => setNome(e.target.value)}
-            placeholder="Treino A — membros inferiores"
+            placeholder="Treino A: membros inferiores"
             disabled={salvando}
             className="h-12 px-3.5 text-base"
           />
@@ -339,7 +339,7 @@ export function FormularioTreino({
               className="size-5 accent-primary"
             />
             <span className="text-sm text-neutral-700">
-              Treino ativo — o aluno vê na tela dele
+              Treino ativo: o aluno vê na tela dele
             </span>
           </label>
         )}

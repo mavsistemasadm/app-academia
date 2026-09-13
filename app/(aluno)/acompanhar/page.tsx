@@ -108,7 +108,8 @@ export default async function AcompanharPage() {
                           unidade={config.unidade}
                           label={config.labelCurto}
                           status={registro.status}
-                          badge={registro.badge || undefined}                          faixa={
+                          badge={registro.badge || undefined}
+                          faixa={
                             ehPeso
                               ? registro.imc
                                 ? { tipo: "peso", valor: registro.imc }
@@ -154,7 +155,7 @@ export default async function AcompanharPage() {
                     return (
                       <div
                         key={dia}
-                        title={`${rotulo} — ${veio ? "esteve na academia" : "não veio"}`}
+                        title={`${rotulo}: ${veio ? "esteve na academia" : "não veio"}`}
                         className={cn(
                           "aspect-square rounded-[6px]",
                           veio ? "bg-ciano" : "bg-neutral-100"

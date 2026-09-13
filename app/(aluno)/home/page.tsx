@@ -5,10 +5,10 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   ArrowRight,
-  Bell,
   CalendarDays,
   ChevronRight,
   Dumbbell,
+  FileHeart,
   Heart,
   LineChart,
   Pill,
@@ -21,7 +21,9 @@ import { BotaoCheckin } from "@/components/aluno/BotaoCheckin";
 import { CardIndicador } from "@/components/aluno/CardIndicador";
 import { CardTreino } from "@/components/aluno/CardTreino";
 import { RegistroHumor } from "@/components/aluno/RegistroHumor";
+import { SinoNotificacoes } from "@/components/shared/SinoNotificacoes";
 import { getHomeAluno } from "@/lib/supabase/home-aluno";
+import { getNotificacoesAluno } from "@/lib/supabase/notificacoes";
 import { getPerfilAtual } from "@/lib/supabase/perfil";
 import { getPresencaAluno } from "@/lib/supabase/presenca";
 import { cn } from "@/lib/utils";
@@ -46,9 +48,10 @@ export default async function HomePage() {
   const perfil = await getPerfilAtual();
   if (!perfil) redirect("/login");
 
-  const [dados, presenca] = await Promise.all([
+  const [dados, presenca, notificacoes] = await Promise.all([
     getHomeAluno(perfil),
     getPresencaAluno(perfil.id),
+    getNotificacoesAluno(perfil),
   ]);
 
   const primeiroNome = perfil.nome.split(" ")[0];
@@ -174,6 +177,13 @@ export default async function HomePage() {
       subtitulo: dados.humorHoje ? "Humor registrado" : "Humor não registrado",
     },
     {
+      // No celular não há outra porta para os exames: a barra de baixo tem só 5 abas.
+      href: "/exames",
+      icone: FileHeart,
+      titulo: "Exames",
+      subtitulo: "Guardar e compartilhar",
+    },
+    {
       href: "/agenda",
       icone: CalendarDays,
       titulo: "Agenda",
@@ -188,13 +198,7 @@ export default async function HomePage() {
   // Função e não componente: sino e avatar aparecem em dois lugares (celular e desktop).
   const acoes = (className: string) => (
     <div className={cn("items-center gap-2", className)}>
-      <Link
-        href="/agenda"
-        aria-label="Agenda e comunicados"
-        className="flex size-11 items-center justify-center rounded-full bg-card text-neutral-600 ring-1 ring-neutral-200/90 transition-colors hover:text-neutral-950"
-      >
-        <Bell className="size-5" strokeWidth={1.9} aria-hidden />
-      </Link>
+      <SinoNotificacoes itens={notificacoes} usuarioId={perfil.id} papel="aluno" />
       <Link
         href="/perfil"
         aria-label="Meu perfil"
@@ -222,7 +226,7 @@ export default async function HomePage() {
       </div>
 
       {/* ── Saudação ─────────────────────────────────────────────── */}
-      <header className="flex items-end justify-between gap-6">
+      <header data-tour="saudacao" className="flex items-end justify-between gap-6">
         <div className="min-w-0">
           <p className="rotulo text-neutral-400 first-letter:uppercase">{dataExtenso}</p>
           <h1 className="mt-2 text-[32px] leading-[1.05] font-semibold tracking-[-0.035em] text-neutral-950 md:text-[44px]">
@@ -237,7 +241,7 @@ export default async function HomePage() {
 
       {/* ── Foco de hoje + check-in ──────────────────────────────── */}
       <section className="grid gap-3 md:grid-cols-[1.45fr_1fr] md:gap-4">
-        <div className="relative flex flex-col overflow-hidden rounded-[26px] bg-grafite p-5 text-white md:p-7">
+        <div data-tour="foco" className="relative flex flex-col overflow-hidden rounded-[26px] bg-grafite p-5 text-white md:p-7">
           <div
             aria-hidden
             className="pointer-events-none absolute -top-24 -right-20 size-72 rounded-full bg-[radial-gradient(circle,rgba(0,180,203,.28),transparent_65%)]"
@@ -281,12 +285,15 @@ export default async function HomePage() {
           )}
         </div>
 
-        <div className="flex flex-col gap-3 md:gap-4">
+        <div data-tour="checkin" className="flex flex-col gap-3 md:gap-4">
           <BotaoCheckin
             alunoId={perfil.id}
             hoje={dados.hoje}
             checkinInicial={presenca.checkinDeHoje}
             presentesAgora={presenca.presentesAgora}
+            sequencia={presenca.sequencia}
+            primeiroNome={primeiroNome}
+            temTreinoHoje={Boolean(treino && !treino.concluido)}
           />
           <div className="flex-1">
             <CardTreino treino={treino} />
@@ -295,7 +302,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── Indicadores ──────────────────────────────────────────── */}
-      <section className="flex flex-col gap-3.5">
+      <section data-tour="indicadores" className="flex flex-col gap-3.5">
         <div className="flex items-baseline justify-between gap-3">
           <h2 className="text-lg font-semibold tracking-[-0.02em] text-neutral-950 md:text-xl">
             Seus indicadores
@@ -370,7 +377,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── Humor + atalhos ──────────────────────────────────────── */}
-      <div className="grid gap-3 md:grid-cols-2 md:gap-4">
+      <div data-tour="humor" className="grid gap-3 md:grid-cols-2 md:gap-4">
         <RegistroHumor alunoId={perfil.id} hoje={dados.hoje} humorInicial={dados.humorHoje} />
 
         <nav

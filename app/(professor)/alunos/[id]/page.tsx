@@ -12,6 +12,7 @@ import {
   MessageCircle,
   Phone,
   Stethoscope,
+  Timer,
   UserRound,
 } from "lucide-react";
 
@@ -19,7 +20,9 @@ import { CardIndicador, CHIP_SEMAFORO } from "@/components/aluno/CardIndicador";
 import { cn } from "@/lib/utils";
 import { getDetalheAluno } from "@/lib/supabase/painel-professor";
 import { getPerfilAtual } from "@/lib/supabase/perfil";
+import { getTreinosRecentes } from "@/lib/supabase/professor";
 import { AVATAR_CONFIG } from "@/lib/utils/avatares";
+import { formatarDuracao } from "@/lib/utils/duracao";
 import { hojeISO, horaAtual } from "@/lib/utils/datas";
 import { CONFIG_INDICADORES } from "@/lib/utils/indicadores";
 import { HUMOR_CONFIG } from "@/lib/utils/saudacao";
@@ -82,7 +85,10 @@ export default async function DetalheAlunoPage({
   if (!professor) redirect("/login");
 
   const { id } = await params;
-  const detalhe = await getDetalheAluno(id);
+  const [detalhe, treinosRecentes] = await Promise.all([
+    getDetalheAluno(id),
+    getTreinosRecentes(id),
+  ]);
   if (!detalhe) notFound();
 
   const { perfil, indicadores, humores, treinos, medicamentos, avaliacoes } =
@@ -233,7 +239,7 @@ export default async function DetalheAlunoPage({
           label="Últimos 30 dias"
         />
         <Metrica
-          valor={detalhe.esforcoMedio ? detalhe.esforcoMedio.toFixed(1).replace(".", ",") : "—"}
+          valor={detalhe.esforcoMedio ? detalhe.esforcoMedio.toFixed(1).replace(".", ",") : "-"}
           unidade={detalhe.esforcoMedio ? "/10" : undefined}
           label="Esforço médio"
         />
@@ -261,8 +267,8 @@ export default async function DetalheAlunoPage({
 
         {ultimos.size === 0 ? (
           <Vazio icone={Stethoscope}>
-            O aluno ainda não registrou nenhuma medição. Vale lembrar na próxima aula —
-            o portão pré-treino também pede.
+            O aluno ainda não registrou nenhuma medição. Vale lembrar na próxima aula,
+            e o portão pré-treino também pede.
           </Vazio>
         ) : (
           <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-5">
@@ -295,6 +301,100 @@ export default async function DetalheAlunoPage({
                       locale: ptBR,
                     })}
                   </p>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+
+      {/* ── Treinos recentes: quando, quanto tempo, quanto fez ────────── */}
+      <section id="treinos-recentes" className="flex scroll-mt-40 flex-col gap-3.5">
+        <TituloSecao>Treinos recentes</TituloSecao>
+
+        {treinosRecentes.length === 0 ? (
+          <Vazio icone={Timer}>
+            O aluno ainda não fez treino pelo app. Quando ele marcar a primeira série, a
+            execução aparece aqui com o tempo que levou.
+          </Vazio>
+        ) : (
+          <ul className={cn(CARD, "divide-y divide-neutral-200/80 overflow-hidden")}>
+            {treinosRecentes.map((execucao) => {
+              const dia = new Date(`${execucao.data}T12:00:00Z`);
+              const emAndamento = !execucao.concluido && execucao.data === hoje;
+
+              return (
+                <li
+                  key={execucao.id}
+                  className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3.5 md:gap-5 md:px-5"
+                >
+                  <div className="w-11 text-center">
+                    <p className="numero text-xl leading-none font-semibold text-neutral-950">
+                      {format(dia, "dd")}
+                    </p>
+                    <p className="rotulo mt-1 text-neutral-400">
+                      {format(dia, "MMM", { locale: ptBR }).replace(".", "")}
+                    </p>
+                  </div>
+
+                  <div className="min-w-0">
+                    <p className="truncate text-[15px] font-semibold text-neutral-950">
+                      {execucao.treinoNome ?? "Treino"}
+                    </p>
+                    <p className="mt-0.5 flex flex-wrap gap-x-2.5 text-[13px] text-neutral-500">
+                      <span className="first-letter:uppercase">
+                        {format(dia, "EEEE", { locale: ptBR })}
+                      </span>
+                      {execucao.seriesFeitas > 0 ? (
+                        <span>
+                          <span className="numero font-semibold text-neutral-800">
+                            {execucao.seriesFeitas}
+                          </span>
+                          {execucao.totalSeries ? `/${execucao.totalSeries}` : ""} séries
+                        </span>
+                      ) : (
+                        <span className="text-neutral-400">séries não marcadas</span>
+                      )}
+                      {execucao.esforco != null && (
+                        <span>
+                          esforço{" "}
+                          <span className="numero font-semibold text-neutral-800">
+                            {execucao.esforco}
+                          </span>
+                          /10
+                        </span>
+                      )}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col items-end gap-1 text-right">
+                    {execucao.duracaoSegundos != null ? (
+                      <p className="numero flex items-center gap-1.5 text-lg leading-none font-semibold text-neutral-950">
+                        <Timer className="size-4 text-ciano" strokeWidth={2} aria-hidden />
+                        {formatarDuracao(execucao.duracaoSegundos)}
+                      </p>
+                    ) : (
+                      <p className="text-[13px] text-neutral-400">
+                        {execucao.concluido ? "Tempo não medido" : ""}
+                      </p>
+                    )}
+                    <span
+                      className={cn(
+                        "rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
+                        execucao.concluido
+                          ? "bg-saude-verde-light text-saude-verde"
+                          : emAndamento
+                            ? "bg-ciano/10 text-primary"
+                            : "bg-neutral-100 text-neutral-500"
+                      )}
+                    >
+                      {execucao.concluido
+                        ? "Concluído"
+                        : emAndamento
+                          ? "Em andamento"
+                          : "Não concluído"}
+                    </span>
+                  </div>
                 </li>
               );
             })}
@@ -470,7 +570,7 @@ export default async function DetalheAlunoPage({
                 .map((registro) => (
                   <span
                     key={registro.data}
-                    title={`${format(new Date(`${registro.data}T12:00:00Z`), "dd/MM")} — ${HUMOR_CONFIG[registro.humor].label}`}
+                    title={`${format(new Date(`${registro.data}T12:00:00Z`), "dd/MM")}: ${HUMOR_CONFIG[registro.humor].label}`}
                     className="flex size-9 items-center justify-center rounded-full text-lg"
                     style={{ backgroundColor: `${HUMOR_CONFIG[registro.humor].cor}1f` }}
                   >

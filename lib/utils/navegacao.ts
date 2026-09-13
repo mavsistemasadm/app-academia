@@ -4,6 +4,7 @@ import {
   ClipboardList,
   Droplets,
   Dumbbell,
+  FileHeart,
   Heart,
   HeartHandshake,
   Home,
@@ -48,6 +49,7 @@ export const NAV_DESKTOP: { secao: string; itens: ItemNav[] }[] = [
     secao: 'Saúde',
     itens: [
       { href: '/evolucao', label: 'Evolução', icone: LineChart },
+      { href: '/exames', label: 'Exames', icone: FileHeart },
       { href: '/humor', label: 'Meu humor', icone: Heart },
       { href: '/hidratacao', label: 'Hidratação', icone: Droplets },
       { href: '/bem-estar', label: 'Bem-estar', icone: Sparkles },

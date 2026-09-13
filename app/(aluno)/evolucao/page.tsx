@@ -46,14 +46,14 @@ export default async function EvolucaoPage() {
   const resumo = [
     { valor: String(treinos.totalPeriodo), unidade: "", label: "Treinos concluídos" },
     {
-      valor: treinos.esforcoMedio ? numeroBR(treinos.esforcoMedio) : "—",
+      valor: treinos.esforcoMedio ? numeroBR(treinos.esforcoMedio) : "-",
       unidade: treinos.esforcoMedio ? "/10" : "",
       label: "Esforço médio",
     },
     {
-      valor: imcAtual ? numeroBR(imcAtual) : "—",
+      valor: imcAtual ? numeroBR(imcAtual) : "-",
       unidade: "",
-      label: imcAtual ? "IMC atual" : "IMC — falta altura",
+      label: imcAtual ? "IMC atual" : "IMC: falta altura",
     },
     { valor: String(comDados.length), unidade: "", label: "Indicadores acompanhados" },
   ];
@@ -63,7 +63,7 @@ export default async function EvolucaoPage() {
       <CabecalhoPagina
         rotulo="Saúde"
         titulo="Evolução"
-        descricao={`Seus últimos ${DIAS} dias — indicadores e frequência de treino.`}
+        descricao={`Seus últimos ${DIAS} dias: indicadores e frequência de treino.`}
       />
 
       <div className="flex flex-col gap-6 px-5 md:gap-8 md:px-0">
@@ -162,7 +162,7 @@ function CartaoGrafico({
       ? `${Math.round(ultimoPonto.valor)}/${Math.round(ultimoPonto.valorSecundario)}`
       : ultimoPonto
         ? numeroBR(ultimoPonto.valor)
-        : "—";
+        : "-";
 
   return (
     <article className={cn(CARD, "flex min-w-0 flex-col gap-4 p-5")}>
@@ -212,7 +212,7 @@ function Variacao({
   if (valor === null) {
     return (
       <p className="text-sm leading-relaxed text-neutral-500">
-        {textoMedia ? `${textoMedia}. ` : ""}Primeiro período — a comparação
+        {textoMedia ? `${textoMedia}. ` : ""}Primeiro período. A comparação
         aparece nos próximos {DIAS} dias.
       </p>
     );
@@ -321,7 +321,7 @@ function ComparativoAvaliacoes({ avaliacoes }: { avaliacoes: AvaliacaoFisica[] }
             <div key={label} className="flex min-w-0 flex-col gap-1">
               <dt className="text-[13px] font-medium text-neutral-500">{label}</dt>
               <dd className="numero text-[28px] leading-none font-semibold text-neutral-950">
-                {valor != null ? numeroBR(valor) : "—"}
+                {valor != null ? numeroBR(valor) : "-"}
                 {valor != null && unidade && (
                   <span className="ml-1 font-sans text-xs font-medium tracking-normal text-neutral-400">
                     {unidade}

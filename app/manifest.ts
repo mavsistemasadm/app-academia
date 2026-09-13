@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Central de Saúde Conectada",
     short_name: "Saúde Conectada",
     description:
-      "Treino, indicadores clínicos e medicamentos — o centro cuidando de você todos os dias.",
+      "Treino, indicadores clínicos e medicamentos. O centro cuidando de você todos os dias.",
     lang: "pt-BR",
     // Instalado, o app abre direto na home do aluno, não na landing.
     start_url: "/home",

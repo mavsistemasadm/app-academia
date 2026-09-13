@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { BarraVisaoAluno } from "@/components/shared/AlternarVisao";
 import { BottomNav } from "@/components/shared/BottomNav";
 import { Sidebar } from "@/components/shared/Sidebar";
+import { TourGuiado } from "@/components/shared/TourGuiado";
 import { getPerfilAtual } from "@/lib/supabase/perfil";
 
 export default async function AlunoLayout({
@@ -29,6 +30,8 @@ export default async function AlunoLayout({
       </div>
 
       <BottomNav />
+      {/* Abre sozinho na primeira visita à home (ou com ?tour=1). */}
+      <TourGuiado />
     </div>
   );
 }

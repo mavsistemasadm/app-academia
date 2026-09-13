@@ -34,6 +34,19 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse
   }
 
+  // Primeira senha do convidado: abre com a sessão recém-criada (não é "já
+  // logado, volta para a home") e também sem sessão — a sessão pode vir no
+  // #fragmento, que só o cliente lê, e sem ela a tela explica o link vencido.
+  if (pathname.startsWith('/definir-senha')) {
+    return supabaseResponse
+  }
+
+  // Link de exames que o aluno manda ao médico: quem abre não tem conta. A
+  // página valida o token no servidor e só mostra o que ele libera.
+  if (pathname.startsWith('/exames/compartilhado/')) {
+    return supabaseResponse
+  }
+
   // Rotas de entrada: quem já está logado não deveria estar aqui.
   const publicRoutes = ['/login', '/cadastro', '/esqueci-senha']
   const isPublic = publicRoutes.some(r => pathname.startsWith(r))

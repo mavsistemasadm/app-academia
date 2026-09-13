@@ -4,7 +4,9 @@ import type {
   IndicadorTipo,
   Profile,
   SaudacaoData,
+  TreinoExecucao,
 } from '@/lib/types'
+import { duracaoDaExecucao } from '@/lib/utils/duracao'
 import { gerarSaudacao } from '@/lib/utils/saudacao'
 import {
   diaSemanaAtual,
@@ -34,6 +36,8 @@ export interface TreinoHoje {
   concluido: boolean
   totalSeries: number
   seriesFeitas: number
+  /** Tempo do treino concluído hoje, em segundos (migração 008 ou estimado). */
+  duracaoSegundos?: number | null
 }
 
 export interface ProximoEvento {
@@ -120,7 +124,8 @@ export async function getHomeAluno(perfil: Profile): Promise<HomeAlunoData> {
       .eq('ativo', true),
     supabase
       .from('treino_execucoes')
-      .select('id, treino_id, data, concluido')
+      // `*` inclui as colunas de tempo da migração 008 quando existem.
+      .select('*')
       .eq('aluno_id', perfil.id)
       .gte('data', inicioSemana),
     supabase
@@ -179,20 +184,23 @@ export async function getHomeAluno(perfil: Profile): Promise<HomeAlunoData> {
 
   // ── Treino de hoje e frequência da semana ────────────────────────
   const listaTreinos = (treinos ?? []) as TreinoRow[]
-  const execucoes = execucoesSemana ?? []
+  const execucoes = (execucoesSemana ?? []) as TreinoExecucao[]
 
   const treinoDoDia = listaTreinos.find((t) => ehHoje(t.dia_semana, diaSemana))
   const execucaoHoje = treinoDoDia
     ? execucoes.find((e) => e.treino_id === treinoDoDia.id && e.data === hoje)
     : undefined
 
-  // Séries marcadas hoje — a barra de progresso da home vem daqui.
-  const { count: seriesFeitas } = execucaoHoje
+  // Séries marcadas hoje — a barra de progresso da home vem daqui, e os
+  // horários delas estimam a duração quando a migração 008 não existe.
+  const { data: seriesHoje } = execucaoHoje
     ? await supabase
         .from('exercicio_execucoes')
-        .select('*', { count: 'exact', head: true })
+        .select('created_at')
         .eq('execucao_id', execucaoHoje.id)
-    : { count: 0 }
+    : { data: null }
+  const horariosDasSeries = (seriesHoje ?? []).map((s) => s.created_at as string)
+  const seriesFeitas = horariosDasSeries.length
 
   const treinoHoje: TreinoHoje | null = treinoDoDia
     ? {
@@ -205,7 +213,10 @@ export async function getHomeAluno(perfil: Profile): Promise<HomeAlunoData> {
           (soma, e) => soma + Math.max(1, e.series ?? 1),
           0
         ),
-        seriesFeitas: seriesFeitas ?? 0,
+        seriesFeitas,
+        duracaoSegundos: execucaoHoje?.concluido
+          ? duracaoDaExecucao(execucaoHoje, horariosDasSeries)
+          : null,
       }
     : null
 

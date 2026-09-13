@@ -4,7 +4,9 @@ import { redirect } from "next/navigation";
 
 import { BotaoVerComoAluno } from "@/components/shared/AlternarVisao";
 import { BotaoSair } from "@/components/shared/BotaoSair";
+import { SinoNotificacoes } from "@/components/shared/SinoNotificacoes";
 import { NavProfessor } from "@/components/professor/NavProfessor";
+import { getNotificacoesProfessor } from "@/lib/supabase/notificacoes";
 import { getPerfilAtual } from "@/lib/supabase/perfil";
 
 export default async function ProfessorLayout({
@@ -17,6 +19,8 @@ export default async function ProfessorLayout({
   if (!perfil) redirect("/login");
   if (perfil.role !== "professor") redirect("/home");
 
+  const notificacoes = await getNotificacoesProfessor(perfil);
+
   return (
     <div className="flex flex-1 flex-col bg-background">
       {/* Cabeçalho e abas grudam juntos: um bloco só, sem somar alturas à mão. */}
@@ -28,7 +32,7 @@ export default async function ProfessorLayout({
               <Link href="/dashboard" className="shrink-0">
                 <Image
                   src="/marca/simbolo.png"
-                  alt="Atitude Vital — painel"
+                  alt="Atitude Vital, painel"
                   width={512}
                   height={512}
                   priority
@@ -37,7 +41,7 @@ export default async function ProfessorLayout({
                 />
                 <Image
                   src="/marca/logo.png"
-                  alt="Atitude Vital — painel"
+                  alt="Atitude Vital, painel"
                   width={1000}
                   height={336}
                   priority
@@ -53,6 +57,11 @@ export default async function ProfessorLayout({
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-1.5">
+              <SinoNotificacoes
+                itens={notificacoes}
+                usuarioId={perfil.id}
+                papel="professor"
+              />
               <BotaoVerComoAluno />
               <BotaoSair />
             </div>

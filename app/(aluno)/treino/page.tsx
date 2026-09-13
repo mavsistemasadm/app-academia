@@ -44,7 +44,13 @@ export default async function TreinoPage() {
     <div className="flex flex-col gap-7 pt-0 md:gap-9 md:px-8 md:pt-10">
       <CabecalhoPagina
         rotulo="Treino de hoje"
-        titulo={treino?.nome ?? "Treino"}
+        titulo={
+          !treino || treino.exercicios.length === 0
+            ? "Treino"
+            : treino.concluido
+              ? "Treino feito!"
+              : "Bora treinar"
+        }
         descricao={
           treino
             ? (treino.descricao ??

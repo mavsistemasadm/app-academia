@@ -66,7 +66,7 @@ export function gerarSaudacao(data: DashboardAlunoData): SaudacaoData {
     const { posse, nome, adjetivo } = NA_FRASE[maisRecente.tipo]
     frase = `${posse} ${nome} está ${adjetivo} 🟢. Continue assim!`
   } else if (treinosNaSemana >= 4) {
-    frase = `Você treinou ${treinosNaSemana} vezes essa semana — incrível! 💪`
+    frase = `Você treinou ${treinosNaSemana} vezes essa semana. Incrível! 💪`
   } else if (treinosNaSemana === 0) {
     frase = 'Que tal começar a semana com seu treino de hoje?'
   } else if (treinoHoje) {

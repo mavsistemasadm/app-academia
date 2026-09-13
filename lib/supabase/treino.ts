@@ -1,6 +1,12 @@
-import type { Exercicio, IndicadorTipo, Profile } from '@/lib/types'
+import type {
+  Exercicio,
+  IndicadorTipo,
+  Profile,
+  TreinoExecucao,
+} from '@/lib/types'
 import { indicadorPrioritario } from '@/lib/utils/avatares'
 import { diaSemanaAtual, ehHoje, hojeISO } from '@/lib/utils/datas'
+import { duracaoDaExecucao, inicioDaExecucao } from '@/lib/utils/duracao'
 import { createClient } from './server'
 
 export interface ExercicioComProgresso {
@@ -28,6 +34,13 @@ export interface TreinoDoDia {
   execucaoId: string | null
   concluido: boolean
   esforcoPercebido: number | null
+  /**
+   * Quando o treino começou hoje (primeira série). Da coluna `iniciado_em`
+   * ou, antes da migração 008, do horário da primeira série.
+   */
+  inicioEm: string | null
+  /** Tempo total, só quando concluído. `null` se não houver como saber. */
+  duracaoSegundos: number | null
   totalSeries: number
   seriesFeitas: number
 }
@@ -116,21 +129,26 @@ export async function getTreinoAluno(
 
   if (!doDia) return { treino: null, outros, hoje, medirAntes: null, altura }
 
-  const { data: execucao } = await supabase
+  // `*` traz iniciado_em/duracao_segundos quando a migração 008 existe, sem
+  // quebrar antes dela.
+  const { data: execucaoRaw } = await supabase
     .from('treino_execucoes')
-    .select('id, concluido, esforco_percebido')
+    .select('*')
     .eq('treino_id', doDia.id)
     .eq('aluno_id', alunoId)
     .eq('data', hoje)
     .maybeSingle()
+  const execucao = execucaoRaw as TreinoExecucao | null
 
   // Só busca as séries se o treino já foi iniciado hoje.
   const { data: series } = execucao
     ? await supabase
         .from('exercicio_execucoes')
-        .select('exercicio_id, serie')
+        .select('exercicio_id, serie, created_at')
         .eq('execucao_id', execucao.id)
     : { data: null }
+
+  const horariosDasSeries = (series ?? []).map((s) => s.created_at as string)
 
   const feitasPorExercicio = new Map<string, number[]>()
   for (const s of series ?? []) {
@@ -165,6 +183,12 @@ export async function getTreinoAluno(
       execucaoId: execucao?.id ?? null,
       concluido: Boolean(execucao?.concluido),
       esforcoPercebido: execucao?.esforco_percebido ?? null,
+      inicioEm: execucao
+        ? inicioDaExecucao(execucao, horariosDasSeries)
+        : null,
+      duracaoSegundos: execucao?.concluido
+        ? duracaoDaExecucao(execucao, horariosDasSeries)
+        : null,
       totalSeries: exercicios.reduce((soma, e) => soma + e.series, 0),
       seriesFeitas: exercicios.reduce(
         (soma, e) => soma + e.seriesFeitas.length,

@@ -15,7 +15,7 @@ export function createServiceClient() {
 
   if (!url || !chave) {
     throw new Error(
-      'SUPABASE_SERVICE_ROLE_KEY não configurada — os lembretes automáticos não funcionam sem ela.'
+      'SUPABASE_SERVICE_ROLE_KEY não configurada. Os lembretes automáticos não funcionam sem ela.'
     )
   }
 

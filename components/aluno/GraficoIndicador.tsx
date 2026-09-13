@@ -257,7 +257,7 @@ export function GraficoIndicador({
                     </td>
                     {ehPressao && (
                       <td className="numero px-3 py-1.5 font-medium text-neutral-950">
-                        {ponto.valorSecundario ?? "—"}
+                        {ponto.valorSecundario ?? "-"}
                       </td>
                     )}
                   </tr>

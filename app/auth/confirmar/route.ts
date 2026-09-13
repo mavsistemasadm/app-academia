@@ -26,6 +26,19 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createClient();
 
+  // Convite com `{{ .ConfirmationURL }}`: inviteUserByEmail não usa PKCE, a
+  // sessão vem no `#access_token`, que não chega ao servidor. O redirect
+  // preserva o fragmento e /definir-senha o lê no cliente (ou mostra "link
+  // expirado" se não houver sessão).
+  if (
+    destino === "/definir-senha" &&
+    !code &&
+    !tokenHash &&
+    !searchParams.get("error")
+  ) {
+    return NextResponse.redirect(new URL(destino, origin));
+  }
+
   let falhou = true;
 
   if (code) {
@@ -40,6 +53,8 @@ export async function GET(request: NextRequest) {
   }
 
   if (falhou) {
+    // Convite (/definir-senha) e confirmação de cadastro voltam para o login,
+    // que avisa do link vencido; senha esquecida volta para pedir outro link.
     const volta = destino === "/redefinir-senha" ? "/esqueci-senha" : "/login";
     return NextResponse.redirect(new URL(`${volta}?link=invalido`, origin));
   }

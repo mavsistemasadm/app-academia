@@ -28,7 +28,7 @@ export default function OfflinePage() {
         Você está sem internet
       </h1>
       <p className="mt-3 max-w-sm text-[15px] leading-relaxed text-neutral-500">
-        Seus dados de saúde precisam de conexão para ficarem certos — por isso
+        Seus dados de saúde precisam de conexão para ficarem certos, por isso
         não guardamos uma cópia velha aqui. Assim que o sinal voltar, é só
         tentar de novo.
       </p>

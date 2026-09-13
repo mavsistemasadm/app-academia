@@ -103,6 +103,12 @@ export interface TreinoExecucao {
   esforco_percebido?: number
   observacao?: string
   created_at: string
+  /** Migração 008 — primeira série marcada. Ausente antes de aplicar. */
+  iniciado_em?: string | null
+  /** Migração 008 — quando o aluno concluiu o treino. */
+  concluido_em?: string | null
+  /** Migração 008 — concluido_em - iniciado_em, em segundos. */
+  duracao_segundos?: number | null
 }
 
 export interface Medicamento {
@@ -302,6 +308,46 @@ export interface EventoConfirmacao {
   evento_id: string
   aluno_id: string
   confirmado: boolean
+}
+
+export type ExameTipo =
+  | 'laboratorial'
+  | 'ressonancia'
+  | 'ultrassom'
+  | 'raio_x'
+  | 'tomografia'
+  | 'eletrocardiograma'
+  | 'ecocardiograma'
+  | 'densitometria'
+  | 'outros'
+
+/** Exame enviado pelo aluno (migração 007). O arquivo mora no bucket privado `exames`. */
+export interface Exame {
+  id: string
+  aluno_id: string
+  tipo: ExameTipo
+  /** Obrigatório quando `tipo = 'outros'`. */
+  tipo_outro?: string | null
+  titulo?: string | null
+  /** `YYYY-MM-DD`. */
+  data_exame: string
+  /** Caminho dentro do bucket: `<aluno_id>/<uuid>-<nome>`. */
+  arquivo_path: string
+  arquivo_nome?: string | null
+  mime?: string | null
+  tamanho_bytes?: number | null
+  observacao?: string | null
+  created_at: string
+}
+
+/** Link público com prazo que o aluno manda ao médico. */
+export interface ExameCompartilhamento {
+  id: string
+  aluno_id: string
+  token: string
+  criado_em: string
+  expira_em?: string | null
+  revogado: boolean
 }
 
 // ── UI types ────────────────────────────────────────────────────

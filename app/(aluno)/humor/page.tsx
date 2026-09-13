@@ -59,7 +59,7 @@ export default async function HumorPage() {
           />
           <Numero valor={String(resumo.diasBons)} label="dias bons" />
           <Numero
-            valor={maisFrequente ? HUMOR_CONFIG[maisFrequente].emoji : "—"}
+            valor={maisFrequente ? HUMOR_CONFIG[maisFrequente].emoji : "-"}
             label={
               maisFrequente ? HUMOR_CONFIG[maisFrequente].label : "sem registro"
             }
@@ -86,7 +86,7 @@ export default async function HumorPage() {
                   <div
                     key={dia}
                     title={
-                      config ? `${rotulo} — ${config.label}` : `${rotulo} — sem registro`
+                      config ? `${rotulo}: ${config.label}` : `${rotulo}: sem registro`
                     }
                     className={`relative flex aspect-square items-center justify-center rounded-xl text-lg ${
                       config ? "" : "bg-neutral-50"

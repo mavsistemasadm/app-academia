@@ -25,9 +25,9 @@ export function VideoExercicio({ url, nome }: VideoExercicioProps) {
       <button
         type="button"
         onClick={() => setAberto(true)}
-        className="group flex h-12 w-full items-center gap-3 rounded-full bg-neutral-50 pr-5 pl-1.5 text-[15px] font-medium text-neutral-700 ring-1 ring-neutral-200/90 transition-all duration-200 hover:bg-neutral-100 active:scale-[.98]"
+        className="group flex h-12 w-full items-center gap-3 rounded-full bg-ciano/10 pr-5 pl-1.5 text-[15px] font-semibold text-primary ring-1 ring-ciano/25 transition-all duration-200 hover:bg-ciano/15 active:scale-[.98]"
       >
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-grafite text-ciano">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#0a8fa3_0%,#00b4cb_100%)] text-white shadow-[0_6px_14px_-6px_rgba(0,150,170,.9)] transition-transform duration-200 group-hover:scale-105">
           <Play className="ml-0.5 size-4 fill-current" aria-hidden />
         </span>
         Ver como se faz

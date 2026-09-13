@@ -72,7 +72,7 @@ export function FormularioIndicador({
     if (principal === null) return `Informe ${config.labelPrincipal.toLowerCase()}.`;
 
     if (principal < config.min || principal > config.max) {
-      return `Valor fora do esperado — deve ficar entre ${config.min} e ${config.max} ${config.unidade}.`;
+      return `Valor fora do esperado: deve ficar entre ${config.min} e ${config.max} ${config.unidade}.`;
     }
 
     if (tipo !== "pressao") return null;
@@ -83,7 +83,7 @@ export function FormularioIndicador({
       secundario < config.minSecundario! ||
       secundario > config.maxSecundario!
     ) {
-      return `Diastólica fora do esperado — deve ficar entre ${config.minSecundario} e ${config.maxSecundario} mmHg.`;
+      return `Diastólica fora do esperado: deve ficar entre ${config.minSecundario} e ${config.maxSecundario} mmHg.`;
     }
 
     if (secundario >= principal) {
@@ -152,7 +152,7 @@ export function FormularioIndicador({
           Registrar medição
         </h2>
         <p className="mt-1 text-[15px] leading-relaxed text-neutral-500">
-          Anote agora — leva menos de um minuto.
+          Anote agora, leva menos de um minuto.
         </p>
       </div>
 

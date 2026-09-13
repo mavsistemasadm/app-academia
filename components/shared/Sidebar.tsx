@@ -11,11 +11,11 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-neutral-200/80 bg-white md:flex">
+    <aside data-tour="navegacao" className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-neutral-200/80 bg-white md:flex">
       <Link href="/home" className="block px-6 pt-7 pb-6">
         <Image
           src="/marca/logo.png"
-          alt="Atitude Vital — início"
+          alt="Atitude Vital, início"
           width={1000}
           height={336}
           priority

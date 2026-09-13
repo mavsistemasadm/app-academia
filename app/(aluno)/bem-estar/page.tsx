@@ -103,7 +103,7 @@ export default async function BemEstarPage() {
         </Link>
 
         <p className="text-[13px] leading-relaxed text-neutral-400">
-          Estes exercícios acompanham o cuidado do centro — não substituem
+          Estes exercícios acompanham o cuidado do centro, mas não substituem
           atendimento psicológico ou médico. Em emergência, procure ajuda ou
           ligue 188 (CVV).
         </p>

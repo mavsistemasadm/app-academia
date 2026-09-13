@@ -82,7 +82,7 @@ export function FormularioAnamnese({
     setSalvo(false);
 
     if (!objetivo.trim()) {
-      setErro("Conte o que você busca no centro — é o que guia o treino.");
+      setErro("Conte o que você busca no centro. É o que guia o treino.");
       return;
     }
 
@@ -157,7 +157,7 @@ export function FormularioAnamnese({
       <Secao
         parte={1}
         titulo="Seu objetivo"
-        descricao="A resposta mais importante do formulário — é o que guia o treino."
+        descricao="A resposta mais importante do formulário. É o que guia o treino."
       >
         <textarea
           rows={3}
@@ -192,7 +192,7 @@ export function FormularioAnamnese({
 
         <Texto
           id="lesoes"
-          rotulo="Lesões — atuais ou antigas"
+          rotulo="Lesões: atuais ou antigas"
           valor={lesoes}
           onMudar={setLesoes}
           placeholder="Dor no ombro direito, joelho que trava…"

@@ -292,7 +292,7 @@ const ALUNOS = [
     ],
     medico: ['Dra. Heloísa Prado', '(11) 3061-7744'],
     familiar: ['Juliana Teixeira (neta)', '(11) 99887-4400'],
-    observacoes: 'Mora sozinha. A neta acompanha pelo app. Catarata no olho esquerdo — cuidado com degrau.',
+    observacoes: 'Mora sozinha. A neta acompanha pelo app. Catarata no olho esquerdo, cuidado com degrau.',
   },
 ]
 
@@ -303,7 +303,7 @@ const EXERCICIOS_POR_CONDICAO = {
     { nome: 'Remada baixa', series: 3, repeticoes: '12', carga: '20 kg', descanso: '60s' },
     { nome: 'Supino máquina', series: 3, repeticoes: '12', carga: '15 kg', descanso: '60s' },
     { nome: 'Elevação lateral', series: 3, repeticoes: '15', carga: '3 kg', descanso: '45s' },
-    { nome: 'Caminhada na esteira', series: 1, repeticoes: '15 min', carga: '5 km/h', descanso: '—' },
+    { nome: 'Caminhada na esteira', series: 1, repeticoes: '15 min', carga: '5 km/h', descanso: 'Sem descanso' },
   ],
   forca_media: [
     { nome: 'Agachamento livre', series: 4, repeticoes: '10', carga: '40 kg', descanso: '90s' },
@@ -311,15 +311,15 @@ const EXERCICIOS_POR_CONDICAO = {
     { nome: 'Supino reto', series: 4, repeticoes: '10', carga: '50 kg', descanso: '90s' },
     { nome: 'Barra fixa assistida', series: 3, repeticoes: '8', carga: 'assist. 20 kg', descanso: '90s' },
     { nome: 'Desenvolvimento halteres', series: 3, repeticoes: '10', carga: '12 kg', descanso: '60s' },
-    { nome: 'Prancha', series: 3, repeticoes: '40s', carga: '—', descanso: '45s' },
+    { nome: 'Prancha', series: 3, repeticoes: '40s', carga: 'Sem carga', descanso: '45s' },
   ],
   funcional: [
     { nome: 'Sentar e levantar da cadeira', series: 3, repeticoes: '10', carga: 'peso do corpo', descanso: '60s' },
     { nome: 'Elevação de panturrilha apoiada', series: 3, repeticoes: '15', carga: 'peso do corpo', descanso: '45s' },
     { nome: 'Remada com elástico', series: 3, repeticoes: '12', carga: 'elástico verde', descanso: '60s' },
-    { nome: 'Marcha estacionária', series: 3, repeticoes: '1 min', carga: '—', descanso: '60s' },
-    { nome: 'Equilíbrio unipodal', series: 3, repeticoes: '20s cada pé', carga: '—', descanso: '30s' },
-    { nome: 'Bicicleta horizontal', series: 1, repeticoes: '12 min', carga: 'carga 3', descanso: '—' },
+    { nome: 'Marcha estacionária', series: 3, repeticoes: '1 min', carga: 'Sem carga', descanso: '60s' },
+    { nome: 'Equilíbrio unipodal', series: 3, repeticoes: '20s cada pé', carga: 'Sem carga', descanso: '30s' },
+    { nome: 'Bicicleta horizontal', series: 1, repeticoes: '12 min', carga: 'carga 3', descanso: 'Sem descanso' },
   ],
 }
 
@@ -464,7 +464,7 @@ async function main() {
   const resposta = await fetch(`${URL_BASE}/rest/v1/checkins?select=id&limit=1`, { headers: cabecalhos })
   if (resposta.status === 404) {
     console.error(
-      '\n  A tabela `checkins` não existe — a migração 004 ainda não foi aplicada.\n' +
+      '\n  A tabela `checkins` não existe: a migração 004 ainda não foi aplicada.\n' +
         '  Rode supabase/migrations/004_tabelas_que_faltavam.sql no SQL Editor antes\n' +
         '  deste script; sem ela metade dos módulos não tem onde gravar.\n'
     )
@@ -649,10 +649,10 @@ async function main() {
           aluno_id: aluno.id,
           nome:
             perfilExercicio === 'funcional'
-              ? 'Treino A — funcional e equilíbrio'
+              ? 'Treino A: funcional e equilíbrio'
               : perfilExercicio === 'forca_media'
-                ? 'Treino A — força de perna'
-                : 'Treino A — corpo inteiro',
+                ? 'Treino A: força de perna'
+                : 'Treino A: corpo inteiro',
           descricao: 'Aquecer 5 minutos na esteira antes de começar. Beber água entre as séries.',
           dia_semana: aluno.dias,
           ativo: true,
@@ -966,7 +966,7 @@ async function main() {
   for (const a of criados) console.log(`    ${a.email.padEnd(34)} ${a.condicoes.join(', ')}`)
   console.log(`\n  E no painel do professor:`)
   console.log(`    professora@${DOMINIO_TESTE}`.padEnd(38) + `senha "${SENHA_TESTE}"`)
-  console.log(`    ${dono.email}`.padEnd(38) + `senha sua — mas os alertas são da Rita\n`)
+  console.log(`    ${dono.email}`.padEnd(38) + `senha sua, mas os alertas são da Rita\n`)
 }
 
 main().catch((erro) => {

@@ -42,7 +42,7 @@ export default function AuthLayout({
         <section className="flex flex-col items-center text-center lg:items-start lg:pl-4 lg:text-left">
           <Image
             src="/marca/logo.png"
-            alt="Atitude Vital — centro de treinamento"
+            alt="Atitude Vital, centro de treinamento"
             width={1000}
             height={336}
             priority
@@ -61,7 +61,7 @@ export default function AuthLayout({
           </h1>
 
           <p className="mt-4 max-w-md text-sm leading-relaxed text-white/55 lg:mt-6 lg:max-w-lg lg:text-lg">
-            O centro acompanha você entre um treino e outro — indicadores,
+            O centro acompanha você entre um treino e outro: indicadores,
             remédios, humor e evolução num lugar só.
           </p>
 

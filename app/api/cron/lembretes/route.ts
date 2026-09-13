@@ -87,7 +87,7 @@ export async function GET(request: Request) {
       const ok = await enviarPush(med.aluno_id, {
         titulo: `Hora do ${med.nome}`,
         corpo: med.dose
-          ? `${med.dose} — das ${horario}. Toque para confirmar.`
+          ? `${med.dose}, das ${horario}. Toque para confirmar.`
           : `Dose das ${horario}. Toque para confirmar.`,
         url: "/remedios",
         tag: `remedio-${med.id}-${horario}`,

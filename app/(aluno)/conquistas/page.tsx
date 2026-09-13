@@ -118,7 +118,7 @@ export default async function ConquistasPage() {
         titulo="Conquistas"
         descricao={
           totalConquistadas === 0
-            ? "Nenhuma ainda — a primeira vem no seu primeiro registro."
+            ? "Nenhuma ainda. A primeira vem no seu primeiro registro."
             : `${totalConquistadas} de ${conquistas.length} conquistadas.`
         }
       />
