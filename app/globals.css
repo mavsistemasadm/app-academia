@@ -39,6 +39,12 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-saude-verde: var(--saude-verde);
+  --color-saude-amarelo: var(--saude-amarelo);
+  --color-saude-vermelho: var(--saude-vermelho);
+  --color-saude-verde-light: var(--saude-verde-light);
+  --color-saude-amarelo-light: var(--saude-amarelo-light);
+  --color-saude-vermelho-light: var(--saude-vermelho-light);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -55,8 +61,8 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -66,13 +72,21 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: #2563eb;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
+
+  /* Semáforo clínico — ver lib/utils/semaforo.ts */
+  --saude-verde: #16a34a;
+  --saude-amarelo: #d97706;
+  --saude-vermelho: #dc2626;
+  --saude-verde-light: #dcfce7;
+  --saude-amarelo-light: #fef3c7;
+  --saude-vermelho-light: #fee2e2;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -90,8 +104,8 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -126,5 +140,43 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+/*
+  O relatório para o médico vira PDF pela impressão do navegador. Some tudo
+  que é navegação e força fundo branco — impressora não imprime cinza de
+  graça, e a folha precisa caber em A4.
+*/
+@media print {
+  nav,
+  aside,
+  header[class*="sticky"] {
+    display: none !important;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  main {
+    padding: 0 !important;
+  }
+
+  @page {
+    margin: 14mm;
+    size: A4;
+  }
+
+  table {
+    break-inside: auto;
+  }
+
+  tr {
+    break-inside: avoid;
+  }
+
+  thead {
+    display: table-header-group;
   }
 }

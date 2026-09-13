@@ -1,0 +1,43 @@
+import Link from "next/link";
+import { ArrowLeftRight, Eye } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+
+/**
+ * Só o professor alterna de visão. O middleware já libera as rotas de aluno
+ * para ele, então isso aqui é navegação — não há sessão nem papel trocado.
+ */
+export function BotaoVerComoAluno() {
+  return (
+    <Button
+      variant="outline"
+      render={<Link href="/home" />}
+      // O elemento é um <a> de verdade: sem isso a Base UI reclama
+      // que perdeu a semântica nativa de <button>.
+      nativeButton={false}
+      className="h-10 gap-2 rounded-xl px-3.5"
+    >
+      <Eye className="size-4" aria-hidden />
+      Ver como aluno
+    </Button>
+  );
+}
+
+/** Barra fixa que aparece no topo das telas de aluno quando quem olha é o professor. */
+export function BarraVisaoAluno() {
+  return (
+    <div className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-primary/20 bg-primary/10 px-4 py-2.5 backdrop-blur">
+      <span className="flex items-center gap-2 text-sm font-medium text-primary">
+        <Eye className="size-4 shrink-0" aria-hidden />
+        Você está na visão do aluno
+      </span>
+      <Link
+        href="/dashboard"
+        className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-semibold text-primary underline-offset-4 hover:underline"
+      >
+        <ArrowLeftRight className="size-4" aria-hidden />
+        Voltar ao painel
+      </Link>
+    </div>
+  );
+}
