@@ -502,10 +502,12 @@ async function main() {
       email: `professora@${DOMINIO_TESTE}`,
       password: SENHA_TESTE,
       email_confirm: true,
+      // O papel mora em app_metadata desde a migração 005: user_metadata é
+      // escrito pelo próprio visitante no signUp e não pode decidir isso.
+      app_metadata: { role: 'professor' },
       user_metadata: {
         nome: 'Rita Salgado',
         telefone: '(11) 98100-2244',
-        role: 'professor',
       },
     }),
   })
