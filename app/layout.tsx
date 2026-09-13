@@ -36,6 +36,8 @@ export const metadata: Metadata = {
   applicationName: "Central de Saúde Conectada",
   appleWebApp: {
     capable: true,
+    // "default": relógio escuro sobre o fundo claro do app. O translúcido
+    // deixaria o texto do sistema branco em cima da névoa.
     statusBarStyle: "default",
     title: "Saúde Conectada",
   },

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { BotaoVerComoAluno } from "@/components/shared/AlternarVisao";
 import { BotaoSair } from "@/components/shared/BotaoSair";
 import { SinoNotificacoes } from "@/components/shared/SinoNotificacoes";
+import { BottomNavProfessor } from "@/components/professor/BottomNavProfessor";
 import { NavProfessor } from "@/components/professor/NavProfessor";
 import { getNotificacoesProfessor } from "@/lib/supabase/notificacoes";
 import { getPerfilAtual } from "@/lib/supabase/perfil";
@@ -68,10 +69,15 @@ export default async function ProfessorLayout({
           </div>
         </header>
 
-        <NavProfessor />
+        {/* No celular as seções vão para a barra de baixo. */}
+        <div className="hidden md:block">
+          <NavProfessor />
+        </div>
       </div>
 
-      <div className="flex flex-1 flex-col">{children}</div>
+      {/* pb-28 reserva espaço para a barra flutuante do celular. */}
+      <div className="flex flex-1 flex-col pb-28 md:pb-0">{children}</div>
+      <BottomNavProfessor />
     </div>
   );
 }

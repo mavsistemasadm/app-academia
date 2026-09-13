@@ -25,14 +25,41 @@ export interface ItemNav {
   icone: LucideIcon
 }
 
-/** Barra inferior do mobile — 5 abas, conforme o mockup. */
+/**
+ * Barra inferior do celular: as 4 telas do dia a dia. A quinta posição é o
+ * botão "Mais", que abre a folha com todo o resto (ver BottomNav).
+ */
 export const NAV_MOBILE: ItemNav[] = [
   { href: '/home', label: 'Início', icone: Home },
   { href: '/treino', label: 'Treino', icone: Dumbbell },
   { href: '/indicadores', label: 'Saúde', icone: Activity },
   { href: '/remedios', label: 'Remédios', icone: Pill },
-  { href: '/perfil', label: 'Perfil', icone: User },
 ]
+
+const TITULOS: Record<string, string> = {
+  '/home': 'Início',
+  '/treino': 'Treino',
+  '/indicadores': 'Indicadores',
+  '/remedios': 'Remédios',
+  '/evolucao': 'Evolução',
+  '/exames': 'Exames',
+  '/humor': 'Meu humor',
+  '/hidratacao': 'Hidratação',
+  '/bem-estar': 'Bem-estar',
+  '/conquistas': 'Conquistas',
+  '/agenda': 'Agenda',
+  '/chat': 'Conversas',
+  '/anamnese': 'Anamnese',
+  '/perfil': 'Perfil',
+  '/familiares': 'Familiares',
+  '/acompanhar': 'Acompanhar',
+  '/relatorio': 'Relatório',
+}
+
+/** Título curto da tela para a barra de topo do celular. */
+export function tituloDaRota(pathname: string): string {
+  return TITULOS[`/${pathname.split('/')[1] ?? ''}`] ?? 'Atitude Vital'
+}
 
 /** Sidebar do desktop — agrupada em seções. */
 export const NAV_DESKTOP: { secao: string; itens: ItemNav[] }[] = [

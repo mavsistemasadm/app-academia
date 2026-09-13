@@ -31,6 +31,19 @@
   --animate-tracar: tracar 0.5s 0.3s ease-out both;
   --animate-brilho: brilho 3.2s ease-in-out infinite;
   --animate-pulso-ponto: pulso-ponto 2s ease-in-out infinite;
+  --animate-entrar: entrar 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+
+  /* Entrada de tela: sobe um pouco e aparece, como troca de tela em app. */
+  @keyframes entrar {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: none;
+    }
+  }
 
   @keyframes pulso-anel {
     0% {
@@ -222,6 +235,26 @@
   }
   html {
     @apply font-sans;
+    /* Toque de app: sem clarão cinza no toque, sem espera de duplo toque,
+       sem a página inteira "quicando" ao rolar além do fim. */
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    overscroll-behavior-y: none;
+    -webkit-text-size-adjust: 100%;
+  }
+  /* Campo com menos de 16px faz o iPhone dar zoom ao focar. */
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1em);
+  }
+  /* Botão, link de navegação e ícone não viram texto selecionado num toque longo. */
+  button,
+  nav a,
+  [role="button"] {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
   }
   h1,
   h2,

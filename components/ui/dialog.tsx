@@ -53,11 +53,15 @@ function DialogContent({
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-[26px] bg-popover p-6 text-sm text-popover-foreground shadow-[0_30px_80px_-20px_rgba(12,18,20,.45)] ring-1 ring-neutral-200/60 duration-150 outline-none sm:max-w-md data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          // Celular: folha que sobe de baixo, com alça e respeitando a barra do sistema.
+          // Do tablet para cima: janela no centro.
+          "fixed inset-x-0 bottom-0 z-50 grid max-h-[92dvh] w-full gap-4 overflow-y-auto overscroll-contain rounded-t-[28px] bg-popover p-6 pt-3 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] text-sm text-popover-foreground shadow-[0_-20px_60px_-20px_rgba(12,18,20,.4)] ring-1 ring-neutral-200/60 duration-250 outline-none data-open:animate-in data-open:slide-in-from-bottom-full data-closed:animate-out data-closed:slide-out-to-bottom-full",
+          "sm:inset-x-auto sm:top-1/2 sm:bottom-auto sm:left-1/2 sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-[26px] sm:pt-6 sm:pb-6 sm:shadow-[0_30px_80px_-20px_rgba(12,18,20,.45)] sm:duration-150 sm:data-open:slide-in-from-bottom-0 sm:data-open:fade-in-0 sm:data-open:zoom-in-95 sm:data-closed:slide-out-to-bottom-0 sm:data-closed:fade-out-0 sm:data-closed:zoom-out-95",
           className
         )}
         {...props}
       >
+        <span aria-hidden className="mx-auto h-1.5 w-10 shrink-0 rounded-full bg-neutral-200 sm:hidden" />
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close

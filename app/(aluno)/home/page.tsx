@@ -54,7 +54,9 @@ export default async function HomePage() {
     getNotificacoesAluno(perfil),
   ]);
 
-  const primeiroNome = perfil.nome.split(" ")[0];
+  // Nome que veio do e-mail ("marlos.h.santos") também vira "Marlos".
+  const primeiroParte = perfil.nome.trim().split(/[\s._-]+/)[0] ?? "";
+  const primeiroNome = primeiroParte.charAt(0).toUpperCase() + primeiroParte.slice(1);
   const periodo = dados.saudacao.saudacao.split(",")[0];
   const inicial = primeiroNome.charAt(0).toUpperCase();
   // `hoje` já vem no fuso da academia; meio-dia UTC não vira o dia errado.

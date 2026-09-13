@@ -15,7 +15,8 @@ export function CabecalhoPagina({
   acao?: React.ReactNode;
 }) {
   return (
-    <header className="flex flex-wrap items-end justify-between gap-4 px-5 pt-7 md:px-0 md:pt-0">
+    // O layout do aluno encolhe o topo com --topo-cabecalho (lá existe a barra de topo do celular).
+    <header className="flex flex-wrap items-end justify-between gap-4 px-5 pt-[var(--topo-cabecalho,1.75rem)] md:px-0 md:pt-0">
       <div className="min-w-0">
         {rotulo && <p className="rotulo text-primary">{rotulo}</p>}
         <h1 className="mt-1.5 text-[28px] leading-[1.1] font-semibold tracking-[-0.03em] text-neutral-950 md:text-[34px]">
