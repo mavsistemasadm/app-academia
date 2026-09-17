@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Atitude Vital</title>
+</head>
+<body style="margin:0;padding:0;background:#F3F6F6;">
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#F3F6F6;padding:32px 16px;font-family:Inter,-apple-system,'Helvetica Neue',Arial,sans-serif;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="max-width:520px;background:#FFFFFF;border-radius:22px;overflow:hidden;">
+
+          <tr>
+            <td style="background:#0F1618;padding:28px 32px;">
+              <img src="https://app-academia-eta.vercel.app/marca/logo-branca.png" alt="Atitude Vital" width="150" style="display:block;width:150px;max-width:60%;height:auto;border:0;">
+              <p style="margin:12px 0 0;color:rgba(255,255,255,.55);font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-family:'Geist Mono',ui-monospace,SFMono-Regular,Menlo,monospace;">
+                Central de Saúde Conectada
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:32px;">
+              <h1 style="margin:0 0 12px;color:#0F1618;font-size:22px;line-height:1.25;font-weight:600;letter-spacing:-0.02em;">
+                Entrar sem digitar senha
+              </h1>
+              <p style="margin:0 0 26px;color:#5C6466;font-size:15px;line-height:1.65;">
+                Use o botão abaixo para entrar na Atitude Vital neste dispositivo. O link é só seu, não repasse.
+              </p>
+
+              <table cellpadding="0" cellspacing="0" role="presentation">
+                <tr>
+                  <td style="border-radius:999px;background:#0A8FA3;">
+                    <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 32px;color:#FFFFFF;text-decoration:none;font-size:16px;font-weight:600;border-radius:999px;">
+                      Entrar na Atitude Vital
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:26px 0 6px;color:#8A9496;font-size:12px;line-height:1.6;">
+                Se o botão não funcionar, copie e cole este endereço no navegador:
+              </p>
+              <p style="margin:0 0 24px;color:#0A8FA3;font-size:11px;line-height:1.6;word-break:break-all;">
+                {{ .ConfirmationURL }}
+              </p>
+
+              <p style="margin:0;padding-top:20px;border-top:1px solid #E6EBEB;color:#8A9496;font-size:13px;line-height:1.6;">
+                O link vale por 24 horas e só pode ser usado uma vez. Se você não pediu, pode ignorar este e-mail.
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        <p style="margin:18px 0 0;color:#8A9496;font-size:12px;line-height:1.6;font-family:Inter,Arial,sans-serif;">
+          Atitude Vital · centro de treinamento<br>
+          Este e-mail foi enviado automaticamente. Fale com o centro pelo app.
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

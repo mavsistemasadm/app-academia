@@ -13,6 +13,7 @@ import {
   MessageSquare,
   Pill,
   Sparkles,
+  Flame,
   Trophy,
   User,
   Users,
@@ -47,6 +48,7 @@ const TITULOS: Record<string, string> = {
   '/hidratacao': 'Hidratação',
   '/bem-estar': 'Bem-estar',
   '/conquistas': 'Conquistas',
+  '/desafios': 'Desafios',
   '/agenda': 'Agenda',
   '/chat': 'Conversas',
   '/anamnese': 'Anamnese',
@@ -81,6 +83,7 @@ export const NAV_DESKTOP: { secao: string; itens: ItemNav[] }[] = [
       { href: '/hidratacao', label: 'Hidratação', icone: Droplets },
       { href: '/bem-estar', label: 'Bem-estar', icone: Sparkles },
       { href: '/conquistas', label: 'Conquistas', icone: Trophy },
+      { href: '/desafios', label: 'Desafios', icone: Flame },
     ],
   },
   {
@@ -107,5 +110,6 @@ export const NAV_PROFESSOR: ItemNav[] = [
   { href: '/alunos', label: 'Alunos', icone: Users },
   { href: '/treinos', label: 'Treinos', icone: Dumbbell },
   { href: '/agenda-professor', label: 'Agenda', icone: CalendarDays },
+  { href: '/desafios-professor', label: 'Desafios', icone: Trophy },
   { href: '/presenca', label: 'Presença', icone: Activity },
 ]

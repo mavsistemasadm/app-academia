@@ -44,6 +44,7 @@ app/
   (aluno)/hidratacao      copo/garrafa/litro num toque + meta
   (aluno)/bem-estar       respiração guiada e aterramento 5-4-3-2-1
   (aluno)/conquistas      badges derivadas dos dados + streak
+  (aluno)/desafios        lista, ranking e pontos do desafio (módulo 24)
   (aluno)/agenda          eventos com confirmação + comunicados
   (aluno)/anamnese        formulário de entrada de saúde
   (aluno)/perfil          dados, foto, contatos, notificações, relatório
@@ -60,6 +61,7 @@ app/
   (professor)/treinos     lista / novo / editar, com upload de vídeo
   (professor)/agenda-professor        eventos e comunicados
   (professor)/presenca    quem está na academia, sumidos, movimento
+  (professor)/desafios-professor      cria, convida e acompanha desafios
 
   chat/                   lista de conversas (fora dos dois grupos)
   chat/[id]               conversa com realtime
@@ -288,6 +290,12 @@ marca `av-tour-visto-v1` no user_metadata) · `?tour=1` reabre
 **22. Sininho** — [x] central de notificações do aluno e do professor com
 realtime (`SinoNotificacoes`)
 
+**24. Desafios** — [x] o professor cria com período, regras e convidados
+(`/desafios-professor`) · [x] o aluno entra, vê ranking e de onde vieram os
+pontos (`/desafios`) · pontuação automática pelo que já existe (presença,
+treino, indicador, água, medicamento, humor), um ponto por hábito por dia ·
+ranking mostra só "Maria S." e pontos, por função `security definer`
+
 **23. Check-in e treino com energia** — [x] comemoração com confete e
 sequência · [x] cronômetro e duração do treino para o professor ·
 [~] duração exata depende da migração 008
@@ -317,14 +325,20 @@ sequência · [x] cronômetro e duração do treino para o professor ·
    - 011 e 012 já aplicadas (17/09/2026). 012 cria o papel `familiar`; o Auth
      grava o app_metadata depois do insert, então `/api/familia/cadastro`
      acerta `profiles.role` pela service role logo depois de criar a conta.
+   - 013 desafios: tabelas `desafios` e `desafio_participantes` + funções
+     `ranking_desafio`, `detalhe_pontos_desafio` e `resumo_desafios`.
    - 011 anamnese editável: tabela `anamnese_perguntas` + `anamneses.respostas`
      (jsonb por id da pergunta). Sem ela o formulário usa `PERGUNTAS_PADRAO`
      de `lib/utils/anamnese.ts` e o editor fica só leitura. As colunas antigas
      de `anamneses` continuam sendo gravadas pelas perguntas originais
      (`coluna_legada`).
-4. **Convite por e-mail** — configurar o template "Invite user" e as Redirect
-   URLs conforme `docs/EMAIL_CONVITE.md`, e desligar "Allow new users to sign
-   up" no Supabase (o cadastro público saiu; /cadastro redireciona ao login).
+4. **Convite por e-mail** — feito em 17/09/2026: `bash scripts/aplicar_emails.sh`
+   manda os modelos de `docs/emails/*.html` (marca Atitude Vital), os assuntos
+   em português, a Site URL de produção e as Redirect URLs. Falta só desligar
+   "Allow new users to sign up" no painel do Supabase (o cadastro público saiu;
+   /cadastro redireciona ao login) e, para convidar a turma inteira sem o
+   limite do SMTP do Supabase, configurar um SMTP próprio (o projeto financeiro
+   usa Resend com remetente da marca).
 
 **Já resolvido:** projeto na Vercel (time Pro) com as sete variáveis nos três
 ambientes; "esqueci a senha" (`/esqueci-senha` → e-mail →

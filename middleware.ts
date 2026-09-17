@@ -100,6 +100,7 @@ export async function middleware(request: NextRequest) {
     '/alunos',
     '/treinos',
     '/agenda-professor',
+    '/desafios-professor',
     '/presenca',
   ]
 

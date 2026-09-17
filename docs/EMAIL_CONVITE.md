@@ -4,6 +4,15 @@ O professor convida em **Alunos → Convidar aluno**. O e-mail sai pelo próprio
 Supabase; o link leva para `/auth/confirmar` e de lá para `/definir-senha`,
 onde o aluno cria a senha e entra na home.
 
+> **Feito em 17/09/2026 pelo `scripts/aplicar_emails.sh`**, que manda os
+> modelos de `docs/emails/*.html`, os assuntos e as URLs pela Management API.
+> Edite o HTML nessa pasta e rode o script de novo; o painel do Supabase só é
+> necessário para SMTP e para desligar o cadastro aberto.
+>
+> O que estava errado até então: a **Site URL** do projeto era
+> `http://localhost:3000`, então todo link de e-mail caía no computador de
+> quem clicava, e não no app.
+
 São três ajustes no painel do Supabase (projeto da Atitude Vital).
 
 ---
