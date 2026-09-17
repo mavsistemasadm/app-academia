@@ -44,7 +44,7 @@ app/
   (aluno)/hidratacao      copo/garrafa/litro num toque + meta
   (aluno)/bem-estar       respiração guiada e aterramento 5-4-3-2-1
   (aluno)/conquistas      badges derivadas dos dados + streak
-  (aluno)/desafios        lista, ranking e pontos do desafio (módulo 24)
+  (aluno)/desafios        lista, ranking, progresso e registro do desafio (24)
   (aluno)/agenda          eventos com confirmação + comunicados
   (aluno)/anamnese        formulário de entrada de saúde
   (aluno)/perfil          dados, foto, contatos, notificações, relatório
@@ -290,11 +290,15 @@ marca `av-tour-visto-v1` no user_metadata) · `?tour=1` reabre
 **22. Sininho** — [x] central de notificações do aluno e do professor com
 realtime (`SinoNotificacoes`)
 
-**24. Desafios** — [x] o professor cria com período, regras e convidados
-(`/desafios-professor`) · [x] o aluno entra, vê ranking e de onde vieram os
-pontos (`/desafios`) · pontuação automática pelo que já existe (presença,
-treino, indicador, água, medicamento, humor), um ponto por hábito por dia ·
-ranking mostra só "Maria S." e pontos, por função `security definer`
+**24. Desafios** — [x] dois tipos: **pontos por hábito** (presença, treino,
+indicador, água, medicamento, humor; cada um conta uma vez por dia) e **meta a
+alcançar** ("5 km em 30 dias", nas medidas km, minutos, treinos, presenças e
+litros) · [x] km é a única medida registrada à mão pelo aluno
+(`desafio_registros`); as outras o app soma sozinho · [x] modelos prontos
+(`MODELOS` em `lib/utils/desafios.ts`) abrem o formulário preenchido ·
+[x] capa e anexo no bucket público `desafios` · [x] aberto a todos ou só
+convidados, e o aluno participa de quantos quiser · ranking e progresso saem de
+funções `security definer` e mostram só "Maria S.", foto e o número
 
 **23. Check-in e treino com energia** — [x] comemoração com confete e
 sequência · [x] cronômetro e duração do treino para o professor ·
@@ -327,6 +331,10 @@ sequência · [x] cronômetro e duração do treino para o professor ·
      acerta `profiles.role` pela service role logo depois de criar a conta.
    - 013 desafios: tabelas `desafios` e `desafio_participantes` + funções
      `ranking_desafio`, `detalhe_pontos_desafio` e `resumo_desafios`.
+   - 014 desafio com meta: `tipo`, `metrica` e `objetivo` em `desafios`,
+     tabela `desafio_registros` e função `progresso_desafio`.
+   - 015 capa e anexo do desafio: `imagem_url`, `arquivo_url`, `arquivo_nome`
+     e o bucket público `desafios` (só professor escreve).
    - 011 anamnese editável: tabela `anamnese_perguntas` + `anamneses.respostas`
      (jsonb por id da pergunta). Sem ela o formulário usa `PERGUNTAS_PADRAO`
      de `lib/utils/anamnese.ts` e o editor fica só leitura. As colunas antigas

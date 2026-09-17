@@ -5,7 +5,21 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { AlertCircle, ArrowRight, Loader2, Plus, RotateCcw, Trash2, Trophy, Users } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowRight,
+  FileText,
+  ImagePlus,
+  Loader2,
+  Paperclip,
+  Plus,
+  RotateCcw,
+  Target,
+  Trash2,
+  Trophy,
+  Users,
+  X,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -21,10 +35,16 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import type { DesafioDoProfessor } from "@/lib/supabase/desafios";
 import {
+  formatarQuantidade,
   HABITOS,
+  MODELOS,
+  METRICAS,
   REGRAS_PADRAO,
   ROTULO_SITUACAO,
+  type Metrica,
+  type ModeloDesafio,
   type Regras,
+  type TipoDesafio,
 } from "@/lib/utils/desafios";
 
 const TITULO_SECAO = "text-lg font-semibold tracking-[-0.02em] text-neutral-950 md:text-xl";
@@ -60,6 +80,7 @@ export function GerenciarDesafios({
 }: GerenciarDesafiosProps) {
   const router = useRouter();
   const [editando, setEditando] = useState<DesafioDoProfessor | "novo" | null>(null);
+  const [modelo, setModelo] = useState<ModeloDesafio | null>(null);
   const [ocupado, setOcupado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [, iniciarTransicao] = useTransition();
@@ -97,7 +118,10 @@ export function GerenciarDesafios({
       <div className="flex flex-wrap items-center gap-3">
         <Button
           type="button"
-          onClick={() => setEditando("novo")}
+          onClick={() => {
+            setModelo(null);
+            setEditando("novo");
+          }}
           disabled={indisponivel || ocupado}
           className="h-11 rounded-full px-5 font-semibold"
         >
@@ -113,6 +137,42 @@ export function GerenciarDesafios({
           {erro}
         </p>
       )}
+
+      <section className="flex flex-col gap-3.5">
+        <div>
+          <h2 className={TITULO_SECAO}>Modelos prontos</h2>
+          <p className="mt-1 text-[15px] leading-relaxed text-neutral-500">
+            Escolha um e o formulário abre preenchido. Dá para mudar tudo antes de salvar, e você
+            pode ter vários desafios no ar ao mesmo tempo.
+          </p>
+        </div>
+
+        <ul className="grid gap-2.5 sm:grid-cols-2">
+          {MODELOS.map((m) => (
+            <li key={m.chave}>
+              <button
+                type="button"
+                disabled={indisponivel || ocupado}
+                onClick={() => {
+                  setModelo(m);
+                  setEditando("novo");
+                }}
+                className="flex h-full w-full flex-col items-start gap-1 rounded-2xl bg-card px-4 py-3.5 text-left ring-1 ring-neutral-200/90 transition-all duration-200 hover:bg-neutral-50 active:scale-[.99] disabled:opacity-60"
+              >
+                <span className="flex items-center gap-2">
+                  {m.tipo === "meta" ? (
+                    <Target className="size-4 text-neutral-400" strokeWidth={1.9} aria-hidden />
+                  ) : (
+                    <Trophy className="size-4 text-neutral-400" strokeWidth={1.9} aria-hidden />
+                  )}
+                  <span className="text-[15px] font-semibold text-neutral-950">{m.nome}</span>
+                </span>
+                <span className="text-[13px] leading-relaxed text-neutral-500">{m.descricao}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       {noAr.length === 0 && !indisponivel && (
         <div className="flex flex-col items-center gap-2 rounded-2xl bg-card px-6 py-10 text-center ring-1 ring-neutral-200/90">
@@ -157,6 +217,11 @@ export function GerenciarDesafios({
                           <span className={cn(CHIP, "bg-neutral-100 text-neutral-600")}>
                             {desafio.aberto ? "Aberto a todos" : "Só convidados"}
                           </span>
+                          {desafio.tipo === "meta" && desafio.metrica && desafio.objetivo && (
+                            <span className={cn(CHIP, "bg-neutral-100 text-neutral-600")}>
+                              Meta de {formatarQuantidade(desafio.objetivo, desafio.metrica)}
+                            </span>
+                          )}
                         </div>
 
                         <p className="mt-1 text-[13px] text-neutral-500">
@@ -212,16 +277,21 @@ export function GerenciarDesafios({
 
       {editando && (
         <DialogDesafio
-          key={editando === "novo" ? "novo" : editando.desafio.id}
+          key={editando === "novo" ? (modelo?.chave ?? "novo") : editando.desafio.id}
           professorId={professorId}
           item={editando === "novo" ? null : editando}
+          modelo={editando === "novo" ? modelo : null}
           alunos={alunos}
           participantes={
             editando === "novo" ? [] : (participantesPorDesafio[editando.desafio.id] ?? [])
           }
-          onFechar={() => setEditando(null)}
+          onFechar={() => {
+            setEditando(null);
+            setModelo(null);
+          }}
           onPronto={() => {
             setEditando(null);
+            setModelo(null);
             iniciarTransicao(() => router.refresh());
           }}
         />
@@ -233,6 +303,7 @@ export function GerenciarDesafios({
 function DialogDesafio({
   professorId,
   item,
+  modelo,
   alunos,
   participantes,
   onFechar,
@@ -240,6 +311,8 @@ function DialogDesafio({
 }: {
   professorId: string;
   item: DesafioDoProfessor | null;
+  /** Modelo pronto escolhido na lista: preenche o formulário. */
+  modelo: ModeloDesafio | null;
   alunos: AlunoSimples[];
   participantes: string[];
   onFechar: () => void;
@@ -247,16 +320,32 @@ function DialogDesafio({
 }) {
   // Dentro do useState: a data de hoje só vale na abertura do diálogo, e
   // lê-la no corpo do componente tornaria o render impuro.
-  const [nome, setNome] = useState(item?.desafio.nome ?? "");
-  const [descricao, setDescricao] = useState(item?.desafio.descricao ?? "");
+  const [nome, setNome] = useState(item?.desafio.nome ?? modelo?.nome ?? "");
+  const [descricao, setDescricao] = useState(item?.desafio.descricao ?? modelo?.descricao ?? "");
   const [inicio, setInicio] = useState(
     () => item?.desafio.inicio ?? new Date().toISOString().slice(0, 10)
   );
   const [fim, setFim] = useState(
-    () => item?.desafio.fim ?? new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10)
+    () =>
+      item?.desafio.fim ??
+      new Date(Date.now() + (modelo?.dias ?? 30) * 86400000).toISOString().slice(0, 10)
   );
   const [aberto, setAberto] = useState(item?.desafio.aberto ?? true);
-  const [regras, setRegras] = useState<Regras>(item?.desafio.regras ?? REGRAS_PADRAO);
+  const [tipo, setTipo] = useState<TipoDesafio>(item?.desafio.tipo ?? modelo?.tipo ?? "pontos");
+  const [metrica, setMetrica] = useState<Metrica>(item?.desafio.metrica ?? modelo?.metrica ?? "km");
+  const [objetivo, setObjetivo] = useState(
+    String(item?.desafio.objetivo ?? modelo?.objetivo ?? 5).replace(".", ",")
+  );
+  const [imagemUrl, setImagemUrl] = useState(item?.desafio.imagemUrl ?? null);
+  const [arquivo, setArquivo] = useState<{ url: string; nome: string } | null>(
+    item?.desafio.arquivoUrl
+      ? { url: item.desafio.arquivoUrl, nome: item.desafio.arquivoNome ?? "Arquivo" }
+      : null
+  );
+  const [enviando, setEnviando] = useState<"imagem" | "arquivo" | null>(null);
+  const [regras, setRegras] = useState<Regras>(
+    item?.desafio.regras ?? modelo?.regras ?? REGRAS_PADRAO
+  );
   const [convidados, setConvidados] = useState<string[]>(participantes);
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
@@ -267,8 +356,12 @@ function DialogDesafio({
 
     if (nome.trim().length < 3) return setErro("Dê um nome ao desafio.");
     if (fim < inicio) return setErro("O fim não pode ser antes do começo.");
-    if (Object.values(regras).every((v) => v === 0)) {
+    if (tipo === "pontos" && Object.values(regras).every((v) => v === 0)) {
       return setErro("Pelo menos um hábito precisa valer ponto.");
+    }
+    const alvo = Number(objetivo.replace(",", "."));
+    if (tipo === "meta" && (!Number.isFinite(alvo) || alvo <= 0)) {
+      return setErro("Diga quanto é a meta, por exemplo 5.");
     }
     if (!aberto && convidados.length === 0) {
       return setErro("Escolha quem participa ou deixe o desafio aberto a todos.");
@@ -284,6 +377,13 @@ function DialogDesafio({
       fim,
       aberto,
       regras,
+      tipo,
+      // Medida e objetivo só existem no desafio de meta; no de pontos ficam nulos.
+      metrica: tipo === "meta" ? metrica : null,
+      objetivo: tipo === "meta" ? alvo : null,
+      imagem_url: imagemUrl,
+      arquivo_url: arquivo?.url ?? null,
+      arquivo_nome: arquivo?.nome ?? null,
       updated_at: new Date().toISOString(),
     };
 
@@ -328,6 +428,38 @@ function DialogDesafio({
     onPronto();
   }
 
+  async function enviarArquivo(file: File, qual: "imagem" | "arquivo") {
+    setErro(null);
+
+    const limite = qual === "imagem" ? 5 : 10;
+    if (file.size > limite * 1024 * 1024) {
+      setErro(`O arquivo passa de ${limite} MB. Escolha um menor.`);
+      return;
+    }
+
+    setEnviando(qual);
+
+    const supabase = createClient();
+    const limpo = file.name.replace(/[^\w.\- ]+/g, "").slice(-60) || "arquivo";
+    const caminho = `${professorId}/${crypto.randomUUID()}-${limpo}`;
+
+    const { error } = await supabase.storage
+      .from("desafios")
+      .upload(caminho, file, { contentType: file.type });
+
+    if (error) {
+      setEnviando(null);
+      setErro("Não conseguimos enviar o arquivo. Tente de novo.");
+      return;
+    }
+
+    const { data } = supabase.storage.from("desafios").getPublicUrl(caminho);
+    if (qual === "imagem") setImagemUrl(data.publicUrl);
+    else setArquivo({ url: data.publicUrl, nome: file.name });
+
+    setEnviando(null);
+  }
+
   const total = Object.values(regras).reduce((s, v) => s + v, 0);
 
   return (
@@ -335,7 +467,9 @@ function DialogDesafio({
       <DialogContent className="sm:max-w-xl">
         <form onSubmit={salvar} className="flex flex-col gap-5" noValidate>
           <DialogHeader>
-            <DialogTitle>{item ? "Editar desafio" : "Novo desafio"}</DialogTitle>
+            <DialogTitle>
+              {item ? "Editar desafio" : modelo ? modelo.nome : "Novo desafio"}
+            </DialogTitle>
             <DialogDescription>
               A pontuação sai sozinha do que o aluno já registra no app. Ninguém precisa postar nada.
             </DialogDescription>
@@ -400,6 +534,174 @@ function DialogDesafio({
           </div>
 
           <fieldset className="flex flex-col gap-2.5" disabled={salvando}>
+            <legend className="mb-2 text-sm font-medium text-neutral-700">Como funciona</legend>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {[
+                {
+                  valor: "pontos" as TipoDesafio,
+                  icone: Trophy,
+                  titulo: "Pontos por hábito",
+                  texto: "Cada hábito do dia vale ponto. Bom para constância.",
+                },
+                {
+                  valor: "meta" as TipoDesafio,
+                  icone: Target,
+                  titulo: "Meta a alcançar",
+                  texto: "Uma medida e um objetivo, tipo 5 km em 30 dias.",
+                },
+              ].map(({ valor, icone: Icone, titulo, texto }) => (
+                <button
+                  key={valor}
+                  type="button"
+                  onClick={() => setTipo(valor)}
+                  aria-pressed={tipo === valor}
+                  className={cn(
+                    "flex flex-col items-start gap-1 rounded-[14px] px-4 py-3 text-left transition-all duration-200 active:scale-[.98]",
+                    tipo === valor
+                      ? "bg-grafite text-white"
+                      : "bg-neutral-50 text-neutral-700 ring-1 ring-neutral-200 hover:bg-neutral-100"
+                  )}
+                >
+                  <Icone
+                    className={cn("size-4", tipo === valor ? "text-ciano" : "text-neutral-400")}
+                    strokeWidth={1.9}
+                    aria-hidden
+                  />
+                  <span className="text-sm font-semibold">{titulo}</span>
+                  <span className={cn("text-[12px] leading-tight", tipo === valor ? "text-white/60" : "text-neutral-500")}>
+                    {texto}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+          {tipo === "meta" && (
+            <fieldset className="flex flex-col gap-2.5" disabled={salvando}>
+              <legend className="mb-2 text-sm font-medium text-neutral-700">A meta</legend>
+
+              <div className="flex flex-wrap gap-2">
+                {(Object.keys(METRICAS) as Metrica[]).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setMetrica(m)}
+                    aria-pressed={metrica === m}
+                    className={cn(
+                      "min-h-11 rounded-full px-4 text-sm font-medium transition-all duration-200 active:scale-[.98]",
+                      metrica === m
+                        ? "bg-grafite text-white"
+                        : "bg-neutral-50 text-neutral-700 ring-1 ring-neutral-200 hover:bg-neutral-100"
+                    )}
+                  >
+                    {METRICAS[m].titulo}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-1 flex items-center gap-3">
+                <Input
+                  id="de-objetivo"
+                  inputMode="decimal"
+                  value={objetivo}
+                  onChange={(e) => setObjetivo(e.target.value.replace(/[^\d,.]/g, ""))}
+                  aria-label="Quanto é a meta"
+                  className="numero h-12 w-28 rounded-[14px] px-4 text-center text-base"
+                />
+                <p className="text-sm text-neutral-600">
+                  {METRICAS[metrica].unidade} por aluno, até {dataCurta(fim)}
+                </p>
+              </div>
+
+              <p className="text-[13px] leading-relaxed text-neutral-500">
+                {METRICAS[metrica].comoConta}
+              </p>
+            </fieldset>
+          )}
+
+          <fieldset className="flex flex-col gap-2.5" disabled={salvando}>
+            <legend className="mb-2 text-sm font-medium text-neutral-700">
+              Imagem e arquivo <span className="font-normal text-neutral-400">(opcional)</span>
+            </legend>
+
+            {imagemUrl && (
+              <div className="relative overflow-hidden rounded-[14px]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={imagemUrl} alt="" className="h-32 w-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setImagemUrl(null)}
+                  aria-label="Remover imagem"
+                  className="absolute top-2 right-2 flex size-8 items-center justify-center rounded-full bg-black/60 text-white"
+                >
+                  <X className="size-4" aria-hidden />
+                </button>
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2">
+              <label className="flex h-11 cursor-pointer items-center gap-2 rounded-full bg-neutral-50 px-4 text-sm font-medium text-neutral-700 ring-1 ring-neutral-200 transition-colors hover:bg-neutral-100">
+                {enviando === "imagem" ? (
+                  <Loader2 className="size-4 animate-spin" aria-hidden />
+                ) : (
+                  <ImagePlus className="size-4 text-neutral-400" strokeWidth={1.9} aria-hidden />
+                )}
+                {imagemUrl ? "Trocar imagem" : "Imagem de capa"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  disabled={Boolean(enviando) || salvando}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = "";
+                    if (file) enviarArquivo(file, "imagem");
+                  }}
+                />
+              </label>
+
+              <label className="flex h-11 cursor-pointer items-center gap-2 rounded-full bg-neutral-50 px-4 text-sm font-medium text-neutral-700 ring-1 ring-neutral-200 transition-colors hover:bg-neutral-100">
+                {enviando === "arquivo" ? (
+                  <Loader2 className="size-4 animate-spin" aria-hidden />
+                ) : (
+                  <Paperclip className="size-4 text-neutral-400" strokeWidth={1.9} aria-hidden />
+                )}
+                {arquivo ? "Trocar arquivo" : "Anexar arquivo"}
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,image/*"
+                  className="sr-only"
+                  disabled={Boolean(enviando) || salvando}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = "";
+                    if (file) enviarArquivo(file, "arquivo");
+                  }}
+                />
+              </label>
+            </div>
+
+            {arquivo && (
+              <p className="flex items-center gap-2 text-[13px] text-neutral-600">
+                <FileText className="size-4 shrink-0 text-neutral-400" strokeWidth={1.8} aria-hidden />
+                <span className="min-w-0 flex-1 truncate">{arquivo.nome}</span>
+                <button
+                  type="button"
+                  onClick={() => setArquivo(null)}
+                  className="shrink-0 font-semibold text-saude-vermelho"
+                >
+                  Remover
+                </button>
+              </p>
+            )}
+
+            <p className="text-[13px] leading-relaxed text-neutral-500">
+              A capa aparece no card do desafio. O arquivo (regulamento, tabela, cartaz) fica para o
+              aluno baixar. Imagem até 5 MB, arquivo até 10 MB.
+            </p>
+          </fieldset>
+
+          <fieldset className="flex flex-col gap-2.5" disabled={salvando}>
             <legend className="mb-2 text-sm font-medium text-neutral-700">Quem participa</legend>
             <div className="flex gap-2">
               {[
@@ -460,7 +762,7 @@ function DialogDesafio({
             </div>
           </fieldset>
 
-          <fieldset className="flex flex-col gap-2" disabled={salvando}>
+          <fieldset className={cn("flex-col gap-2", tipo === "pontos" ? "flex" : "hidden")} disabled={salvando}>
             <legend className="mb-2 text-sm font-medium text-neutral-700">
               Quanto vale cada hábito, por dia
             </legend>

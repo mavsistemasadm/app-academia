@@ -5,8 +5,10 @@ import {
   lerRegras,
   situacaoDoDesafio,
   type Habito,
+  type Metrica,
   type Regras,
   type Situacao,
+  type TipoDesafio,
 } from '@/lib/utils/desafios'
 import { createClient } from './server'
 
@@ -20,6 +22,14 @@ export interface Desafio {
   aberto: boolean
   regras: Regras
   cancelado: boolean
+  tipo: TipoDesafio
+  /** Só em `tipo: 'meta'`. */
+  metrica: Metrica | null
+  objetivo: number | null
+  /** Capa e anexo ficam no bucket público `desafios` (migração 015). */
+  imagemUrl: string | null
+  arquivoUrl: string | null
+  arquivoNome: string | null
 }
 
 export interface DesafioNaLista {
@@ -28,8 +38,10 @@ export interface DesafioNaLista {
   /** 'participando' | 'convidado' | 'fora' (aberto, dá para entrar) | 'saiu' */
   minhaSituacao: 'participando' | 'convidado' | 'fora' | 'saiu'
   participantes: number
+  /** Pontos, quando é de pontos; a quantidade da medida, quando é de meta. */
   meusPontos: number | null
   minhaPosicao: number | null
+  concluido: boolean
 }
 
 export interface LinhaRanking {
@@ -59,6 +71,12 @@ function montar(linha: Record<string, unknown>): Desafio {
     aberto: Boolean(linha.aberto),
     regras: lerRegras(linha.regras),
     cancelado: Boolean(linha.cancelado),
+    tipo: linha.tipo === 'meta' ? 'meta' : 'pontos',
+    metrica: (linha.metrica as Metrica | null) ?? null,
+    objetivo: linha.objetivo === null || linha.objetivo === undefined ? null : Number(linha.objetivo),
+    imagemUrl: (linha.imagem_url as string | null) ?? null,
+    arquivoUrl: (linha.arquivo_url as string | null) ?? null,
+    arquivoNome: (linha.arquivo_nome as string | null) ?? null,
   }
 }
 
@@ -92,6 +110,7 @@ export async function getDesafiosDoAluno(alunoId: string): Promise<ListaDesafios
       participantes: number
       meus_pontos: number | null
       minha_posicao: number | null
+      concluido: boolean | null
     }[]).map((r) => [r.desafio_id, r])
   )
 
@@ -116,8 +135,9 @@ export async function getDesafiosDoAluno(alunoId: string): Promise<ListaDesafios
                 ? 'saiu'
                 : 'fora',
         participantes: r?.participantes ?? 0,
-        meusPontos: r?.meus_pontos ?? null,
+        meusPontos: r?.meus_pontos === null || r?.meus_pontos === undefined ? null : Number(r.meus_pontos),
         minhaPosicao: r?.minha_posicao ?? null,
+        concluido: Boolean(r?.concluido),
       }
     }),
   }
@@ -159,6 +179,61 @@ export async function getDetalhePontos(
   }))
 }
 
+export interface LinhaProgresso {
+  alunoId: string
+  nome: string
+  fotoUrl: string | null
+  quantidade: number
+  concluido: boolean
+  souEu: boolean
+}
+
+/** Quem está onde num desafio de meta ("5 km em 30 dias"). */
+export async function getProgresso(
+  supabase: SupabaseClient,
+  desafioId: string
+): Promise<LinhaProgresso[]> {
+  const { data } = await supabase.rpc('progresso_desafio', { p_desafio: desafioId })
+
+  return ((data ?? []) as Record<string, unknown>[]).map((l) => ({
+    alunoId: l.aluno_id as string,
+    nome: l.nome as string,
+    fotoUrl: (l.foto_url as string | null) ?? null,
+    quantidade: Number(l.quantidade ?? 0),
+    concluido: Boolean(l.concluido),
+    souEu: Boolean(l.sou_eu),
+  }))
+}
+
+export interface RegistroDesafio {
+  id: string
+  data: string
+  quantidade: number
+  observacao: string | null
+}
+
+/** O que o próprio aluno registrou na mão (só em desafio de quilômetros). */
+export async function getMeusRegistros(
+  supabase: SupabaseClient,
+  desafioId: string,
+  alunoId: string
+): Promise<RegistroDesafio[]> {
+  const { data } = await supabase
+    .from('desafio_registros')
+    .select('id, data, quantidade, observacao')
+    .eq('desafio_id', desafioId)
+    .eq('aluno_id', alunoId)
+    .order('data', { ascending: false })
+    .limit(60)
+
+  return ((data ?? []) as Record<string, unknown>[]).map((r) => ({
+    id: r.id as string,
+    data: r.data as string,
+    quantidade: Number(r.quantidade ?? 0),
+    observacao: (r.observacao as string | null) ?? null,
+  }))
+}
+
 export interface DesafioDoProfessor extends DesafioNaLista {
   /** Convidados que ainda não aceitaram. */
   convidados: number
@@ -194,6 +269,7 @@ export async function getDesafiosDoProfessor(): Promise<{
         desafio,
         situacao: situacaoDoDesafio(desafio.inicio, desafio.fim, hoje),
         minhaSituacao: 'fora' as const,
+        concluido: false,
         participantes:
           resumos.get(desafio.id)?.participantes ??
           doDesafio.filter((p) => p.status === 'ativo').length,

@@ -2,16 +2,31 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowLeft, Trophy } from "lucide-react";
+import { ArrowLeft, Check, FileText, Trophy } from "lucide-react";
 
 import { BotaoParticiparDesafio } from "@/components/aluno/BotaoParticiparDesafio";
+import { RegistroDesafio } from "@/components/aluno/RegistroDesafio";
 import { CabecalhoPagina } from "@/components/shared/CabecalhoPagina";
 import { cn } from "@/lib/utils";
-import { getDesafio, getDetalhePontos, getRanking } from "@/lib/supabase/desafios";
+import {
+  getDesafio,
+  getDetalhePontos,
+  getMeusRegistros,
+  getProgresso,
+  getRanking,
+} from "@/lib/supabase/desafios";
 import { getPerfilAtual } from "@/lib/supabase/perfil";
 import { createClient } from "@/lib/supabase/server";
 import { hojeISO } from "@/lib/utils/datas";
-import { diasEntre, HABITOS, ROTULO_SITUACAO, situacaoDoDesafio } from "@/lib/utils/desafios";
+import {
+  diasEntre,
+  formatarQuantidade,
+  HABITOS,
+  METRICAS,
+  porcentagem,
+  ROTULO_SITUACAO,
+  situacaoDoDesafio,
+} from "@/lib/utils/desafios";
 
 function dataLonga(iso: string) {
   return format(new Date(`${iso}T12:00:00Z`), "d 'de' MMMM", { locale: ptBR });
@@ -31,15 +46,21 @@ export default async function DesafioPage({
 
   const supabase = await createClient();
 
-  const [{ data: minha }, ranking, detalhe] = await Promise.all([
+  const meta = desafio.tipo === "meta" && desafio.metrica && desafio.objetivo !== null;
+
+  const [{ data: minha }, ranking, detalhe, progresso, registros] = await Promise.all([
     supabase
       .from("desafio_participantes")
       .select("status")
       .eq("desafio_id", id)
       .eq("aluno_id", perfil.id)
       .maybeSingle(),
-    getRanking(supabase, id),
-    getDetalhePontos(supabase, id),
+    meta ? Promise.resolve([]) : getRanking(supabase, id),
+    meta ? Promise.resolve([]) : getDetalhePontos(supabase, id),
+    meta ? getProgresso(supabase, id) : Promise.resolve([]),
+    meta && desafio.metrica && METRICAS[desafio.metrica].manual
+      ? getMeusRegistros(supabase, id, perfil.id)
+      : Promise.resolve([]),
   ]);
 
   const status = (minha?.status as string | undefined) ?? null;
@@ -55,8 +76,26 @@ export default async function DesafioPage({
   const hoje = hojeISO();
   const situacao = situacaoDoDesafio(desafio.inicio, desafio.fim, hoje);
   const faltam = diasEntre(hoje, desafio.fim);
-  const eu = ranking.find((l) => l.souEu);
-  const minhaPosicao = ranking.findIndex((l) => l.souEu) + 1;
+  const classificacao = meta
+    ? progresso.map((l) => ({
+        alunoId: l.alunoId,
+        nome: l.nome,
+        fotoUrl: l.fotoUrl,
+        valor: l.quantidade,
+        detalhe: l.concluido ? "concluiu a meta" : null,
+        souEu: l.souEu,
+      }))
+    : ranking.map((l) => ({
+        alunoId: l.alunoId,
+        nome: l.nome,
+        fotoUrl: l.fotoUrl,
+        valor: l.pontos,
+        detalhe: `${l.diasAtivos} ${l.diasAtivos === 1 ? "dia ativo" : "dias ativos"}`,
+        souEu: l.souEu,
+      }));
+
+  const eu = classificacao.find((l) => l.souEu);
+  const minhaPosicao = classificacao.findIndex((l) => l.souEu) + 1;
   const podeEntrar = desafio.aberto || minhaSituacao === "convidado";
 
   return (
@@ -91,6 +130,36 @@ export default async function DesafioPage({
       />
 
       <div className="flex flex-col gap-8 px-5 md:px-0">
+        {desafio.imagemUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={desafio.imagemUrl}
+            alt=""
+            className="h-40 w-full rounded-2xl object-cover md:h-52"
+          />
+        )}
+
+        {meta && desafio.metrica && desafio.objetivo !== null && (
+          <p className="text-[15px] leading-relaxed text-neutral-600">
+            Meta de cada participante:{" "}
+            <strong className="font-semibold text-neutral-950">
+              {formatarQuantidade(desafio.objetivo, desafio.metrica)}
+            </strong>{" "}
+            até o fim. {METRICAS[desafio.metrica].comoConta}
+          </p>
+        )}
+
+        {desafio.arquivoUrl && (
+          <a
+            href={desafio.arquivoUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex w-fit items-center gap-2 rounded-full bg-card px-4 py-3 text-sm font-semibold text-neutral-950 ring-1 ring-neutral-200/90 transition-colors hover:bg-neutral-50"
+          >
+            <FileText className="size-4 text-neutral-400" strokeWidth={1.8} aria-hidden />
+            {desafio.arquivoNome ?? "Abrir arquivo do desafio"}
+          </a>
+        )}
         {minhaSituacao !== "participando" && podeEntrar && (
           <BotaoParticiparDesafio
             desafioId={desafio.id}
@@ -103,26 +172,62 @@ export default async function DesafioPage({
         {minhaSituacao === "participando" && (
           <section className="flex flex-col gap-3.5">
             <div className="flex flex-col gap-4 rounded-[26px] bg-grafite p-6 text-white">
-              <p className="rotulo text-white/50">Seus pontos</p>
+              <p className="rotulo text-white/50">
+                {meta ? "Seu progresso" : "Seus pontos"}
+              </p>
               <div className="flex items-end justify-between gap-4">
                 <p className="numero text-[44px] leading-none font-semibold">
-                  {eu?.pontos ?? 0}
+                  {meta && desafio.metrica
+                    ? formatarQuantidade(eu?.valor ?? 0, desafio.metrica).split(" ")[0]
+                    : (eu?.valor ?? 0)}
                   <span className="ml-2 font-sans text-sm font-medium tracking-normal text-white/50">
-                    pontos
+                    {meta && desafio.metrica
+                      ? `de ${formatarQuantidade(desafio.objetivo ?? 0, desafio.metrica)}`
+                      : "pontos"}
                   </span>
                 </p>
                 {minhaPosicao > 0 && (
                   <p className="numero text-right text-[28px] leading-none font-semibold text-ciano">
                     {minhaPosicao}º
                     <span className="ml-1 font-sans text-xs font-medium tracking-normal text-white/50">
-                      de {ranking.length}
+                      de {classificacao.length}
                     </span>
                   </p>
                 )}
               </div>
+
+              {meta && desafio.objetivo !== null && (
+                <>
+                  <div aria-hidden className="h-2 overflow-hidden rounded-full bg-white/15">
+                    <div
+                      className="h-full rounded-full bg-ciano transition-all duration-200"
+                      style={{ width: `${porcentagem(eu?.valor ?? 0, desafio.objetivo)}%` }}
+                    />
+                  </div>
+                  <p className="text-sm text-white/60">
+                    {porcentagem(eu?.valor ?? 0, desafio.objetivo) >= 100
+                      ? "Meta batida. Continue somando se quiser."
+                      : `${porcentagem(eu?.valor ?? 0, desafio.objetivo)}% da meta`}
+                  </p>
+                </>
+              )}
             </div>
 
-            <ul className="flex flex-col divide-y divide-neutral-200/80 overflow-hidden rounded-2xl bg-card ring-1 ring-neutral-200/90">
+            {meta && desafio.metrica && METRICAS[desafio.metrica].manual && (
+              <RegistroDesafio
+                desafioId={desafio.id}
+                alunoId={perfil.id}
+                metrica={desafio.metrica}
+                hoje={hoje}
+                registros={registros}
+                bloqueado={situacao !== "em_andamento"}
+              />
+            )}
+
+            <ul className={cn(
+              "flex-col divide-y divide-neutral-200/80 overflow-hidden rounded-2xl bg-card ring-1 ring-neutral-200/90",
+              meta ? "hidden" : "flex"
+            )}>
               {HABITOS.filter(({ chave }) => desafio.regras[chave] > 0).map(
                 ({ chave, titulo, descricao, icone: Icone }) => {
                   const linha = detalhe.find((d) => d.habito === chave);
@@ -163,11 +268,11 @@ export default async function DesafioPage({
               Ranking
             </h2>
             <p className="rotulo text-neutral-400">
-              {ranking.length} {ranking.length === 1 ? "participante" : "participantes"}
+              {classificacao.length} {classificacao.length === 1 ? "participante" : "participantes"}
             </p>
           </div>
 
-          {ranking.length === 0 ? (
+          {classificacao.length === 0 ? (
             <div className="flex flex-col items-center gap-2 rounded-2xl bg-card px-6 py-10 text-center ring-1 ring-neutral-200/90">
               <Trophy className="size-6 text-neutral-400" strokeWidth={1.8} aria-hidden />
               <p className="text-[15px] font-semibold text-neutral-950">Ninguém entrou ainda</p>
@@ -177,7 +282,7 @@ export default async function DesafioPage({
             </div>
           ) : (
             <ol className="flex flex-col divide-y divide-neutral-200/80 overflow-hidden rounded-2xl bg-card ring-1 ring-neutral-200/90">
-              {ranking.map((linha, i) => (
+              {classificacao.map((linha, i) => (
                 <li
                   key={linha.alunoId}
                   className={cn(
@@ -210,13 +315,20 @@ export default async function DesafioPage({
                       {linha.nome}
                       {linha.souEu && <span className="font-normal text-neutral-500"> · você</span>}
                     </p>
-                    <p className="rotulo text-neutral-400">
-                      {linha.diasAtivos} {linha.diasAtivos === 1 ? "dia ativo" : "dias ativos"}
-                    </p>
+                    {linha.detalhe && (
+                      <p className="rotulo flex items-center gap-1 text-neutral-400">
+                        {linha.detalhe === "concluiu a meta" && (
+                          <Check className="size-3.5 text-saude-verde" strokeWidth={2.4} aria-hidden />
+                        )}
+                        {linha.detalhe}
+                      </p>
+                    )}
                   </div>
 
                   <p className="numero shrink-0 text-[17px] font-semibold text-neutral-950">
-                    {linha.pontos}
+                    {meta && desafio.metrica
+                      ? formatarQuantidade(linha.valor, desafio.metrica)
+                      : linha.valor}
                   </p>
                 </li>
               ))}

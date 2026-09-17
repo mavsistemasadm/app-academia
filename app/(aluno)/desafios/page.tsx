@@ -9,7 +9,12 @@ import { cn } from "@/lib/utils";
 import { getDesafiosDoAluno } from "@/lib/supabase/desafios";
 import { getPerfilAtual } from "@/lib/supabase/perfil";
 import { hojeISO } from "@/lib/utils/datas";
-import { diasEntre, ROTULO_SITUACAO } from "@/lib/utils/desafios";
+import {
+  diasEntre,
+  formatarQuantidade,
+  porcentagem,
+  ROTULO_SITUACAO,
+} from "@/lib/utils/desafios";
 
 const CHIP = "rounded-full px-2.5 py-0.5 text-[11px] font-semibold";
 
@@ -34,7 +39,7 @@ export default async function DesafiosPage() {
       <CabecalhoPagina
         rotulo="Turma"
         titulo="Desafios"
-        descricao="Aparecer, medir, beber água e tomar o remédio na hora valem ponto. O resto é com você."
+        descricao="Entre em quantos quiser. Uns contam pontos pelo que você já faz no app; outros têm uma meta, tipo 5 km em 30 dias."
       />
 
       <div className="flex flex-col gap-8 px-5 md:px-0">
@@ -80,12 +85,26 @@ export default async function DesafiosPage() {
                         href={`/desafios/${desafio.id}`}
                         className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-neutral-50"
                       >
+                        {desafio.imagemUrl && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={desafio.imagemUrl}
+                            alt=""
+                            className="size-14 shrink-0 rounded-[14px] object-cover"
+                          />
+                        )}
+
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                             <p className="text-[15px] font-semibold text-neutral-950">{desafio.nome}</p>
                             {minhaSituacao === "convidado" && (
                               <span className={cn(CHIP, "bg-saude-amarelo-light text-[#b45309]")}>
                                 Convite
+                              </span>
+                            )}
+                            {desafio.tipo === "meta" && desafio.metrica && desafio.objetivo && (
+                              <span className={cn(CHIP, "bg-neutral-100 text-neutral-600")}>
+                                Meta de {formatarQuantidade(desafio.objetivo, desafio.metrica)}
                               </span>
                             )}
                             {situacao === "encerrado" && (
@@ -112,8 +131,20 @@ export default async function DesafiosPage() {
                             {minhaSituacao === "participando" && meusPontos !== null && (
                               <span className="flex items-center gap-1.5">
                                 <Trophy className="size-3.5 text-neutral-400" strokeWidth={1.8} aria-hidden />
-                                <span className="numero font-semibold text-neutral-950">{meusPontos}</span>
-                                pontos
+                                {desafio.tipo === "meta" && desafio.metrica && desafio.objetivo ? (
+                                  <>
+                                    <span className="numero font-semibold text-neutral-950">
+                                      {formatarQuantidade(meusPontos, desafio.metrica)}
+                                    </span>
+                                    de {formatarQuantidade(desafio.objetivo, desafio.metrica)} ·{" "}
+                                    {porcentagem(meusPontos, desafio.objetivo)}%
+                                  </>
+                                ) : (
+                                  <>
+                                    <span className="numero font-semibold text-neutral-950">{meusPontos}</span>
+                                    pontos
+                                  </>
+                                )}
                                 {minhaPosicao !== null && <> · {minhaPosicao}º lugar</>}
                               </span>
                             )}
