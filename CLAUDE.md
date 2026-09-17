@@ -46,6 +46,7 @@ app/
   (aluno)/conquistas      badges derivadas dos dados + streak
   (aluno)/desafios        lista, ranking, progresso e registro do desafio (24)
   (aluno)/agenda          eventos com confirmação + comunicados
+  (aluno)/aulas           grade da semana, marcar vaga, próximas e histórico
   (aluno)/anamnese        formulário de entrada de saúde
   (aluno)/perfil          dados, foto, contatos, notificações, relatório
   (aluno)/relatorio       folha mensal para o médico (imprime em PDF)
@@ -61,13 +62,14 @@ app/
   (professor)/treinos     lista / novo / editar, com upload de vídeo
   (professor)/agenda-professor        eventos e comunicados
   (professor)/presenca    quem está na academia, sumidos, movimento
+  (professor)/aulas-professor         grade semanal, inscritos e cancelamento
   (professor)/desafios-professor      cria, convida e acompanha desafios
 
   chat/                   lista de conversas (fora dos dois grupos)
   chat/[id]               conversa com realtime
 
   api/push/inscrever      salva/apaga a assinatura de push do usuário
-  api/cron/lembretes      medicamento, água e evento — roda a cada 15 min
+  api/cron/lembretes      medicamento, água, evento e aula — a cada 15 min
 
 components/aluno/    CardIndicador · CardTreino · RegistroHumor ·
                      FormularioIndicador · HistoricoIndicadores ·
@@ -290,6 +292,14 @@ marca `av-tour-visto-v1` no user_metadata) · `?tour=1` reabre
 **22. Sininho** — [x] central de notificações do aluno e do professor com
 realtime (`SinoNotificacoes`)
 
+**25. Aulas com hora marcada** — [x] o professor monta a grade semanal
+(dia, hora, duração, vagas, local, condições) em `/aulas-professor` ·
+[x] o aluno marca e desmarca em `/aulas`, vê as próximas e o histórico ·
+[x] a vaga é garantida pelo gatilho `checa_vaga_da_aula`, não pela tela
+(dois toques no mesmo segundo não furam o limite) · [x] cancelar uma data
+específica avisa a turma · [x] destaque na home, lembrete no sino e push uma
+hora antes · aluno não enxerga quem mais marcou; o professor vê a lista
+
 **24. Desafios** — [x] dois tipos: **pontos por hábito** (presença, treino,
 indicador, água, medicamento, humor; cada um conta uma vez por dia) e **meta a
 alcançar** ("5 km em 30 dias", nas medidas km, minutos, treinos, presenças e
@@ -329,6 +339,8 @@ sequência · [x] cronômetro e duração do treino para o professor ·
    - 011 e 012 já aplicadas (17/09/2026). 012 cria o papel `familiar`; o Auth
      grava o app_metadata depois do insert, então `/api/familia/cadastro`
      acerta `profiles.role` pela service role logo depois de criar a conta.
+   - 016 aulas: `aulas_horarios`, `aula_inscricoes`, `aula_cancelamentos`,
+     o gatilho de vaga e a função `aulas_do_periodo`.
    - 013 desafios: tabelas `desafios` e `desafio_participantes` + funções
      `ranking_desafio`, `detalhe_pontos_desafio` e `resumo_desafios`.
    - 014 desafio com meta: `tipo`, `metrica` e `objetivo` em `desafios`,

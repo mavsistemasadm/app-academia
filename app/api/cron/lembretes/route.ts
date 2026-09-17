@@ -25,7 +25,8 @@ function paraMinutos(hhmm: string): number {
 
 /**
  * Roda de 15 em 15 minutos (ver `vercel.json`) e dispara três coisas:
- * medicamento atrasado, lembrete de água e evento que começa em uma hora.
+ * medicamento atrasado, lembrete de água, evento e aula que começam em uma
+ * hora.
  *
  * O `CRON_SECRET` é obrigatório — sem ele, qualquer um na internet
  * conseguiria disparar notificação para todos os alunos.
@@ -52,7 +53,7 @@ export async function GET(request: Request) {
   const agoraMin = paraMinutos(agora);
   const diaSemana = diaSemanaAtual();
 
-  const enviados = { medicamentos: 0, agua: 0, eventos: 0 };
+  const enviados = { medicamentos: 0, agua: 0, eventos: 0, aulas: 0 };
 
   // ── 1. Medicamento vencido e não confirmado ─────────────────────────
   const [{ data: medicamentos }, { data: confirmacoes }] = await Promise.all([
@@ -167,6 +168,58 @@ export async function GET(request: Request) {
 
       if (ok) enviados.eventos += 1;
     }
+  }
+
+  // ── 4. Aula marcada que começa em uma hora ──────────────────────
+  const { data: inscricoes } = await supabase
+    .from("aula_inscricoes")
+    .select("aluno_id, horario_id, data, aulas_horarios(titulo, hora, local)")
+    .eq("data", hoje);
+
+  type InscricaoComAula = {
+    aluno_id: string;
+    horario_id: string;
+    data: string;
+    aulas_horarios:
+      | { titulo: string; hora: string; local: string | null }
+      | { titulo: string; hora: string; local: string | null }[]
+      | null;
+  };
+
+  const emUmaHora = (inscricoes ?? []) as InscricaoComAula[];
+
+  // Aula cancelada não lembra ninguém: o aviso já saiu pelo sininho.
+  const cancelados = new Set<string>();
+  if (emUmaHora.length > 0) {
+    const { data: cancelamentos } = await supabase
+      .from("aula_cancelamentos")
+      .select("horario_id")
+      .eq("data", hoje);
+    for (const c of cancelamentos ?? []) cancelados.add(c.horario_id as string);
+  }
+
+  for (const inscricao of emUmaHora) {
+    if (cancelados.has(inscricao.horario_id)) continue;
+
+    const aula = Array.isArray(inscricao.aulas_horarios)
+      ? inscricao.aulas_horarios[0]
+      : inscricao.aulas_horarios;
+    if (!aula) continue;
+
+    const minutosDaAula = paraMinutos(aula.hora.slice(0, 5));
+    const faltam = minutosDaAula - agoraMin;
+
+    // A janela é a do cron: roda a cada 15 minutos.
+    if (faltam < 53 || faltam > 68) continue;
+
+    const ok = await enviarPush(inscricao.aluno_id, {
+      titulo: `${aula.titulo} às ${aula.hora.slice(0, 5)}`,
+      corpo: `Começa em uma hora${aula.local ? ` · ${aula.local}` : ""}. Sua vaga está garantida.`,
+      url: "/aulas",
+      tag: `aula-${inscricao.horario_id}-${inscricao.data}`,
+    });
+
+    if (ok) enviados.aulas += 1;
   }
 
   return NextResponse.json({ ok: true, hoje, agora, enviados });

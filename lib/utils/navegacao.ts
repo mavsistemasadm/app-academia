@@ -1,5 +1,6 @@
 import {
   Activity,
+  CalendarClock,
   CalendarDays,
   ClipboardList,
   Droplets,
@@ -34,7 +35,7 @@ export const NAV_MOBILE: ItemNav[] = [
   { href: '/home', label: 'Início', icone: Home },
   { href: '/treino', label: 'Treino', icone: Dumbbell },
   { href: '/indicadores', label: 'Saúde', icone: Activity },
-  { href: '/medicamentos', label: 'Medicamentos', icone: Pill },
+  { href: '/aulas', label: 'Aulas', icone: CalendarClock },
 ]
 
 const TITULOS: Record<string, string> = {
@@ -47,6 +48,7 @@ const TITULOS: Record<string, string> = {
   '/humor': 'Meu humor',
   '/hidratacao': 'Hidratação',
   '/bem-estar': 'Bem-estar',
+  '/aulas': 'Aulas',
   '/conquistas': 'Conquistas',
   '/desafios': 'Desafios',
   '/agenda': 'Agenda',
@@ -72,6 +74,7 @@ export const NAV_DESKTOP: { secao: string; itens: ItemNav[] }[] = [
       { href: '/treino', label: 'Meu treino', icone: Dumbbell },
       { href: '/indicadores', label: 'Indicadores', icone: Activity },
       { href: '/medicamentos', label: 'Medicamentos', icone: Pill },
+      { href: '/aulas', label: 'Aulas', icone: CalendarClock },
     ],
   },
   {
@@ -108,8 +111,15 @@ export const NAV_DESKTOP: { secao: string; itens: ItemNav[] }[] = [
 export const NAV_PROFESSOR: ItemNav[] = [
   { href: '/dashboard', label: 'Painel', icone: LayoutDashboard },
   { href: '/alunos', label: 'Alunos', icone: Users },
+  { href: '/aulas-professor', label: 'Aulas', icone: CalendarClock },
   { href: '/treinos', label: 'Treinos', icone: Dumbbell },
   { href: '/agenda-professor', label: 'Agenda', icone: CalendarDays },
   { href: '/desafios-professor', label: 'Desafios', icone: Trophy },
   { href: '/presenca', label: 'Presença', icone: Activity },
 ]
+
+/**
+ * Barra de baixo do professor: as 4 do dia a dia. O resto abre no "Mais",
+ * como na do aluno.
+ */
+export const NAV_PROFESSOR_MOBILE: ItemNav[] = NAV_PROFESSOR.slice(0, 4)

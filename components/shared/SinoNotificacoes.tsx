@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import {
   Bell,
   BellRing,
+  CalendarClock,
   CalendarDays,
   CalendarX,
   HeartPulse,
@@ -35,6 +36,7 @@ import { cn } from "@/lib/utils";
 import { hojeISO, naAcademia, somarDiasISO } from "@/lib/utils/datas";
 
 const ICONE: Record<TipoNotificacao, LucideIcon> = {
+  aula: CalendarClock,
   comunicado: Megaphone,
   medicamento: Pill,
   evento: CalendarDays,

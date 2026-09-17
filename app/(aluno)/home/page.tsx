@@ -18,16 +18,19 @@ import {
 } from "lucide-react";
 
 import { BotaoCheckin } from "@/components/aluno/BotaoCheckin";
+import { CardAulas } from "@/components/aluno/CardAulas";
 import { CardIndicador } from "@/components/aluno/CardIndicador";
 import { CardTreino } from "@/components/aluno/CardTreino";
 import { RegistroHumor } from "@/components/aluno/RegistroHumor";
 import { SinoNotificacoes } from "@/components/shared/SinoNotificacoes";
+import { getAgendaDoAluno, getMinhasAulas } from "@/lib/supabase/aulas";
 import { getHomeAluno } from "@/lib/supabase/home-aluno";
 import { getNotificacoesAluno } from "@/lib/supabase/notificacoes";
 import { getPerfilAtual } from "@/lib/supabase/perfil";
 import { getPresencaAluno } from "@/lib/supabase/presenca";
+import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
-import { naAcademia } from "@/lib/utils/datas";
+import { horaAtual, naAcademia } from "@/lib/utils/datas";
 import { getMensagemAlerta } from "@/lib/utils/semaforo";
 
 interface Foco {
@@ -48,10 +51,14 @@ export default async function HomePage() {
   const perfil = await getPerfilAtual();
   if (!perfil) redirect("/login");
 
-  const [dados, presenca, notificacoes] = await Promise.all([
+  const supabase = await createClient();
+
+  const [dados, presenca, notificacoes, agendaAulas, minhasAulas] = await Promise.all([
     getHomeAluno(perfil),
     getPresencaAluno(perfil.id),
     getNotificacoesAluno(perfil),
+    getAgendaDoAluno(),
+    getMinhasAulas(supabase, perfil.id),
   ]);
 
   // Nome que veio do e-mail ("marlos.h.santos") também vira "Marlos".
@@ -240,6 +247,15 @@ export default async function HomePage() {
         </div>
         {acoes("hidden md:flex")}
       </header>
+
+      {/* ── Marcar aula: a primeira coisa depois da saudação ─────── */}
+      <CardAulas
+        aulas={agendaAulas.aulas}
+        minhas={minhasAulas}
+        hoje={dados.hoje}
+        horaAgora={horaAtual()}
+        indisponivel={agendaAulas.indisponivel}
+      />
 
       {/* ── Foco de hoje + check-in ──────────────────────────────── */}
       <section className="grid gap-3 md:grid-cols-[1.45fr_1fr] md:gap-4">

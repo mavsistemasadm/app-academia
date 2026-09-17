@@ -3,10 +3,13 @@ import { ptBR } from 'date-fns/locale'
 
 import type { AlertaTipo, AvatarCondicao, Profile } from '@/lib/types'
 import { hojeISO, naAcademia, somarDiasISO } from '@/lib/utils/datas'
+import { horaCurta } from '@/lib/utils/aulas'
+import { getMinhasAulas } from './aulas'
 import { getMedicamentosAluno } from './medicamentos'
 import { createClient } from './server'
 
 export type TipoNotificacao =
+  | 'aula'
   | 'comunicado'
   | 'medicamento'
   | 'evento'
@@ -128,7 +131,7 @@ export async function getNotificacoesAluno(
   const limiteComunicados = new Date(agora.getTime() - 30 * DIA_MS).toISOString()
   const limiteEventos = new Date(agora.getTime() + 2 * DIA_MS).toISOString()
 
-  const [{ data: comunicados }, { data: eventos }, medicamentos, mensagens] =
+  const [{ data: comunicados }, { data: eventos }, medicamentos, mensagens, aulas] =
     await Promise.all([
       supabase
         .from('notificacoes')
@@ -145,6 +148,8 @@ export async function getNotificacoesAluno(
         .limit(10),
       getMedicamentosAluno(perfil.id),
       mensagensNaoLidas(supabase, perfil.id),
+      // As aulas que o aluno marcou para hoje e amanhã.
+      getMinhasAulas(supabase, perfil.id),
     ])
 
   const itens: ItemNotificacao[] = [...mensagens]
@@ -212,6 +217,30 @@ export async function getNotificacoesAluno(
       href: '/agenda',
       criadoEm: (entrouNaJanela < agora ? entrouNaJanela : agora).toISOString(),
       urgente: false,
+    })
+  }
+
+  /*
+    Aula marcada vira lembrete no dia e na véspera. Aula cancelada pelo
+    centro entra como urgente: é a única forma de o aluno saber antes de sair
+    de casa.
+  */
+  for (const aula of aulas) {
+    if (aula.data !== hoje && aula.data !== amanha) continue
+
+    const hora = horaCurta(aula.hora)
+    const quando = aula.data === hoje ? `Hoje às ${hora}` : `Amanhã às ${hora}`
+
+    itens.push({
+      id: `aula:${aula.id}:${aula.cancelada ? 'cancelada' : 'marcada'}`,
+      tipo: 'aula',
+      titulo: aula.cancelada ? `${aula.titulo} foi cancelada` : aula.titulo,
+      texto: aula.cancelada
+        ? `${quando}. O centro cancelou esta aula, você não precisa vir.`
+        : `${quando}${aula.local ? ` · ${aula.local}` : ''}. Sua vaga está garantida.`,
+      href: '/aulas',
+      criadoEm: instanteNaAcademia(aula.data, '00:01'),
+      urgente: aula.cancelada,
     })
   }
 
