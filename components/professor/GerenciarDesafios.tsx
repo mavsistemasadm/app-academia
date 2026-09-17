@@ -245,14 +245,16 @@ function DialogDesafio({
   onFechar: () => void;
   onPronto: () => void;
 }) {
-  const hoje = new Date().toISOString().slice(0, 10);
-  const daqui = (dias: number) =>
-    new Date(Date.now() + dias * 86400000).toISOString().slice(0, 10);
-
+  // Dentro do useState: a data de hoje só vale na abertura do diálogo, e
+  // lê-la no corpo do componente tornaria o render impuro.
   const [nome, setNome] = useState(item?.desafio.nome ?? "");
   const [descricao, setDescricao] = useState(item?.desafio.descricao ?? "");
-  const [inicio, setInicio] = useState(item?.desafio.inicio ?? hoje);
-  const [fim, setFim] = useState(item?.desafio.fim ?? daqui(30));
+  const [inicio, setInicio] = useState(
+    () => item?.desafio.inicio ?? new Date().toISOString().slice(0, 10)
+  );
+  const [fim, setFim] = useState(
+    () => item?.desafio.fim ?? new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10)
+  );
   const [aberto, setAberto] = useState(item?.desafio.aberto ?? true);
   const [regras, setRegras] = useState<Regras>(item?.desafio.regras ?? REGRAS_PADRAO);
   const [convidados, setConvidados] = useState<string[]>(participantes);
