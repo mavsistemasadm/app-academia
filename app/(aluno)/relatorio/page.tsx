@@ -9,6 +9,7 @@ import { CabecalhoPagina } from "@/components/shared/CabecalhoPagina";
 import { cn } from "@/lib/utils";
 import { getPerfilAtual } from "@/lib/supabase/perfil";
 import { getRelatorioMensal } from "@/lib/supabase/relatorio";
+import { respostasParaLeitura } from "@/lib/utils/anamnese";
 import { rotularCondicoes } from "@/lib/utils/avatares";
 import { hojeISO, naAcademia, somarDiasISO } from "@/lib/utils/datas";
 import { CONFIG_INDICADORES } from "@/lib/utils/indicadores";
@@ -39,6 +40,10 @@ export default async function RelatorioPage({
   const mes = /^\d{4}-\d{2}$/.test(mesParam ?? "") ? mesParam! : mesAtual;
 
   const relatorio = await getRelatorioMensal(perfil, mes);
+  const respostasAnamnese = respostasParaLeitura(
+    relatorio.perguntasAnamnese,
+    relatorio.anamnese
+  );
 
   // Os três meses mais recentes, para o seletor.
   const opcoesMes = Array.from({ length: 3 }, (_, i) =>
@@ -46,10 +51,10 @@ export default async function RelatorioPage({
   ).filter((valor, indice, todos) => todos.indexOf(valor) === indice);
 
   const adesao =
-    relatorio.adesaoRemedio.previstas > 0
+    relatorio.adesaoMedicamento.previstas > 0
       ? Math.round(
-          (relatorio.adesaoRemedio.confirmadas /
-            relatorio.adesaoRemedio.previstas) *
+          (relatorio.adesaoMedicamento.confirmadas /
+            relatorio.adesaoMedicamento.previstas) *
             100
         )
       : null;
@@ -291,33 +296,19 @@ export default async function RelatorioPage({
         )}
 
         {/* ── Contexto clínico ─────────────────────────────────── */}
-        {relatorio.anamnese && (
+        {respostasAnamnese.length > 0 && (
           <section className="flex flex-col gap-3">
             <h3 className={TITULO_SECAO}>Informado pelo aluno na anamnese</h3>
             <dl className="flex flex-col divide-y divide-neutral-200 border-y border-neutral-200 text-sm">
-              {(
-                [
-                  ["Objetivo", relatorio.anamnese.objetivo],
-                  ["Condições", relatorio.anamnese.doencas?.join(", ")],
-                  ["Medicamentos em uso", relatorio.anamnese.medicamentos_uso],
-                  ["Alergias", relatorio.anamnese.alergias],
-                  ["Lesões", relatorio.anamnese.lesoes],
-                  [
-                    "Restrições médicas",
-                    relatorio.anamnese.restricoes_medicas,
-                  ],
-                ] as const
-              )
-                .filter(([, valor]) => valor)
-                .map(([rotulo, valor]) => (
-                  <div
-                    key={rotulo}
-                    className="flex flex-col gap-0.5 py-2.5 sm:flex-row sm:gap-4"
-                  >
-                    <dt className="shrink-0 text-neutral-500 sm:w-44">{rotulo}</dt>
-                    <dd className="text-neutral-900">{valor}</dd>
-                  </div>
-                ))}
+              {respostasAnamnese.map(({ pergunta, texto }) => (
+                <div
+                  key={pergunta.id}
+                  className="flex flex-col gap-0.5 py-2.5 sm:flex-row sm:gap-4"
+                >
+                  <dt className="shrink-0 text-neutral-500 sm:w-44">{pergunta.enunciado}</dt>
+                  <dd className="text-neutral-900">{texto}</dd>
+                </div>
+              ))}
             </dl>
           </section>
         )}

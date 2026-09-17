@@ -42,7 +42,7 @@ export type MedicamentoStatus = 'tomou' | 'nao_tomou' | 'adiou'
 
 export type AlertaTipo =
   | 'indicador_vermelho'
-  | 'remedio_nao_tomado'
+  | 'medicamento_nao_tomado'
   | 'humor_ruim'
   | 'sem_treinar'
 
@@ -275,6 +275,8 @@ export interface Anamnese {
   restricoes_medicas?: string
   liberado_por_medico?: boolean
   observacoes?: string
+  /** Migração 011: chave = id da pergunta em `anamnese_perguntas`. */
+  respostas?: Record<string, unknown>
   atualizado_em: string
   created_at: string
 }
@@ -366,7 +368,7 @@ export interface DashboardAlunoData {
    * semáforo do IMC, e não com o verde que o gatilho do banco grava.
    */
   indicadores: Partial<Record<IndicadorTipo, RegistroIndicador>>
-  remediosPendentes: Medicamento[]
+  medicamentosPendentes: Medicamento[]
   humorHoje?: HumorDiario
   treinosNaSemana: number
 }
@@ -377,6 +379,6 @@ export interface DashboardProfessorAluno {
   treinouHoje: boolean
   humorHoje?: HumorDiario
   ultimoIndicador?: Indicador
-  remedioConfirmado: boolean | null
+  medicamentoConfirmado: boolean | null
   alertas: AlertaProfessor[]
 }

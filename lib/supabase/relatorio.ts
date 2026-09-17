@@ -7,7 +7,9 @@ import type {
   Profile,
 } from '@/lib/types'
 import { hojeISO, somarDiasISO } from '@/lib/utils/datas'
+import type { PerguntaAnamnese } from '@/lib/utils/anamnese'
 import { resumirIndicador, type RegistroIndicador } from '@/lib/utils/indicadores'
+import { getPerguntasAnamnese } from './anamnese'
 import { createClient } from './server'
 
 export interface ResumoIndicadorMes {
@@ -34,11 +36,13 @@ export interface RelatorioMensal {
   treinosFeitos: number
   presencas: number
   esforcoMedio: number | null
-  adesaoRemedio: { previstas: number; confirmadas: number }
+  adesaoMedicamento: { previstas: number; confirmadas: number }
   humor: { tipo: HumorTipo; dias: number }[]
   diasComHumor: number
   avaliacoes: AvaliacaoFisica[]
   anamnese: Anamnese | null
+  /** Só as marcadas pelo professor para ir ao médico. */
+  perguntasAnamnese: PerguntaAnamnese[]
   altura: number | null
 }
 
@@ -69,6 +73,7 @@ export async function getRelatorioMensal(
     { data: humores },
     { data: avaliacoes },
     { data: anamnese },
+    { perguntas },
   ] = await Promise.all([
     supabase
       .from('indicadores')
@@ -122,6 +127,7 @@ export async function getRelatorioMensal(
       .select('*')
       .eq('aluno_id', perfil.id)
       .maybeSingle(),
+    getPerguntasAnamnese(supabase),
   ])
 
   const listaAvaliacoes = (avaliacoes ?? []) as AvaliacaoFisica[]
@@ -224,7 +230,7 @@ export async function getRelatorioMensal(
       esforcos.length > 0
         ? esforcos.reduce((s, v) => s + v, 0) / esforcos.length
         : null,
-    adesaoRemedio: {
+    adesaoMedicamento: {
       previstas: dosesPorDia * diasDecorridos,
       confirmadas: (confirmacoes ?? []).filter((c) => c.status === 'tomou')
         .length,
@@ -235,6 +241,7 @@ export async function getRelatorioMensal(
     diasComHumor: (humores ?? []).length,
     avaliacoes: listaAvaliacoes,
     anamnese: (anamnese as Anamnese | null) ?? null,
+    perguntasAnamnese: perguntas.filter((p) => p.no_relatorio),
     altura,
   }
 }

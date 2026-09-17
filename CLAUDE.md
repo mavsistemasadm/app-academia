@@ -38,7 +38,7 @@ app/
   (aluno)/home            saudação, check-in, indicadores, treino, humor
   (aluno)/treino          treino do dia, série a série, com portão pré-treino
   (aluno)/indicadores     registro + histórico + faixas de referência
-  (aluno)/remedios        doses do dia num toque + cadastro
+  (aluno)/medicamentos    doses do dia num toque + cadastro
   (aluno)/humor           calendário e distribuição de 30 dias
   (aluno)/evolucao        gráficos (recharts) + avaliações físicas
   (aluno)/hidratacao      copo/garrafa/litro num toque + meta
@@ -64,7 +64,7 @@ app/
   chat/[id]               conversa com realtime
 
   api/push/inscrever      salva/apaga a assinatura de push do usuário
-  api/cron/lembretes      remédio, água e evento — roda a cada 15 min
+  api/cron/lembretes      medicamento, água e evento — roda a cada 15 min
 
 components/aluno/    CardIndicador · CardTreino · RegistroHumor ·
                      FormularioIndicador · HistoricoIndicadores ·
@@ -82,7 +82,7 @@ components/shared/   BottomNav · Sidebar · AlternarVisao · BotaoSair ·
                      GerenciarNotificacoes · RegistrarServiceWorker
 
 lib/supabase/  client · server · servico (service role) · perfil ·
-               home-aluno · indicadores · treino · remedios · humor ·
+               home-aluno · indicadores · treino · medicamentos · humor ·
                evolucao · agenda · chat · presenca · hidratacao ·
                conquistas · familiares · relatorio · professor ·
                painel-professor
@@ -222,7 +222,7 @@ arquivo no storage)
 **2. Indicadores** — [x] registro com semáforo · [x] alerta ao professor pelo
 gatilho do banco · [x] realtime no painel
 
-**3. Remédios** — [x] cadastro com horários e dias · [x] confirmação num
+**3. Medicamentos** — [x] cadastro com horários e dias · [x] confirmação num
 toque · [x] push de dose atrasada · [x] o professor vê as pendências no card
 do aluno
 
@@ -262,7 +262,10 @@ a indicadores e frequência · [x] RLS própria
 **16. Conquistas** — [x] nove badges derivadas dos dados · [x] streak de
 presença · [x] marca as novas como vistas
 
-**17. Anamnese** — [x] formulário do aluno · [x] o professor lê na ficha
+**17. Anamnese** — [x] formulário do aluno · [x] o professor lê na ficha ·
+[x] professor edita, reordena, arquiva e cria perguntas (`/alunos/anamnese`)
+em oito tipos: texto curto e longo, escolha única e múltipla, sim ou não,
+número, escala 0 a 10 e data · [~] depende da migração 011
 
 **18. Hidratação** — [x] registro num toque com meta e histórico · [x] push
 ao longo do dia
@@ -307,6 +310,11 @@ sequência · [x] cronômetro e duração do treino para o professor ·
      em `treino_execucoes`. Antes dela o tempo é estimado pelas séries.
    - 009 põe `notificacoes` no Realtime (comunicado chega na hora no sino).
    - 010 texto do alerta de indicador crítico sem travessão.
+   - 011 anamnese editável: tabela `anamnese_perguntas` + `anamneses.respostas`
+     (jsonb por id da pergunta). Sem ela o formulário usa `PERGUNTAS_PADRAO`
+     de `lib/utils/anamnese.ts` e o editor fica só leitura. As colunas antigas
+     de `anamneses` continuam sendo gravadas pelas perguntas originais
+     (`coluna_legada`).
 4. **Convite por e-mail** — configurar o template "Invite user" e as Redirect
    URLs conforme `docs/EMAIL_CONVITE.md`, e desligar "Allow new users to sign
    up" no Supabase (o cadastro público saiu; /cadastro redireciona ao login).
@@ -360,4 +368,4 @@ Seja específico sobre o módulo e o que precisa:
 **Exemplos de prompts eficientes:**
 - "Crie a tela /app/(aluno)/indicadores/page.tsx seguindo o padrão do projeto. O aluno deve conseguir registrar glicemia, pressão e peso. Após salvar, mostrar o semáforo com a cor correta. Se vermelho, criar alerta na tabela alertas_professor."
 - "Crie o componente CardAluno em /components/professor/CardAluno.tsx. Deve mostrar foto, nome, condição clínica, se treinou hoje, humor do dia e último indicador com semáforo."
-- "Adicione notificações push no módulo de medicamentos. Quando o horário do remédio chegar e o aluno não confirmar em 15 minutos, enviar reforço."
+- "Adicione notificações push no módulo de medicamentos. Quando o horário do medicamento chegar e o aluno não confirmar em 15 minutos, enviar reforço."

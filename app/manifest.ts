@@ -42,7 +42,7 @@ export default function manifest(): MetadataRoute.Manifest {
         url: "/indicadores",
       },
       { name: "Treino de hoje", short_name: "Treino", url: "/treino" },
-      { name: "Meus remédios", short_name: "Remédios", url: "/remedios" },
+      { name: "Meus medicamentos", short_name: "Medicamentos", url: "/medicamentos" },
     ],
   };
 }

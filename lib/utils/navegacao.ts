@@ -33,14 +33,14 @@ export const NAV_MOBILE: ItemNav[] = [
   { href: '/home', label: 'Início', icone: Home },
   { href: '/treino', label: 'Treino', icone: Dumbbell },
   { href: '/indicadores', label: 'Saúde', icone: Activity },
-  { href: '/remedios', label: 'Remédios', icone: Pill },
+  { href: '/medicamentos', label: 'Medicamentos', icone: Pill },
 ]
 
 const TITULOS: Record<string, string> = {
   '/home': 'Início',
   '/treino': 'Treino',
   '/indicadores': 'Indicadores',
-  '/remedios': 'Remédios',
+  '/medicamentos': 'Medicamentos',
   '/evolucao': 'Evolução',
   '/exames': 'Exames',
   '/humor': 'Meu humor',
@@ -69,7 +69,7 @@ export const NAV_DESKTOP: { secao: string; itens: ItemNav[] }[] = [
       { href: '/home', label: 'Início', icone: Home },
       { href: '/treino', label: 'Meu treino', icone: Dumbbell },
       { href: '/indicadores', label: 'Indicadores', icone: Activity },
-      { href: '/remedios', label: 'Remédios', icone: Pill },
+      { href: '/medicamentos', label: 'Medicamentos', icone: Pill },
     ],
   },
   {

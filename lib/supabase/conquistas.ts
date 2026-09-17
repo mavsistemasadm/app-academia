@@ -28,7 +28,7 @@ interface Materia {
   diasComHumor: number
   diasIndicadorVerde: number
   totalIndicadores: number
-  adesaoRemedio: number
+  adesaoMedicamento: number
   diasNaMetaDeAgua: number
   primeiroRegistro: boolean
 }
@@ -91,10 +91,10 @@ function regras(m: Materia) {
     },
     {
       chave: 'remedio_em_dia',
-      titulo: 'Remédio em dia',
+      titulo: 'Medicamento em dia',
       descricao: 'Trinta dias confirmando todos os medicamentos.',
       emoji: '💊',
-      atual: m.adesaoRemedio,
+      atual: m.adesaoMedicamento,
       alvo: 30,
       unidade: 'dias',
     },
@@ -209,11 +209,11 @@ export async function getConquistasAluno(
     aguaPorDia.set(r.data, (aguaPorDia.get(r.data) ?? 0) + r.quantidade_ml)
   }
 
-  // ── Remédio: dias em que nada ficou sem confirmação ─────────────
-  const remedioPorDia = new Map<string, boolean>()
+  // ── Medicamento: dias em que nada ficou sem confirmação ─────────────
+  const medicamentoPorDia = new Map<string, boolean>()
   for (const c of confirmacoes ?? []) {
-    const tudoCerto = remedioPorDia.get(c.data) ?? true
-    remedioPorDia.set(c.data, tudoCerto && c.status === 'tomou')
+    const tudoCerto = medicamentoPorDia.get(c.data) ?? true
+    medicamentoPorDia.set(c.data, tudoCerto && c.status === 'tomou')
   }
 
   const materia: Materia = {
@@ -224,7 +224,7 @@ export async function getConquistasAluno(
     diasIndicadorVerde: Array.from(porDiaIndicador.values()).filter(Boolean)
       .length,
     totalIndicadores: listaIndicadores.length,
-    adesaoRemedio: Array.from(remedioPorDia.values()).filter(Boolean).length,
+    adesaoMedicamento: Array.from(medicamentoPorDia.values()).filter(Boolean).length,
     diasNaMetaDeAgua: Array.from(aguaPorDia.values()).filter(
       (ml) => ml >= metaAguaMl
     ).length,

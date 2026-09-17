@@ -5,6 +5,7 @@ import { ptBR } from "date-fns/locale";
 import { FormularioAnamnese } from "@/components/aluno/FormularioAnamnese";
 import { CabecalhoPagina } from "@/components/shared/CabecalhoPagina";
 import type { Anamnese } from "@/lib/types";
+import { getPerguntasAnamnese } from "@/lib/supabase/anamnese";
 import { getPerfilAtual } from "@/lib/supabase/perfil";
 import { createClient } from "@/lib/supabase/server";
 import { naAcademia } from "@/lib/utils/datas";
@@ -14,11 +15,10 @@ export default async function AnamnesePage() {
   if (!perfil) redirect("/login");
 
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("anamneses")
-    .select("*")
-    .eq("aluno_id", perfil.id)
-    .maybeSingle();
+  const [{ data }, { perguntas, editavel }] = await Promise.all([
+    supabase.from("anamneses").select("*").eq("aluno_id", perfil.id).maybeSingle(),
+    getPerguntasAnamnese(supabase),
+  ]);
 
   const anamnese = (data as Anamnese | null) ?? null;
 
@@ -35,7 +35,12 @@ export default async function AnamnesePage() {
       />
 
       <div className="w-full max-w-3xl px-5 md:px-0">
-        <FormularioAnamnese alunoId={perfil.id} anamnese={anamnese} />
+        <FormularioAnamnese
+          alunoId={perfil.id}
+          anamnese={anamnese}
+          perguntas={perguntas}
+          editavel={editavel}
+        />
       </div>
     </div>
   );

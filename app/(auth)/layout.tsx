@@ -12,7 +12,7 @@ import { Activity, Dumbbell, HeartHandshake, ShieldCheck } from "lucide-react";
 
 const DESTAQUES = [
   { icone: Dumbbell, texto: "Treino do dia, série a série, com vídeo" },
-  { icone: Activity, texto: "Pressão, glicemia e remédios no semáforo" },
+  { icone: Activity, texto: "Pressão, glicemia e medicamentos no semáforo" },
   { icone: HeartHandshake, texto: "Seu professor avisado quando algo foge do normal" },
 ];
 
@@ -62,7 +62,7 @@ export default function AuthLayout({
 
           <p className="mt-4 max-w-md text-sm leading-relaxed text-white/55 lg:mt-6 lg:max-w-lg lg:text-lg">
             O centro acompanha você entre um treino e outro: indicadores,
-            remédios, humor e evolução num lugar só.
+            medicamentos, humor e evolução num lugar só.
           </p>
 
           <ul className="mt-10 hidden flex-col gap-4 lg:flex">

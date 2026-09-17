@@ -113,10 +113,10 @@ export function GerenciarNotificacoes() {
         </p>
         <p className="text-sm text-neutral-500">
           {ativo
-            ? "Você recebe aviso de remédio, água e eventos."
+            ? "Você recebe aviso de medicamento, água e eventos."
             : estado === "bloqueado"
               ? "Bloqueados nas configurações do navegador. Libere por lá para ativar."
-              : "Remédio na hora certa, água ao longo do dia e lembrete de evento."}
+              : "Medicamento na hora certa, água ao longo do dia e lembrete de evento."}
         </p>
       </div>
 

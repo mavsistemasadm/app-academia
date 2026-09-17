@@ -25,7 +25,7 @@ function paraMinutos(hhmm: string): number {
 
 /**
  * Roda de 15 em 15 minutos (ver `vercel.json`) e dispara três coisas:
- * remédio atrasado, lembrete de água e evento que começa em uma hora.
+ * medicamento atrasado, lembrete de água e evento que começa em uma hora.
  *
  * O `CRON_SECRET` é obrigatório — sem ele, qualquer um na internet
  * conseguiria disparar notificação para todos os alunos.
@@ -52,9 +52,9 @@ export async function GET(request: Request) {
   const agoraMin = paraMinutos(agora);
   const diaSemana = diaSemanaAtual();
 
-  const enviados = { remedios: 0, agua: 0, eventos: 0 };
+  const enviados = { medicamentos: 0, agua: 0, eventos: 0 };
 
-  // ── 1. Remédio vencido e não confirmado ─────────────────────────
+  // ── 1. Medicamento vencido e não confirmado ─────────────────────────
   const [{ data: medicamentos }, { data: confirmacoes }] = await Promise.all([
     supabase
       .from("medicamentos")
@@ -89,11 +89,11 @@ export async function GET(request: Request) {
         corpo: med.dose
           ? `${med.dose}, das ${horario}. Toque para confirmar.`
           : `Dose das ${horario}. Toque para confirmar.`,
-        url: "/remedios",
-        tag: `remedio-${med.id}-${horario}`,
+        url: "/medicamentos",
+        tag: `medicamento-${med.id}-${horario}`,
       });
 
-      if (ok) enviados.remedios += 1;
+      if (ok) enviados.medicamentos += 1;
     }
   }
 

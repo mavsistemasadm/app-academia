@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { getDetalheAluno } from "@/lib/supabase/painel-professor";
 import { getPerfilAtual } from "@/lib/supabase/perfil";
 import { getTreinosRecentes } from "@/lib/supabase/professor";
+import { respostasParaLeitura } from "@/lib/utils/anamnese";
 import { AVATAR_CONFIG } from "@/lib/utils/avatares";
 import { formatarDuracao } from "@/lib/utils/duracao";
 import { hojeISO, horaAtual } from "@/lib/utils/datas";
@@ -116,25 +117,7 @@ export default async function DetalheAlunoPage({
   const ultimaAvaliacao = avaliacoes[0];
 
   const anamnese = detalhe.anamnese
-    ? (
-        [
-          ["Objetivo", detalhe.anamnese.objetivo],
-          ["Doenças", detalhe.anamnese.doencas?.join(", ")],
-          ["Lesões", detalhe.anamnese.lesoes],
-          ["Cirurgias", detalhe.anamnese.cirurgias],
-          ["Alergias", detalhe.anamnese.alergias],
-          ["Medicamentos em uso", detalhe.anamnese.medicamentos_uso],
-          ["Restrições médicas", detalhe.anamnese.restricoes_medicas],
-          [
-            "Liberado por médico",
-            detalhe.anamnese.liberado_por_medico === undefined
-              ? undefined
-              : detalhe.anamnese.liberado_por_medico
-                ? "Sim"
-                : "Não",
-          ],
-        ] as const
-      ).filter(([, valor]) => valor)
+    ? respostasParaLeitura(detalhe.perguntasAnamnese, detalhe.anamnese)
     : null;
 
   const contatos = [
@@ -405,17 +388,22 @@ export default async function DetalheAlunoPage({
       <div className="grid items-start gap-7 lg:grid-cols-2 lg:gap-6">
         {/* ── Anamnese ─────────────────────────────────────────────────── */}
         <section className="flex flex-col gap-3.5">
-          <TituloSecao>Anamnese</TituloSecao>
+          <TituloSecao acao={<LinkSecao href="/alunos/anamnese">Editar perguntas</LinkSecao>}>
+            Anamnese
+          </TituloSecao>
 
-          {anamnese ? (
+          {anamnese && anamnese.length > 0 ? (
             <dl className={cn(CARD, "divide-y divide-neutral-200/80 px-5")}>
-              {anamnese.map(([rotulo, valor]) => (
+              {anamnese.map(({ pergunta, texto }) => (
                 <div
-                  key={rotulo}
-                  className="grid gap-0.5 py-3 sm:grid-cols-[160px_minmax(0,1fr)] sm:gap-4"
+                  key={pergunta.id}
+                  className="grid gap-0.5 py-3 sm:grid-cols-[180px_minmax(0,1fr)] sm:gap-4"
                 >
-                  <dt className="text-[13px] font-medium text-neutral-500">{rotulo}</dt>
-                  <dd className="text-[15px] leading-relaxed text-neutral-950">{valor}</dd>
+                  <dt className="text-[13px] font-medium text-neutral-500">
+                    {pergunta.enunciado}
+                    {!pergunta.ativa && <span className="text-neutral-400"> (arquivada)</span>}
+                  </dt>
+                  <dd className="text-[15px] leading-relaxed text-neutral-950">{texto}</dd>
                 </div>
               ))}
             </dl>

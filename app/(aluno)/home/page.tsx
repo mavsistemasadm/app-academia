@@ -68,8 +68,8 @@ export default async function HomePage() {
   const pressao = dados.indicadores.pressao;
   const peso = dados.indicadores.peso;
 
-  const pendente = dados.remediosPendentes[0];
-  const totalPendentes = dados.remediosPendentes.length;
+  const pendente = dados.medicamentosPendentes[0];
+  const totalPendentes = dados.medicamentosPendentes.length;
   const treino = dados.treinoHoje;
 
   /*
@@ -108,12 +108,12 @@ export default async function HomePage() {
       ? [
           {
             tom: "amarelo" as const,
-            titulo: "Remédio esperando confirmação",
+            titulo: "Medicamento esperando confirmação",
             texto: `${pendente.nome}${pendente.dose ? ` (${pendente.dose})` : ""} das ${pendente.horario} ainda não foi marcado${
               totalPendentes > 1 ? `, e há mais ${totalPendentes - 1} na fila` : ""
             }.`,
             acao: "Confirmar dose",
-            href: "/remedios",
+            href: "/medicamentos",
           },
         ]
       : []),
@@ -147,7 +147,7 @@ export default async function HomePage() {
   const foco: Foco = candidatos[0] ?? {
     tom: "ciano",
     titulo: "Dia em ordem",
-    texto: "Remédios em dia, humor registrado e nada fora da faixa. Lembre de beber água ao longo do dia.",
+    texto: "Medicamentos em dia, humor registrado e nada fora da faixa. Lembre de beber água ao longo do dia.",
     acao: "Registrar água",
     href: "/hidratacao",
   };
@@ -155,9 +155,9 @@ export default async function HomePage() {
 
   const acessoRapido = [
     {
-      href: "/remedios",
+      href: "/medicamentos",
       icone: Pill,
-      titulo: "Remédios",
+      titulo: "Medicamentos",
       subtitulo:
         totalPendentes > 0
           ? `${totalPendentes} pendente${totalPendentes > 1 ? "s" : ""} hoje`

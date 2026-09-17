@@ -23,7 +23,7 @@ function getPeriodoDia(): string {
 }
 
 export function gerarSaudacao(data: DashboardAlunoData): SaudacaoData {
-  const { profile, indicadores, treinosNaSemana, remediosPendentes, humorHoje, treinoHoje } = data
+  const { profile, indicadores, treinosNaSemana, medicamentosPendentes, humorHoje, treinoHoje } = data
 
   const registrados = Object.values(indicadores)
   const vermelhos = registrados.filter((i) => i.status === 'vermelho')
@@ -39,11 +39,11 @@ export function gerarSaudacao(data: DashboardAlunoData): SaudacaoData {
   let frase = ''
 
   // ── Alertas prioritários ──────────────────────────────────────
-  if (remediosPendentes.length > 0) {
+  if (medicamentosPendentes.length > 0) {
     alertas.push(
-      `💊 ${remediosPendentes.length === 1
-        ? `Você ainda não confirmou seu ${remediosPendentes[0].nome}`
-        : `${remediosPendentes.length} medicamentos pendentes de confirmação`}`
+      `💊 ${medicamentosPendentes.length === 1
+        ? `Você ainda não confirmou seu ${medicamentosPendentes[0].nome}`
+        : `${medicamentosPendentes.length} medicamentos pendentes de confirmação`}`
     )
   }
 

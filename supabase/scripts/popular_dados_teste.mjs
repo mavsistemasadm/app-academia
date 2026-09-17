@@ -762,7 +762,7 @@ async function main() {
     await inserir('indicadores', indicadores)
     console.log(`  ${indicadores.length} indicadores`)
 
-    // ── Remédios ──────────────────────────────────────────────
+    // ── Medicamentos ──────────────────────────────────────────────
     const medicamentos = await inserir(
       'medicamentos',
       aluno.medicamentos.map((m) => ({

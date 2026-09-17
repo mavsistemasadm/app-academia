@@ -36,7 +36,7 @@ import { hojeISO, naAcademia, somarDiasISO } from "@/lib/utils/datas";
 
 const ICONE: Record<TipoNotificacao, LucideIcon> = {
   comunicado: Megaphone,
-  remedio: Pill,
+  medicamento: Pill,
   evento: CalendarDays,
   mensagem: MessageCircle,
   indicador: HeartPulse,

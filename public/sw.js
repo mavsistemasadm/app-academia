@@ -2,7 +2,7 @@
   Service worker da Central de Saúde Conectada.
 
   Deliberadamente enxuto: o app é todo dado clínico vivo, e cachear resposta
-  de indicador ou de remédio faria o aluno ver informação velha achando que é
+  de indicador ou de medicamento faria o aluno ver informação velha achando que é
   a de agora. O que fica offline é só a casca — o resto vai à rede sempre.
 */
 
@@ -82,7 +82,7 @@ self.addEventListener('push', (evento) => {
       icon: '/icones/icone-192.png',
       badge: '/icones/icone-192.png',
       tag: dados.tag || 'geral',
-      // Lembrete de remédio substitui o anterior em vez de empilhar.
+      // Lembrete de medicamento substitui o anterior em vez de empilhar.
       renotify: Boolean(dados.tag),
       requireInteraction: dados.urgente === true,
       data: { url: dados.url || '/home' },

@@ -138,7 +138,7 @@ export function CardAluno({ aluno }: { aluno: AlunoNoPainel }) {
             <span className="flex items-center gap-1 font-medium text-[#b45309]">
               <Pill className="size-3.5" strokeWidth={1.9} aria-hidden />
               {aluno.dosesPendentes}{" "}
-              {aluno.dosesPendentes === 1 ? "remédio pendente" : "remédios pendentes"}
+              {aluno.dosesPendentes === 1 ? "medicamento pendente" : "medicamentos pendentes"}
             </span>
           )}
 

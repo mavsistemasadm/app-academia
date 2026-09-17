@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { UserPlus } from "lucide-react";
+import { ClipboardList, UserPlus } from "lucide-react";
 
 import { ListaAlunos } from "@/components/professor/ListaAlunos";
 import { CabecalhoPagina } from "@/components/shared/CabecalhoPagina";
@@ -21,13 +21,26 @@ export default async function AlunosPage() {
           titulo="Alunos"
           descricao="Quem precisa de atenção aparece primeiro."
           acao={
-            <Link
-              href="/alunos/convidar"
-              className="inline-flex h-12 items-center gap-2 rounded-full bg-grafite px-5 text-[15px] font-semibold text-white transition-all duration-200 hover:bg-neutral-800 active:scale-[.98]"
-            >
-              <UserPlus className="size-5" strokeWidth={1.8} aria-hidden />
-              Convidar aluno
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href="/alunos/anamnese"
+                className="inline-flex h-12 items-center gap-2 rounded-full bg-card px-5 text-[15px] font-semibold text-neutral-950 ring-1 ring-neutral-200/90 transition-all duration-200 hover:bg-neutral-50 active:scale-[.98]"
+              >
+                <ClipboardList
+                  className="size-5 text-neutral-400"
+                  strokeWidth={1.8}
+                  aria-hidden
+                />
+                Anamnese
+              </Link>
+              <Link
+                href="/alunos/convidar"
+                className="inline-flex h-12 items-center gap-2 rounded-full bg-grafite px-5 text-[15px] font-semibold text-white transition-all duration-200 hover:bg-neutral-800 active:scale-[.98]"
+              >
+                <UserPlus className="size-5" strokeWidth={1.8} aria-hidden />
+                Convidar aluno
+              </Link>
+            </div>
           }
         />
       </div>

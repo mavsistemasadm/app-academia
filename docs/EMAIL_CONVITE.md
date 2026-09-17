@@ -53,7 +53,7 @@ Seu acesso à Atitude Vital está pronto
       </h1>
       <p style="margin:0 0 24px;color:#5C6466;font-size:15px;line-height:1.6;">
         A partir de agora a Atitude Vital acompanha você entre um treino e outro:
-        treino do dia, indicadores, remédios e evolução num lugar só.
+        treino do dia, indicadores, medicamentos e evolução num lugar só.
         Para começar, crie a sua senha.
       </p>
 

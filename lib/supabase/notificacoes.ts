@@ -3,12 +3,12 @@ import { ptBR } from 'date-fns/locale'
 
 import type { AlertaTipo, AvatarCondicao, Profile } from '@/lib/types'
 import { hojeISO, naAcademia, somarDiasISO } from '@/lib/utils/datas'
-import { getRemediosAluno } from './remedios'
+import { getMedicamentosAluno } from './medicamentos'
 import { createClient } from './server'
 
 export type TipoNotificacao =
   | 'comunicado'
-  | 'remedio'
+  | 'medicamento'
   | 'evento'
   | 'mensagem'
   | 'indicador'
@@ -128,7 +128,7 @@ export async function getNotificacoesAluno(
   const limiteComunicados = new Date(agora.getTime() - 30 * DIA_MS).toISOString()
   const limiteEventos = new Date(agora.getTime() + 2 * DIA_MS).toISOString()
 
-  const [{ data: comunicados }, { data: eventos }, remedios, mensagens] =
+  const [{ data: comunicados }, { data: eventos }, medicamentos, mensagens] =
     await Promise.all([
       supabase
         .from('notificacoes')
@@ -143,7 +143,7 @@ export async function getNotificacoesAluno(
         .lte('data_inicio', limiteEventos)
         .order('data_inicio', { ascending: true })
         .limit(10),
-      getRemediosAluno(perfil.id),
+      getMedicamentosAluno(perfil.id),
       mensagensNaoLidas(supabase, perfil.id),
     ])
 
@@ -166,23 +166,23 @@ export async function getNotificacoesAluno(
     Uma linha só para as doses atrasadas. O instante é o da dose mais recente:
     quando mais uma vence, o item "renasce" como não visto.
   */
-  const atrasadas = remedios.doses.filter((d) => d.situacao === 'atrasada')
+  const atrasadas = medicamentos.doses.filter((d) => d.situacao === 'atrasada')
   if (atrasadas.length > 0) {
     const ultima = atrasadas[atrasadas.length - 1]
     const nomeDose = `${ultima.nome}${ultima.dose ? ` (${ultima.dose})` : ''}`
     itens.push({
-      id: `remedio:${remedios.hoje}:${atrasadas.map((d) => `${d.medicamentoId}-${d.horario}`).join(',')}`,
-      tipo: 'remedio',
+      id: `medicamento:${medicamentos.hoje}:${atrasadas.map((d) => `${d.medicamentoId}-${d.horario}`).join(',')}`,
+      tipo: 'medicamento',
       titulo:
         atrasadas.length > 1
-          ? `${atrasadas.length} doses de remédio atrasadas`
-          : 'Remédio atrasado',
+          ? `${atrasadas.length} doses de medicamento atrasadas`
+          : 'Medicamento atrasado',
       texto:
         atrasadas.length > 1
           ? `${nomeDose} das ${ultima.horario} e mais ${atrasadas.length - 1} esperando confirmação.`
           : `${nomeDose} das ${ultima.horario} ainda não foi confirmado.`,
-      href: '/remedios',
-      criadoEm: instanteNaAcademia(remedios.hoje, ultima.horario),
+      href: '/medicamentos',
+      criadoEm: instanteNaAcademia(medicamentos.hoje, ultima.horario),
       urgente: true,
     })
   }
@@ -221,14 +221,14 @@ export async function getNotificacoesAluno(
 const TIPO_ALERTA: Record<AlertaTipo, TipoNotificacao> = {
   indicador_vermelho: 'indicador',
   humor_ruim: 'humor',
-  remedio_nao_tomado: 'remedio',
+  medicamento_nao_tomado: 'medicamento',
   sem_treinar: 'frequencia',
 }
 
 const ROTULO_ALERTA: Record<AlertaTipo, string> = {
   indicador_vermelho: 'indicador crítico',
   humor_ruim: 'humor',
-  remedio_nao_tomado: 'remédio',
+  medicamento_nao_tomado: 'medicamento',
   sem_treinar: 'frequência',
 }
 

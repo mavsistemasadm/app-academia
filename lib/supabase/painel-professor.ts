@@ -16,7 +16,9 @@ import {
   horaAtual,
   somarDiasISO,
 } from '@/lib/utils/datas'
+import type { PerguntaAnamnese } from '@/lib/utils/anamnese'
 import { resumirIndicador, type RegistroIndicador } from '@/lib/utils/indicadores'
+import { getPerguntasAnamnese } from './anamnese'
 import { createClient } from './server'
 
 /** Depois de tantos dias sem aparecer, o aluno vira pauta do professor. */
@@ -57,7 +59,7 @@ export interface PainelProfessorData {
 
 /**
  * O pior sinal do aluno vira a cor do card: um indicador vermelho pesa mais
- * que um humor ruim, e humor ruim pesa mais que remédio pendente.
+ * que um humor ruim, e humor ruim pesa mais que medicamento pendente.
  */
 function piorStatus(...candidatos: (SemaforoStatus | null)[]): SemaforoStatus {
   if (candidatos.includes('vermelho')) return 'vermelho'
@@ -324,6 +326,8 @@ export interface DetalheAluno {
   medicamentos: Medicamento[]
   avaliacoes: AvaliacaoFisica[]
   anamnese: Anamnese | null
+  /** Inclui as arquivadas: resposta antiga continua aparecendo na ficha. */
+  perguntasAnamnese: PerguntaAnamnese[]
   checkins: Checkin[]
   /** Treinos concluídos nos últimos 30 dias. */
   treinosNoMes: number
@@ -350,6 +354,7 @@ export async function getDetalheAluno(
     { data: anamnese },
     { data: checkins },
     { data: execucoes },
+    { perguntas: perguntasAnamnese },
   ] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', alunoId).maybeSingle(),
     supabase
@@ -395,6 +400,7 @@ export async function getDetalheAluno(
       .select('data, concluido, esforco_percebido')
       .eq('aluno_id', alunoId)
       .gte('data', inicio),
+    getPerguntasAnamnese(supabase, { incluirArquivadas: true }),
   ])
 
   if (!perfil) return null
@@ -428,6 +434,7 @@ export async function getDetalheAluno(
     medicamentos: (medicamentos ?? []) as Medicamento[],
     avaliacoes: listaAvaliacoes,
     anamnese: (anamnese as Anamnese | null) ?? null,
+    perguntasAnamnese,
     checkins: listaCheckins,
     treinosNoMes: concluidos.length,
     esforcoMedio:

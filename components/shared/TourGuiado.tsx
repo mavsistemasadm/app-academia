@@ -27,7 +27,7 @@ const PASSOS: Passo[] = [
     alvo: "foco",
     titulo: "Foco de hoje",
     texto:
-      "A coisa mais importante do dia aparece neste cartão: um indicador fora da faixa, um remédio atrasado ou o seu treino.",
+      "A coisa mais importante do dia aparece neste cartão: um indicador fora da faixa, um medicamento atrasado ou o seu treino.",
   },
   {
     alvo: "checkin",
@@ -55,7 +55,7 @@ const PASSOS: Passo[] = [
   {
     alvo: "navegacao",
     titulo: "Tudo a um toque",
-    texto: "Treino, saúde, remédios e perfil sempre por aqui. Bom treino!",
+    texto: "Treino, saúde, medicamentos e perfil sempre por aqui. Bom treino!",
   },
 ];
 

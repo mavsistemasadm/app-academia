@@ -46,7 +46,7 @@ export function BottomNav() {
                   aria-current={ativo ? "page" : undefined}
                   onClick={() => vibrar()}
                   className={cn(
-                    "flex flex-col items-center gap-1 rounded-[20px] px-1 py-2 text-[11px] font-medium transition-all duration-200 active:scale-90",
+                    "flex flex-col items-center gap-1 rounded-[20px] px-0.5 py-2 text-[10.5px] font-medium tracking-tight whitespace-nowrap transition-all duration-200 active:scale-90",
                     ativo ? "bg-white/[.08] text-white" : "text-neutral-400"
                   )}
                 >
@@ -70,7 +70,7 @@ export function BottomNav() {
               aria-haspopup="dialog"
               aria-expanded={maisAberto}
               className={cn(
-                "flex w-full flex-col items-center gap-1 rounded-[20px] px-1 py-2 text-[11px] font-medium transition-all duration-200 active:scale-90",
+                "flex w-full flex-col items-center gap-1 rounded-[20px] px-0.5 py-2 text-[10.5px] font-medium tracking-tight whitespace-nowrap transition-all duration-200 active:scale-90",
                 maisAberto || !emAba ? "bg-white/[.08] text-white" : "text-neutral-400"
               )}
             >

@@ -21,7 +21,7 @@ import {
 } from '@/lib/utils/indicadores'
 import { createClient } from './server'
 
-export interface RemedioPendente {
+export interface MedicamentoPendente {
   medicamentoId: string
   nome: string
   dose?: string
@@ -52,7 +52,7 @@ export interface HomeAlunoData {
   indicadores: Partial<Record<IndicadorTipo, RegistroIndicador>>
   treinosNaSemana: number
   treinosPlanejados: number
-  remediosPendentes: RemedioPendente[]
+  medicamentosPendentes: MedicamentoPendente[]
   treinoHoje: TreinoHoje | null
   humorHoje: HumorTipo | null
   totalIndicadores: number
@@ -152,7 +152,7 @@ export async function getHomeAluno(perfil: Profile): Promise<HomeAlunoData> {
     indicadores[indicador.tipo] = resumirIndicador(indicador, altura)
   }
 
-  // ── Remédios ainda não confirmados hoje ──────────────────────────
+  // ── Medicamentos ainda não confirmados hoje ──────────────────────────
   // A confirmação guarda o horário previsto, então a dose é identificada
   // exatamente — sem chutar qual das tomadas do dia foi registrada.
   const resolvidas = new Set(
@@ -161,17 +161,17 @@ export async function getHomeAluno(perfil: Profile): Promise<HomeAlunoData> {
       .map((c) => `${c.medicamento_id}:${c.horario}`)
   )
 
-  const remediosPendentes: RemedioPendente[] = []
+  const medicamentosPendentes: MedicamentoPendente[] = []
   for (const med of (medicamentos ?? []) as MedicamentoRow[]) {
     if (!ehHoje(med.dias_semana, diaSemana)) continue
 
     for (const bruto of med.horarios ?? []) {
       const horario = bruto.slice(0, 5)
-      // Só cobra horário que já passou — remédio das 20h não é pendência às 14h.
+      // Só cobra horário que já passou — medicamento das 20h não é pendência às 14h.
       if (horario > agora) continue
       if (resolvidas.has(`${med.id}:${horario}`)) continue
 
-      remediosPendentes.push({
+      medicamentosPendentes.push({
         medicamentoId: med.id,
         nome: med.nome,
         dose: med.dose ?? undefined,
@@ -180,7 +180,7 @@ export async function getHomeAluno(perfil: Profile): Promise<HomeAlunoData> {
     }
   }
 
-  remediosPendentes.sort((a, b) => a.horario.localeCompare(b.horario))
+  medicamentosPendentes.sort((a, b) => a.horario.localeCompare(b.horario))
 
   // ── Treino de hoje e frequência da semana ────────────────────────
   const listaTreinos = (treinos ?? []) as TreinoRow[]
@@ -234,7 +234,7 @@ export async function getHomeAluno(perfil: Profile): Promise<HomeAlunoData> {
     profile: perfil,
     indicadores,
     treinosNaSemana,
-    remediosPendentes: remediosPendentes.map((r) => ({
+    medicamentosPendentes: medicamentosPendentes.map((r) => ({
       id: r.medicamentoId,
       aluno_id: perfil.id,
       nome: r.nome,
@@ -271,7 +271,7 @@ export async function getHomeAluno(perfil: Profile): Promise<HomeAlunoData> {
     indicadores,
     treinosNaSemana,
     treinosPlanejados: diasPlanejados.size,
-    remediosPendentes,
+    medicamentosPendentes,
     treinoHoje,
     humorHoje,
     totalIndicadores: listaIndicadores.length,

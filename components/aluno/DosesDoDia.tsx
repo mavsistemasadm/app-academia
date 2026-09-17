@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Pill, X } from "lucide-react";
 
-import type { Dose, SituacaoDose } from "@/lib/supabase/remedios";
+import type { Dose, SituacaoDose } from "@/lib/supabase/medicamentos";
 import type { MedicamentoStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";

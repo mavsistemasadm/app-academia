@@ -4,13 +4,13 @@ import { DosesDoDia } from "@/components/aluno/DosesDoDia";
 import { GerenciarMedicamentos } from "@/components/aluno/GerenciarMedicamentos";
 import { CabecalhoPagina } from "@/components/shared/CabecalhoPagina";
 import { getPerfilAtual } from "@/lib/supabase/perfil";
-import { getRemediosAluno } from "@/lib/supabase/remedios";
+import { getMedicamentosAluno } from "@/lib/supabase/medicamentos";
 
-export default async function RemediosPage() {
+export default async function MedicamentosPage() {
   const perfil = await getPerfilAtual();
   if (!perfil) redirect("/login");
 
-  const { medicamentos, doses, hoje, tomadas } = await getRemediosAluno(
+  const { medicamentos, doses, hoje, tomadas } = await getMedicamentosAluno(
     perfil.id
   );
 
@@ -20,7 +20,7 @@ export default async function RemediosPage() {
     <div className="flex flex-col gap-7 pt-0 md:gap-9 md:px-8 md:pt-10">
       <CabecalhoPagina
         rotulo="Cuidado diário"
-        titulo="Remédios"
+        titulo="Medicamentos"
         descricao={
           doses.length === 0
             ? "Cadastre seus medicamentos para o centro acompanhar junto."

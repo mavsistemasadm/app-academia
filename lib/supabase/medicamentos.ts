@@ -15,7 +15,7 @@ export interface Dose {
   motivo: string | null
 }
 
-export interface RemediosAlunoData {
+export interface MedicamentosAlunoData {
   medicamentos: Medicamento[]
   /** As doses de hoje, em ordem de horário. */
   doses: Dose[]
@@ -36,9 +36,9 @@ function situacaoDe(
   return horario <= agora ? 'atrasada' : 'aguardando'
 }
 
-export async function getRemediosAluno(
+export async function getMedicamentosAluno(
   alunoId: string
-): Promise<RemediosAlunoData> {
+): Promise<MedicamentosAlunoData> {
   const supabase = await createClient()
 
   const hoje = hojeISO()
@@ -113,7 +113,7 @@ export interface AdesaoAluno {
 }
 
 /**
- * Quem ainda não confirmou o remédio de hoje — a pergunta que o professor faz
+ * Quem ainda não confirmou o medicamento de hoje — a pergunta que o professor faz
  * antes do treino. Roda com a visão do professor (policies da migração 004).
  */
 export async function getAdesaoDoDia(): Promise<AdesaoAluno[]> {
@@ -162,7 +162,7 @@ export async function getAdesaoDoDia(): Promise<AdesaoAluno[]> {
 
     for (const bruto of med.horarios ?? []) {
       const horario = bruto.slice(0, 5)
-      // Só conta o que já venceu: remédio das 20h não é pendência às 14h.
+      // Só conta o que já venceu: medicamento das 20h não é pendência às 14h.
       if (horario > agora) continue
 
       atual.previstas += 1

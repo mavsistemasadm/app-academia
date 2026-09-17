@@ -13,7 +13,7 @@ import { createClient } from "@/lib/supabase/client";
 
 /*
   Severidade à esquerda, tipo no chip. Vermelho só para indicador crítico —
-  é o que exige ação na hora; humor e remédio são amarelo; frequência, neutro.
+  é o que exige ação na hora; humor e medicamento são amarelo; frequência, neutro.
 */
 const ESTILO: Record<AlertaTipo, { faixa: string; chip: string; rotulo: string }> = {
   indicador_vermelho: {
@@ -26,7 +26,7 @@ const ESTILO: Record<AlertaTipo, { faixa: string; chip: string; rotulo: string }
     chip: "bg-saude-amarelo-light text-[#b45309]",
     rotulo: "Humor",
   },
-  remedio_nao_tomado: {
+  medicamento_nao_tomado: {
     faixa: "bg-saude-amarelo",
     chip: "bg-saude-amarelo-light text-[#b45309]",
     rotulo: "Medicamento",

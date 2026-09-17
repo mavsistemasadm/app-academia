@@ -28,7 +28,7 @@ saude-conectada/
 │   │   ├── treino/page.tsx
 │   │   ├── treino/[id]/page.tsx
 │   │   ├── indicadores/page.tsx
-│   │   ├── remedios/page.tsx
+│   │   ├── medicamentos/page.tsx
 │   │   ├── humor/page.tsx
 │   │   ├── evolucao/page.tsx
 │   │   └── agenda/page.tsx
@@ -260,7 +260,7 @@ create table alertas_professor (
   id uuid primary key default gen_random_uuid(),
   professor_id uuid references profiles(id),
   aluno_id uuid references profiles(id),
-  tipo text not null, -- 'indicador_vermelho' | 'remedio_nao_tomado' | 'humor_ruim' | 'sem_treinar'
+  tipo text not null, -- 'indicador_vermelho' | 'medicamento_nao_tomado' | 'humor_ruim' | 'sem_treinar'
   mensagem text not null,
   dados jsonb, -- dados do aluno que gerou o alerta
   resolvido boolean default false,
@@ -549,19 +549,19 @@ Design: clean, cores azul médico (#2563EB) e verde saúde (#16A34A), mobile-fir
 Crie a tela principal do aluno em /app/(aluno)/home/page.tsx.
 
 Ela deve:
-1. Buscar os dados do aluno autenticado no Supabase (profile, último indicador registrado, treino de hoje, remédio pendente)
+1. Buscar os dados do aluno autenticado no Supabase (profile, último indicador registrado, treino de hoje, medicamento pendente)
 2. Mostrar saudação personalizada baseada em:
    - Hora do dia (bom dia/tarde/noite)
    - Último indicador registrado ("sua pressão ontem estava ótima 🟢")
    - Frequência de treino da semana
-   - Se tem remédio pendente hoje
+   - Se tem medicamento pendente hoje
 3. Menu principal com cards grandes e ícones:
    - 🏋️ Meu treino de hoje
    - 📊 Meus indicadores
-   - 💊 Meus remédios
+   - 💊 Meus medicamentos
    - 😊 Como estou hoje
    - 📅 Agenda
-4. Card de alerta no topo se houver algo pendente (remédio não confirmado, indicador em vermelho)
+4. Card de alerta no topo se houver algo pendente (medicamento não confirmado, indicador em vermelho)
 
 Use os dados reais do Supabase. Crie o arquivo /lib/utils/saudacao.ts com a lógica de geração da saudação.
 
@@ -627,7 +627,7 @@ Use Supabase Storage para vídeos. Limite de upload: 100MB por vídeo.
 ```
 Crie o módulo de medicamentos completo.
 
-/app/(aluno)/remedios/page.tsx:
+/app/(aluno)/medicamentos/page.tsx:
 1. Lista de medicamentos cadastrados com status de hoje (tomou/pendente)
 2. Formulário de cadastro:
    - Nome, dose, horários (múltiplos), dias da semana, condição, foto (opcional)
@@ -642,7 +642,7 @@ Lógica de notificações em /lib/utils/notificacoes.ts:
 4. Após 30 min: alerta para familiar (se configurado)
 
 /app/(professor)/dashboard/page.tsx — adicionar seção:
-- Alunos que não confirmaram remédio hoje e têm treino
+- Alunos que não confirmaram medicamento hoje e têm treino
 - Alerta visual destacado para cardiopatas e diabéticos
 
 Use Supabase para persistência. Web Push API para notificações PWA.
@@ -677,18 +677,18 @@ Crie o painel principal do professor em /app/(professor)/dashboard/page.tsx.
 Funcionalidades:
 1. Grid de todos os alunos com status visual:
    - 🟢 Verde: tudo ok hoje
-   - 🟡 Amarelo: pendências (remédio não confirmado, humor ruim)
+   - 🟡 Amarelo: pendências (medicamento não confirmado, humor ruim)
    - 🔴 Vermelho: alerta crítico (indicador vermelho registrado)
 2. Seção "Alertas Urgentes" no topo:
    - Alunos com indicador em vermelho hoje
-   - Alunos que não confirmaram remédio crítico
+   - Alunos que não confirmaram medicamento crítico
    - Alunos com humor "enfermo" ou "ansioso" por 3+ dias
 3. Cada card de aluno mostra:
    - Foto, nome, condição clínica
    - Treinou hoje? Sim/Não
    - Humor de hoje (emoji)
    - Último indicador registrado com semáforo
-   - Remédio confirmado? Sim/Não/N.A.
+   - Medicamento confirmado? Sim/Não/N.A.
 4. Clique no aluno: abre histórico completo
 5. Atualização em tempo real via Supabase Realtime
 
