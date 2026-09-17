@@ -9,9 +9,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 
-export function AceitarConvite({ familiarId }: { familiarId: string }) {
+export function AceitarConvite({
+  familiarId,
+  codigoInicial = "",
+}: {
+  familiarId: string;
+  /** Vem do link `/familia?codigo=` de quem já tinha conta. */
+  codigoInicial?: string;
+}) {
   const router = useRouter();
-  const [codigo, setCodigo] = useState("");
+  const [codigo, setCodigo] = useState(codigoInicial.toUpperCase().slice(0, 6));
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
 

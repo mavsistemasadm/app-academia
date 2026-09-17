@@ -1,6 +1,6 @@
 import type { RegistroIndicador } from '@/lib/utils/indicadores'
 
-export type Role = 'aluno' | 'professor'
+export type Role = 'aluno' | 'professor' | 'familiar'
 
 export type AvatarCondicao =
   | 'diabetico'

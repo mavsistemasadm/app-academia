@@ -51,8 +51,8 @@ const TITULOS: Record<string, string> = {
   '/chat': 'Conversas',
   '/anamnese': 'Anamnese',
   '/perfil': 'Perfil',
-  '/familiares': 'Familiares',
-  '/acompanhar': 'Acompanhar',
+  '/familiares': 'Dar acesso à família',
+  '/acompanhar': 'Acompanhar um familiar',
   '/relatorio': 'Relatório',
 }
 
@@ -95,8 +95,8 @@ export const NAV_DESKTOP: { secao: string; itens: ItemNav[] }[] = [
     secao: 'Conta',
     itens: [
       { href: '/perfil', label: 'Perfil', icone: User },
-      { href: '/familiares', label: 'Familiares', icone: Users },
-      { href: '/acompanhar', label: 'Acompanhar alguém', icone: HeartHandshake },
+      { href: '/familiares', label: 'Dar acesso à família', icone: Users },
+      { href: '/acompanhar', label: 'Acompanhar um familiar', icone: HeartHandshake },
     ],
   },
 ]

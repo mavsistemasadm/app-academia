@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, Check, Copy, Loader2, Plus, X } from "lucide-react";
+import { AlertCircle, Check, Copy, Loader2, Plus, Send, X } from "lucide-react";
 
 import { CHIP_SEMAFORO } from "@/components/aluno/CardIndicador";
 import { Button } from "@/components/ui/button";
@@ -60,10 +60,33 @@ export function GerenciarFamiliares({
     iniciarTransicao(() => router.refresh());
   }
 
-  async function copiar(codigo: string) {
-    await navigator.clipboard.writeText(codigo);
-    setCopiado(codigo);
-    setTimeout(() => setCopiado(null), 2000);
+  function mensagemConvite(familiar: FamiliarAcesso) {
+    const link = `${window.location.origin}/familia?codigo=${familiar.codigo}`;
+    return (
+      `Oi, ${familiar.nome.split(" ")[0]}! Quero que você acompanhe minha saúde pelo app da Atitude Vital. ` +
+      `Abra o link, crie seu acesso com o e-mail ${familiar.email} e pronto: ${link} ` +
+      `(código ${familiar.codigo})`
+    );
+  }
+
+  async function copiar(familiar: FamiliarAcesso) {
+    try {
+      await navigator.clipboard.writeText(mensagemConvite(familiar));
+      setCopiado(familiar.codigo);
+      setTimeout(() => setCopiado(null), 2000);
+    } catch {
+      // Sem permissão de área de transferência: o código continua à vista.
+    }
+  }
+
+  async function enviar(familiar: FamiliarAcesso) {
+    if (typeof navigator.share !== "function") return copiar(familiar);
+    try {
+      await navigator.share({ title: "Acompanhe minha saúde", text: mensagemConvite(familiar) });
+    } catch (e) {
+      // Fechar a folha de compartilhamento não é erro.
+      if ((e as DOMException)?.name !== "AbortError") await copiar(familiar);
+    }
   }
 
   return (
@@ -91,8 +114,8 @@ export function GerenciarFamiliares({
               Ninguém convidado ainda
             </p>
             <p className="mt-1 text-[15px] leading-relaxed text-neutral-500">
-              Gere um convite e mande o código para um filho, cônjuge ou
-              cuidador. Ele passa a ver seus indicadores pelo app.
+              Gere um convite e mande para um filho, cônjuge ou cuidador.
+              Ele cria um acesso só de acompanhante, sem precisar ser aluno.
             </p>
           </div>
         ) : (
@@ -136,25 +159,36 @@ export function GerenciarFamiliares({
                           {familiar.codigo}
                         </p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => copiar(familiar.codigo)}
-                        className="flex h-11 shrink-0 items-center gap-2 rounded-full bg-card px-4 text-sm font-semibold text-neutral-700 ring-1 ring-neutral-200 transition-all duration-200 hover:text-neutral-950 active:scale-[.98]"
-                      >
-                        {copiado === familiar.codigo ? (
-                          <>
-                            <Check className="size-4 text-saude-verde" aria-hidden />
-                            Copiado
-                          </>
-                        ) : (
-                          <>
+                      <div className="flex shrink-0 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => copiar(familiar)}
+                          aria-label="Copiar convite"
+                          className="flex h-11 items-center gap-2 rounded-full bg-card px-4 text-sm font-semibold text-neutral-700 ring-1 ring-neutral-200 transition-all duration-200 hover:text-neutral-950 active:scale-[.98]"
+                        >
+                          {copiado === familiar.codigo ? (
+                            <>
+                              <Check className="size-4 text-saude-verde" aria-hidden />
+                              Copiado
+                            </>
+                          ) : (
                             <Copy className="size-4" aria-hidden />
-                            Copiar
-                          </>
-                        )}
-                      </button>
-                      <p className="w-full text-[13px] text-neutral-500">
-                        O familiar digita esse código em Acompanhar, no app dele.
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => enviar(familiar)}
+                          className="flex h-11 items-center gap-2 rounded-full bg-grafite px-4 text-sm font-semibold text-white transition-all duration-200 hover:bg-neutral-800 active:scale-[.98]"
+                        >
+                          <Send className="size-4" aria-hidden />
+                          Enviar convite
+                        </button>
+                      </div>
+                      <p className="w-full text-[13px] leading-relaxed text-neutral-500">
+                        O convite leva um link. Quem recebe cria o acesso com o
+                        e-mail {familiar.email} e já passa a acompanhar você. Se a
+                        pessoa já usa o app, é só digitar o código em Acompanhar
+                        um familiar.
                       </p>
                     </div>
                   )}

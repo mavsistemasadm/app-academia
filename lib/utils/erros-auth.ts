@@ -24,3 +24,12 @@ export function traduzirErroAuth(mensagem?: string): string {
 
   return 'Não foi possível concluir. Tente novamente em instantes.'
 }
+
+/** O Auth recusou criar a conta porque o e-mail já está cadastrado. */
+export function emailJaCadastrado(erro: { code?: string; message?: string }): boolean {
+  return (
+    erro.code === 'email_exists' ||
+    erro.code === 'user_already_exists' ||
+    /already (been )?registered|already exists/i.test(erro.message ?? '')
+  )
+}

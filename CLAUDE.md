@@ -50,6 +50,7 @@ app/
   (aluno)/relatorio       folha mensal para o médico (imprime em PDF)
   (aluno)/familiares      convites de acompanhamento familiar
   (aluno)/acompanhar      visão restrita de quem é familiar de um aluno
+  (auth)/familia          conta de familiar criada com o código do convite
 
   (professor)/layout.tsx  header + abas + botão "ver como aluno"
   (professor)/dashboard   números do dia, alertas realtime, alunos críticos
@@ -257,7 +258,9 @@ aluno antes de liberar o treino; no vermelho, avisa e pede confirmação
 PDF sai pelo próprio navegador, sem biblioteca
 
 **15. Acompanhamento familiar** — [x] convite por código · [x] visão restrita
-a indicadores e frequência · [x] RLS própria
+a indicadores e frequência · [x] RLS própria · [x] quem recebe o convite cria
+uma conta de familiar em `/familia?codigo=` (sem convite do professor; o
+e-mail precisa ser o do convite) e fica preso em `/acompanhar` pelo middleware
 
 **16. Conquistas** — [x] nove badges derivadas dos dados · [x] streak de
 presença · [x] marca as novas como vistas
@@ -271,8 +274,9 @@ número, escala 0 a 10 e data · [~] depende da migração 011
 ao longo do dia
 
 **19. Exames** — [x] upload de PDF/imagem com tipo e data (`/exames`) ·
-[x] link público com prazo para o médico (`/exames/compartilhado/[token]`) ·
-[~] depende da migração 007
+[x] link público com prazo para o médico (`/exames/compartilhado/[token]`),
+que mostra também medições de 90 dias, medicamentos e a anamnese marcada
+"vai ao médico"
 
 **20. Convite de aluno** — [x] professor convida por nome e e-mail
 (`/alunos/convidar`) · [x] primeira senha em `/definir-senha` · [~] template
@@ -310,6 +314,9 @@ sequência · [x] cronômetro e duração do treino para o professor ·
      em `treino_execucoes`. Antes dela o tempo é estimado pelas séries.
    - 009 põe `notificacoes` no Realtime (comunicado chega na hora no sino).
    - 010 texto do alerta de indicador crítico sem travessão.
+   - 011 e 012 já aplicadas (17/09/2026). 012 cria o papel `familiar`; o Auth
+     grava o app_metadata depois do insert, então `/api/familia/cadastro`
+     acerta `profiles.role` pela service role logo depois de criar a conta.
    - 011 anamnese editável: tabela `anamnese_perguntas` + `anamneses.respostas`
      (jsonb por id da pergunta). Sem ela o formulário usa `PERGUNTAS_PADRAO`
      de `lib/utils/anamnese.ts` e o editor fica só leitura. As colunas antigas

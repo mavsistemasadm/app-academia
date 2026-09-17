@@ -25,8 +25,8 @@ const ATALHOS = [
   {
     href: "/familiares",
     icone: Users,
-    titulo: "Familiares",
-    texto: "Quem pode acompanhar seus indicadores e sua frequência.",
+    titulo: "Dar acesso à família",
+    texto: "Gere um código para alguém acompanhar seus indicadores e sua frequência.",
   },
 ];
 

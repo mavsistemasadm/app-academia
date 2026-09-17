@@ -17,7 +17,7 @@ export default async function FamiliaresPage() {
     <div className="flex flex-col gap-7 pt-0 md:gap-9 md:px-8 md:pt-10">
       <CabecalhoPagina
         rotulo="Família"
-        titulo="Familiares"
+        titulo="Dar acesso à família"
         descricao={
           ativos === 0
             ? "Convide quem cuida de você para acompanhar seus indicadores de longe."
@@ -29,12 +29,12 @@ export default async function FamiliaresPage() {
         <GerenciarFamiliares alunoId={perfil.id} familiares={familiares} />
 
         <p className="text-sm text-neutral-500">
-          Você é o familiar de alguém?{" "}
+          Quer o contrário, acompanhar alguém que recebeu um código?{" "}
           <Link
             href="/acompanhar"
             className="font-semibold text-primary underline-offset-4 hover:underline"
           >
-            Use seu código aqui →
+            Digite em Acompanhar um familiar →
           </Link>
         </p>
       </div>

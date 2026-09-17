@@ -1,6 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+import { destinoDoPapel, ROTAS_DO_FAMILIAR } from '@/lib/utils/papel'
+
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
@@ -47,8 +49,17 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse
   }
 
+  // Link que o aluno manda ao familiar. Quem já tem conta e está logado usa
+  // o código direto em /acompanhar, sem criar outra conta.
+  if (pathname.startsWith('/familia') && user) {
+    const destino = new URL('/acompanhar', request.url)
+    const codigo = request.nextUrl.searchParams.get('codigo')
+    if (codigo) destino.searchParams.set('codigo', codigo)
+    return NextResponse.redirect(destino)
+  }
+
   // Rotas de entrada: quem já está logado não deveria estar aqui.
-  const publicRoutes = ['/login', '/cadastro', '/esqueci-senha']
+  const publicRoutes = ['/login', '/cadastro', '/esqueci-senha', '/familia']
   const isPublic = publicRoutes.some(r => pathname.startsWith(r))
 
   // Não autenticado tentando acessar rota privada
@@ -70,8 +81,16 @@ export async function middleware(request: NextRequest) {
       return supabaseResponse
     }
 
-    const destino = profile.role === 'professor' ? '/dashboard' : '/home'
-    return NextResponse.redirect(new URL(destino, request.url))
+    return NextResponse.redirect(new URL(destinoDoPapel(profile.role), request.url))
+  }
+
+  // Conta de familiar só enxerga quem acompanha. O papel vem do app_metadata
+  // do token (só a service role escreve), então não custa consulta ao banco.
+  if (
+    user?.app_metadata?.role === 'familiar' &&
+    !ROTAS_DO_FAMILIAR.some((r) => pathname.startsWith(r))
+  ) {
+    return NextResponse.redirect(new URL('/acompanhar', request.url))
   }
 
   // Aluno tentando acessar área do professor. Os layouts de `(professor)`

@@ -6,6 +6,7 @@ import { buscarUsuarioPorEmail } from "@/lib/supabase/convites";
 import { getPerfilAtual } from "@/lib/supabase/perfil";
 import { createServiceClient } from "@/lib/supabase/servico";
 import { AVATAR_CONFIG } from "@/lib/utils/avatares";
+import { emailJaCadastrado } from "@/lib/utils/erros-auth";
 
 /**
  * Convite de aluno. Só professor chama; o e-mail sai pelo próprio Supabase
@@ -56,14 +57,6 @@ function traduzirErroConvite(error: AuthError): { mensagem: string; status: numb
     mensagem: "Não foi possível enviar o convite agora. Tente novamente em instantes.",
     status: 500,
   };
-}
-
-function jaExiste(error: AuthError) {
-  return (
-    error.code === "email_exists" ||
-    error.code === "user_already_exists" ||
-    /already (been )?registered|already exists/i.test(error.message ?? "")
-  );
 }
 
 export async function POST(request: NextRequest) {
@@ -144,7 +137,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, reenviado });
   }
 
-  if (!jaExiste(error)) {
+  if (!emailJaCadastrado(error)) {
     const { mensagem, status } = traduzirErroConvite(error);
     return NextResponse.json({ erro: mensagem }, { status });
   }

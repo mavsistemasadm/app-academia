@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -13,7 +14,12 @@ import { CONFIG_INDICADORES } from "@/lib/utils/indicadores";
 
 const DIAS_NO_CALENDARIO = 30;
 
-export default async function AcompanharPage() {
+export default async function AcompanharPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ codigo?: string }>;
+}) {
+  const { codigo } = await searchParams;
   const perfil = await getPerfilAtual();
   if (!perfil) redirect("/login");
 
@@ -28,10 +34,10 @@ export default async function AcompanharPage() {
     <div className="flex flex-col gap-7 pt-0 md:gap-9 md:px-8 md:pt-10">
       <CabecalhoPagina
         rotulo="Família"
-        titulo="Acompanhar"
+        titulo={perfil.role === "familiar" ? "Quem você acompanha" : "Acompanhar um familiar"}
         descricao={
           acompanhados.length === 0
-            ? "Digite o código que seu familiar gerou no app dele e acompanhe a saúde dele daqui."
+            ? "Recebeu um código de um familiar que treina no centro? Digite aqui e acompanhe a saúde dele."
             : "Indicadores e frequência de quem você acompanha."
         }
       />
@@ -39,7 +45,7 @@ export default async function AcompanharPage() {
       <div className="flex flex-col gap-9 px-5 md:gap-12 md:px-0">
         {acompanhados.length === 0 && (
           <div className="w-full max-w-xl">
-            <AceitarConvite familiarId={perfil.id} />
+            <AceitarConvite familiarId={perfil.id} codigoInicial={codigo} />
           </div>
         )}
 
@@ -181,9 +187,21 @@ export default async function AcompanharPage() {
               anamnese ficam entre o aluno e o centro.
             </p>
             <div className="w-full max-w-xl">
-              <AceitarConvite familiarId={perfil.id} />
+              <AceitarConvite familiarId={perfil.id} codigoInicial={codigo} />
             </div>
           </>
+        )}
+
+        {perfil.role !== "familiar" && (
+          <p className="text-sm text-neutral-500">
+            Quer o contrário, que alguém acompanhe <strong className="font-semibold">você</strong>?{" "}
+            <Link
+              href="/familiares"
+              className="font-semibold text-primary underline-offset-4 hover:underline"
+            >
+              Gere um código em Dar acesso à família →
+            </Link>
+          </p>
         )}
       </div>
     </div>

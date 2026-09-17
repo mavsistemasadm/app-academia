@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { BotaoSair } from "@/components/shared/BotaoSair";
 import { cn } from "@/lib/utils";
 import { NAV_DESKTOP } from "@/lib/utils/navegacao";
 
@@ -59,6 +60,10 @@ export function Sidebar() {
           </div>
         ))}
       </nav>
+
+      <div className="border-t border-neutral-200/80 px-3 py-3">
+        <BotaoSair variante="menu" />
+      </div>
     </aside>
   );
 }

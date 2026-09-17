@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 import { traduzirErroAuth } from "@/lib/utils/erros-auth";
+import { destinoDoPapel } from "@/lib/utils/papel";
 
 // WhatsApp da Atitude Vital, com a primeira mensagem já escrita.
 const LINK_WHATSAPP = `https://wa.me/5548984591376?text=${encodeURIComponent(
@@ -59,14 +60,14 @@ export default function LoginPage() {
       return;
     }
 
-    // O destino depende do papel: professor vai para o painel, aluno para a home.
+    // O destino depende do papel: painel, home ou, para o familiar, Acompanhar.
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", data.user.id)
       .single();
 
-    const destino = profile?.role === "professor" ? "/dashboard" : "/home";
+    const destino = destinoDoPapel(profile?.role);
 
     // `refresh` faz o middleware reler a sessão recém-criada nos cookies.
     router.replace(destino);

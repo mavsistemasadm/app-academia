@@ -1,5 +1,19 @@
-import type { AvatarCondicao, Exame, ExameCompartilhamento } from '@/lib/types'
+import type {
+  Anamnese,
+  AvatarCondicao,
+  Exame,
+  ExameCompartilhamento,
+  Indicador,
+  Medicamento,
+} from '@/lib/types'
+import {
+  PERGUNTAS_PADRAO,
+  respostasParaLeitura,
+  type PerguntaAnamnese,
+} from '@/lib/utils/anamnese'
+import { hojeISO, somarDiasISO } from '@/lib/utils/datas'
 import { FORMATO_TOKEN } from '@/lib/utils/exames'
+import { resumirIndicador, type RegistroIndicador } from '@/lib/utils/indicadores'
 import { createClient } from './server'
 import { createServiceClient } from './servico'
 
@@ -62,7 +76,16 @@ export interface ExamesCompartilhadosData {
   }
   expiraEm: string | null
   exames: ExameCompartilhado[]
+  /** Medições dos últimos DIAS_DE_MEDICOES dias, da mais recente para a mais antiga. */
+  medicoes: RegistroIndicador[]
+  medicamentos: Pick<Medicamento, 'id' | 'nome' | 'dose' | 'horarios' | 'dias_semana'>[]
+  /** Só as perguntas que o professor marcou como "vai ao médico". */
+  anamnese: { pergunta: string; resposta: string }[]
+  anamneseAtualizadaEm: string | null
 }
+
+/** Janela de medições que o médico enxerga pelo link. */
+export const DIAS_DE_MEDICOES = 90
 
 /**
  * O que a página pública do médico enxerga. Usa a service role — **só do
@@ -91,19 +114,45 @@ export async function getExamesCompartilhados(
 
   const alunoId = (link as ExameCompartilhamento).aluno_id
 
-  const [perfil, exames] = await Promise.all([
-    servico
-      .from('profiles')
-      .select('nome, data_nascimento, avatar_condicao')
-      .eq('id', alunoId)
-      .maybeSingle(),
-    servico
-      .from('exames')
-      .select('*')
-      .eq('aluno_id', alunoId)
-      .order('data_exame', { ascending: false })
-      .order('created_at', { ascending: false }),
-  ])
+  const inicioMedicoes = somarDiasISO(hojeISO(), -DIAS_DE_MEDICOES)
+
+  const [perfil, exames, indicadores, medicamentos, avaliacao, anamnese, perguntas] =
+    await Promise.all([
+      servico
+        .from('profiles')
+        .select('nome, data_nascimento, avatar_condicao')
+        .eq('id', alunoId)
+        .maybeSingle(),
+      servico
+        .from('exames')
+        .select('*')
+        .eq('aluno_id', alunoId)
+        .order('data_exame', { ascending: false })
+        .order('created_at', { ascending: false }),
+      servico
+        .from('indicadores')
+        .select('*')
+        .eq('aluno_id', alunoId)
+        .gte('created_at', `${inicioMedicoes}T00:00:00`)
+        .order('created_at', { ascending: false })
+        .limit(300),
+      servico
+        .from('medicamentos')
+        .select('id, nome, dose, horarios, dias_semana')
+        .eq('aluno_id', alunoId)
+        .eq('ativo', true)
+        .order('nome', { ascending: true }),
+      servico
+        .from('avaliacoes_fisicas')
+        .select('altura')
+        .eq('aluno_id', alunoId)
+        .not('altura', 'is', null)
+        .order('data', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      servico.from('anamneses').select('*').eq('aluno_id', alunoId).maybeSingle(),
+      servico.from('anamnese_perguntas').select('*').eq('ativa', true).order('ordem'),
+    ])
 
   if (!perfil.data) return null
 
@@ -132,6 +181,18 @@ export async function getExamesCompartilhados(
       avatar_condicao: (perfil.data.avatar_condicao as AvatarCondicao[] | null) ?? null,
     },
     expiraEm: (link as ExameCompartilhamento).expira_em ?? null,
+    medicoes: ((indicadores.data as Indicador[] | null) ?? []).map((i) =>
+      resumirIndicador(i, (avaliacao.data?.altura as number | null) ?? null)
+    ),
+    medicamentos: (medicamentos.data as ExamesCompartilhadosData['medicamentos'] | null) ?? [],
+    anamnese: respostasParaLeitura(
+      // Antes da migração 011 a tabela não existe: vale a lista do código.
+      ((perguntas.error ? PERGUNTAS_PADRAO : perguntas.data) as PerguntaAnamnese[]).filter(
+        (p) => p.no_relatorio
+      ),
+      (anamnese.data as Anamnese | null) ?? null
+    ).map(({ pergunta, texto }) => ({ pergunta: pergunta.enunciado, resposta: texto })),
+    anamneseAtualizadaEm: (anamnese.data?.atualizado_em as string | undefined) ?? null,
     exames: lista.map((exame) => ({
       ...exame,
       url: urls.get(exame.arquivo_path) ?? null,

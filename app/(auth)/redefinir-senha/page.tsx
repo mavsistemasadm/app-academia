@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 import { traduzirErroAuth } from "@/lib/utils/erros-auth";
+import { destinoDoPapel } from "@/lib/utils/papel";
 
 /**
  * Chega-se aqui pelo link do e-mail, já com sessão: `/auth/confirmar` trocou o
@@ -55,7 +56,7 @@ export default function RedefinirSenhaPage() {
       .eq("id", data.user.id)
       .single();
 
-    router.replace(profile?.role === "professor" ? "/dashboard" : "/home");
+    router.replace(destinoDoPapel(profile?.role));
     router.refresh();
   }
 

@@ -140,15 +140,24 @@ export function GerenciarExames({
         <div>
           <h2 className={TITULO_SECAO}>Compartilhar com o médico</h2>
           <p className="mt-1 text-[15px] leading-relaxed text-neutral-500">
-            Gere um link que abre todos os seus exames, sem precisar de conta.
-            Ele vence sozinho e você pode cancelar quando quiser.
+            Gere um link que o médico abre sem precisar de conta. Ele vence
+            sozinho e você pode cancelar quando quiser.
           </p>
         </div>
-        <CompartilharExames
-          alunoId={alunoId}
-          compartilhamentos={compartilhamentos}
-          semExames={exames.length === 0}
-        />
+        <ul className="flex flex-col divide-y divide-neutral-200/80 overflow-hidden rounded-2xl bg-card text-[15px] ring-1 ring-neutral-200/90">
+          {[
+            "Seus exames, para abrir e baixar",
+            "Suas medições dos últimos 90 dias, com o semáforo",
+            "Os medicamentos que você cadastrou",
+            "As respostas da anamnese que o centro separou para o médico",
+          ].map((item) => (
+            <li key={item} className="flex items-center gap-3 px-5 py-3 text-neutral-700">
+              <Check className="size-5 shrink-0 text-saude-verde" strokeWidth={1.8} aria-hidden />
+              {item}
+            </li>
+          ))}
+        </ul>
+        <CompartilharExames alunoId={alunoId} compartilhamentos={compartilhamentos} />
       </section>
     </>
   );
@@ -707,11 +716,9 @@ function FormularioExame({
 function CompartilharExames({
   alunoId,
   compartilhamentos,
-  semExames,
 }: {
   alunoId: string;
   compartilhamentos: ExameCompartilhamento[];
-  semExames: boolean;
 }) {
   const router = useRouter();
   const [, iniciarTransicao] = useTransition();
@@ -765,8 +772,8 @@ function CompartilharExames({
     if (typeof navigator.share !== "function") return copiar(token);
     try {
       await navigator.share({
-        title: "Meus exames",
-        text: "Meus exames, compartilhados pelo app Atitude Vital:",
+        title: "Meu resumo de saúde",
+        text: "Meus exames, medições e medicamentos, compartilhados pelo app Atitude Vital:",
         url: urlDe(token),
       });
     } catch (e) {
@@ -824,7 +831,7 @@ function CompartilharExames({
       <button
         type="button"
         onClick={gerar}
-        disabled={gerando || semExames}
+        disabled={gerando}
         className="flex h-12 items-center justify-center gap-2 rounded-full bg-primary text-[15px] font-semibold text-white transition-all duration-200 hover:bg-primary/90 active:scale-[.98] disabled:opacity-60"
       >
         {gerando ? (
@@ -834,12 +841,6 @@ function CompartilharExames({
         )}
         Gerar link
       </button>
-
-      {semExames && (
-        <p className="text-[13px] text-neutral-400">
-          Envie pelo menos um exame para gerar o link.
-        </p>
-      )}
 
       {erro && (
         <p role="alert" className="text-sm text-saude-vermelho">

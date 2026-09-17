@@ -4,17 +4,20 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ExternalLink, FileText, ImageIcon, ShieldCheck } from "lucide-react";
 
-import { getExamesCompartilhados } from "@/lib/supabase/exames";
+import { CHIP_SEMAFORO } from "@/components/aluno/CardIndicador";
+import { cn } from "@/lib/utils";
+import { DIAS_DE_MEDICOES, getExamesCompartilhados } from "@/lib/supabase/exames";
 import { rotularCondicoes } from "@/lib/utils/avatares";
 import { naAcademia } from "@/lib/utils/datas";
 import { ehPdf, rotuloTipoExame } from "@/lib/utils/exames";
+import { CONFIG_INDICADORES, MOMENTO_LABEL } from "@/lib/utils/indicadores";
 
 // Cada visita valida o token de novo e gera URLs assinadas novas.
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: "Exames compartilhados",
+  title: "Resumo de saúde compartilhado",
   robots: { index: false, follow: false, nocache: true },
   // O token está na URL: não vaza no Referer quando o médico abre o arquivo.
   referrer: "no-referrer",
@@ -23,6 +26,10 @@ export const metadata: Metadata = {
 function dataISO(iso: string, padrao = "dd 'de' MMMM 'de' yyyy") {
   return format(new Date(`${iso}T12:00:00Z`), padrao, { locale: ptBR });
 }
+
+const TEXTO_STATUS = { verde: "Ideal", amarelo: "Atenção", vermelho: "Crítico" } as const;
+const TITULO = "text-base font-semibold tracking-[-0.015em] text-neutral-950";
+const CARD = "overflow-hidden rounded-2xl ring-1 ring-neutral-200/90";
 
 function Logo() {
   return (
@@ -65,7 +72,12 @@ export default async function ExamesCompartilhadosPage({
     );
   }
 
-  const { aluno, exames, expiraEm } = dados;
+  const { aluno, exames, expiraEm, medicoes, medicamentos, anamnese } = dados;
+
+  // O último registro de cada indicador, na ordem em que o app apresenta.
+  const ultimas = (Object.keys(CONFIG_INDICADORES) as (keyof typeof CONFIG_INDICADORES)[])
+    .map((tipo) => medicoes.find((m) => m.tipo === tipo))
+    .filter((m) => m !== undefined);
   const condicoes = aluno.avatar_condicao?.length
     ? rotularCondicoes(aluno.avatar_condicao)
     : null;
@@ -80,9 +92,9 @@ export default async function ExamesCompartilhadosPage({
               Central de Saúde Conectada
             </p>
           </div>
-          <p className="rotulo text-neutral-400">Exames compartilhados</p>
+          <p className="rotulo text-neutral-400">Resumo de saúde compartilhado</p>
           <h1 className="text-[24px] leading-tight font-semibold tracking-[-0.025em] text-neutral-950 sm:text-[28px]">
-            Exames de {aluno.nome}
+            {aluno.nome}
           </h1>
           {(aluno.data_nascimento || condicoes) && (
             <p className="mt-1 text-[15px] text-neutral-600">
@@ -105,15 +117,130 @@ export default async function ExamesCompartilhadosPage({
             {expiraEm
               ? `, válido até ${format(naAcademia(expiraEm), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`
               : ""}
-            . Os arquivos abrem por tempo limitado. Se algum não abrir,
-            recarregue a página.
+            . Medições e medicamentos são registrados pelo próprio paciente no
+            app. Os arquivos de exame abrem por tempo limitado: se algum não
+            abrir, recarregue a página.
           </p>
         </div>
+
+        {anamnese.length > 0 && (
+          <section className="flex flex-col gap-3">
+            <h2 className={TITULO}>Informado pelo paciente na anamnese</h2>
+            <dl className={cn(CARD, "divide-y divide-neutral-200/80 px-4 md:px-5")}>
+              {anamnese.map(({ pergunta, resposta }) => (
+                <div key={pergunta} className="grid gap-0.5 py-3 sm:grid-cols-[200px_minmax(0,1fr)] sm:gap-4">
+                  <dt className="text-[13px] font-medium text-neutral-500">{pergunta}</dt>
+                  <dd className="text-[15px] leading-relaxed text-neutral-950">{resposta}</dd>
+                </div>
+              ))}
+            </dl>
+            {dados.anamneseAtualizadaEm && (
+              <p className="rotulo text-neutral-400">
+                Atualizada em {format(naAcademia(dados.anamneseAtualizadaEm), "dd/MM/yyyy")}
+              </p>
+            )}
+          </section>
+        )}
+
+        <section className="flex flex-col gap-3">
+          <h2 className={TITULO}>
+            {medicamentos.length === 0 ? "Nenhum medicamento cadastrado no app" : "Medicamentos em uso"}
+          </h2>
+          {medicamentos.length > 0 && (
+            <ul className={cn(CARD, "divide-y divide-neutral-200/80")}>
+              {medicamentos.map((m) => (
+                <li key={m.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-4 py-3 md:px-5">
+                  <p className="text-[15px] font-semibold text-neutral-950">
+                    {m.nome}
+                    {m.dose && <span className="font-normal text-neutral-600"> · {m.dose}</span>}
+                  </p>
+                  <p className="rotulo text-neutral-500">
+                    {m.horarios.map((h) => h.slice(0, 5)).join(" · ")}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section className="flex flex-col gap-3">
+          <h2 className={TITULO}>
+            {medicoes.length === 0
+              ? `Nenhuma medição nos últimos ${DIAS_DE_MEDICOES} dias`
+              : `Medições dos últimos ${DIAS_DE_MEDICOES} dias`}
+          </h2>
+
+          {ultimas.length > 0 && (
+            <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+              {ultimas.map((m) => (
+                <li key={m.id} className="flex flex-col gap-1.5 rounded-2xl px-4 py-3.5 ring-1 ring-neutral-200/90">
+                  <p className="rotulo text-neutral-400">{CONFIG_INDICADORES[m.tipo].labelCurto}, a última</p>
+                  <p className="numero text-[24px] leading-none font-semibold text-neutral-950">
+                    {m.valorFormatado.replace(" kg", "")}
+                    <span className="ml-1 font-sans text-xs font-medium tracking-normal text-neutral-400">
+                      {CONFIG_INDICADORES[m.tipo].unidade}
+                    </span>
+                  </p>
+                  <p className="flex flex-wrap items-center gap-1.5">
+                    <span className={cn("rounded-full px-2 py-px text-[11px] font-semibold", CHIP_SEMAFORO[m.status])}>
+                      {TEXTO_STATUS[m.status]}
+                    </span>
+                    <span className="text-[12px] text-neutral-500">
+                      {format(naAcademia(m.registradoEm), "dd/MM")}
+                    </span>
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {medicoes.length > 0 && (
+            <details className={cn(CARD, "group")}>
+              <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-primary md:px-5">
+                Ver as {medicoes.length} medições
+              </summary>
+              <div className="overflow-x-auto border-t border-neutral-200/80">
+                <table className="w-full min-w-[520px] text-left text-sm">
+                  <thead className="bg-neutral-50 text-[12px] text-neutral-500">
+                    <tr>
+                      <th className="px-4 py-2 font-medium md:px-5">Data</th>
+                      <th className="px-2 py-2 font-medium">Indicador</th>
+                      <th className="px-2 py-2 font-medium">Valor</th>
+                      <th className="px-2 py-2 font-medium">Momento</th>
+                      <th className="px-4 py-2 font-medium md:px-5">Faixa</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-200/80">
+                    {medicoes.map((m) => (
+                      <tr key={m.id}>
+                        <td className="numero px-4 py-2 whitespace-nowrap text-neutral-600 md:px-5">
+                          {format(naAcademia(m.registradoEm), "dd/MM/yy HH:mm")}
+                        </td>
+                        <td className="px-2 py-2 text-neutral-700">{CONFIG_INDICADORES[m.tipo].labelCurto}</td>
+                        <td className="numero px-2 py-2 font-semibold whitespace-nowrap text-neutral-950">
+                          {m.valorFormatado.replace(" kg", "")} {CONFIG_INDICADORES[m.tipo].unidade}
+                        </td>
+                        <td className="px-2 py-2 text-neutral-600">
+                          {m.momento ? MOMENTO_LABEL[m.momento] : "Não informado"}
+                        </td>
+                        <td className="px-4 py-2 md:px-5">
+                          <span className={cn("rounded-full px-2 py-px text-[11px] font-semibold", CHIP_SEMAFORO[m.status])}>
+                            {TEXTO_STATUS[m.status]}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </details>
+          )}
+        </section>
 
         <section className="flex flex-col gap-3">
           <h2 className="text-base font-semibold tracking-[-0.015em] text-neutral-950">
             {exames.length === 0
-              ? "Nenhum exame enviado ainda"
+              ? "Nenhum exame enviado"
               : `${exames.length} ${exames.length === 1 ? "exame" : "exames"}, do mais recente ao mais antigo`}
           </h2>
 
