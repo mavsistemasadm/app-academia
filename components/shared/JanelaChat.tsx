@@ -15,6 +15,8 @@ interface JanelaChatProps {
   contatoId: string;
   contatoNome: string;
   mensagensIniciais: Mensagem[];
+  /** Texto já digitado ao abrir: vem do botão "Chamar no chat" do alerta. */
+  rascunhoInicial?: string;
 }
 
 export function JanelaChat({
@@ -22,9 +24,10 @@ export function JanelaChat({
   contatoId,
   contatoNome,
   mensagensIniciais,
+  rascunhoInicial = "",
 }: JanelaChatProps) {
   const [mensagens, setMensagens] = useState(mensagensIniciais);
-  const [texto, setTexto] = useState("");
+  const [texto, setTexto] = useState(rascunhoInicial);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 

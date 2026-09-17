@@ -9,13 +9,16 @@ import { rotularCondicoes } from "@/lib/utils/avatares";
 
 export default async function ConversaPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ rascunho?: string }>;
 }) {
   const perfil = await getPerfilAtual();
   if (!perfil) redirect("/login");
 
   const { id } = await params;
+  const { rascunho } = await searchParams;
   const conversa = await getConversa(perfil, id);
   if (!conversa) notFound();
 
@@ -75,6 +78,7 @@ export default async function ConversaPage({
         contatoId={contato.id}
         contatoNome={contato.nome}
         mensagensIniciais={mensagens}
+        rascunhoInicial={rascunho?.slice(0, 500)}
       />
     </div>
   );

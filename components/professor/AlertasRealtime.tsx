@@ -5,17 +5,21 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Check, CheckCircle2, Loader2 } from "lucide-react";
+import { Check, CheckCircle2, Loader2, MessageCircle } from "lucide-react";
 
 import type { AlertaProfessor, AlertaTipo } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { CONFIG_INDICADORES } from "@/lib/utils/indicadores";
 
 /*
   Severidade à esquerda, tipo no chip. Vermelho só para indicador crítico —
   é o que exige ação na hora; humor e medicamento são amarelo; frequência, neutro.
 */
-const ESTILO: Record<AlertaTipo, { faixa: string; chip: string; rotulo: string }> = {
+const ESTILO: Record<
+  AlertaTipo,
+  { faixa: string; chip: string; rotulo: string }
+> = {
   indicador_vermelho: {
     faixa: "bg-saude-vermelho",
     chip: "bg-saude-vermelho-light text-[#b91c1c]",
@@ -44,17 +48,60 @@ function detalhar(alerta: AlertaProfessor): string | null {
   if (!dados) return null;
 
   if (alerta.tipo === "indicador_vermelho") {
-    const partes = [dados.tipo, dados.valor].filter(Boolean);
-    if (partes.length === 0) return null;
+    const valor = valorDoIndicador(dados);
+    if (!valor) return null;
 
-    const valor = dados.valor2
-      ? `${dados.valor}/${dados.valor2}`
-      : String(dados.valor);
-
-    return `${dados.tipo}: ${valor}`;
+    return `${rotuloDoIndicador(dados)}: ${valor}`;
   }
 
   return null;
+}
+
+/** O gatilho grava a chave crua ("pressao"); o rótulo bonito mora no app. */
+function rotuloDoIndicador(dados: Record<string, unknown>): string {
+  const tipo = String(dados.tipo ?? "");
+  return tipo in CONFIG_INDICADORES
+    ? CONFIG_INDICADORES[tipo as keyof typeof CONFIG_INDICADORES].labelCurto
+    : tipo;
+}
+
+function valorDoIndicador(dados: Record<string, unknown>): string | null {
+  if (!dados.valor) return null;
+  const valor = dados.valor2
+    ? `${dados.valor}/${dados.valor2}`
+    : String(dados.valor);
+  const unidade =
+    String(dados.tipo ?? "") in CONFIG_INDICADORES
+      ? CONFIG_INDICADORES[
+          String(dados.tipo) as keyof typeof CONFIG_INDICADORES
+        ].unidade
+      : "";
+  return unidade ? `${valor} ${unidade}` : valor;
+}
+
+/**
+ * A conversa já abre escrita: o professor lê o alerta e fala com o aluno sem
+ * ter que lembrar do número nem digitar do zero.
+ */
+function rascunhoDoAlerta(alerta: AlertaProfessor): string {
+  const primeiro = alerta.aluno?.nome?.split(" ")[0] ?? "";
+  const oi = primeiro ? `Oi, ${primeiro}!` : "Oi!";
+  const dados = (alerta.dados as Record<string, unknown> | undefined) ?? {};
+
+  if (alerta.tipo === "indicador_vermelho") {
+    const valor = valorDoIndicador(dados);
+    const rotulo = rotuloDoIndicador(dados).toLowerCase();
+    return valor
+      ? `${oi} Vi aqui o registro de ${rotulo} em ${valor}. Como você está se sentindo agora?`
+      : `${oi} Vi um indicador fora da faixa no seu registro. Como você está se sentindo agora?`;
+  }
+  if (alerta.tipo === "humor_ruim") {
+    return `${oi} Vi seu registro de humor de hoje. Quer me contar como está sendo o dia?`;
+  }
+  if (alerta.tipo === "medicamento_nao_tomado") {
+    return `${oi} Passando para lembrar do medicamento de hoje. Conseguiu tomar?`;
+  }
+  return `${oi} Faz alguns dias que você não aparece por aqui. Está tudo bem?`;
 }
 
 interface AlertasRealtimeProps {
@@ -115,9 +162,9 @@ export function AlertasRealtime({
           setRecebidos((atuais) =>
             atuais.some((a) => a.id === alerta.id)
               ? atuais
-              : [{ ...alerta, aluno: aluno ?? undefined }, ...atuais]
+              : [{ ...alerta, aluno: aluno ?? undefined }, ...atuais],
           );
-        }
+        },
       )
       .subscribe();
 
@@ -163,7 +210,9 @@ export function AlertasRealtime({
     );
   }
 
-  const criticos = alertas.filter((a) => a.tipo === "indicador_vermelho").length;
+  const criticos = alertas.filter(
+    (a) => a.tipo === "indicador_vermelho",
+  ).length;
 
   return (
     <div className="overflow-hidden rounded-2xl bg-card ring-1 ring-neutral-200/90">
@@ -173,7 +222,9 @@ export function AlertasRealtime({
           Tempo real
         </p>
         <p className="text-[13px] text-neutral-500">
-          <span className="numero font-semibold text-neutral-950">{alertas.length}</span>{" "}
+          <span className="numero font-semibold text-neutral-950">
+            {alertas.length}
+          </span>{" "}
           {alertas.length === 1 ? "aberto" : "abertos"}
           {criticos > 0 && (
             <>
@@ -186,16 +237,25 @@ export function AlertasRealtime({
         </p>
       </div>
 
-      <ul className="flex flex-col divide-y divide-neutral-200/80" aria-live="polite">
+      <ul
+        className="flex flex-col divide-y divide-neutral-200/80"
+        aria-live="polite"
+      >
         {alertas.map((alerta) => {
           const estilo = ESTILO[alerta.tipo] ?? ESTILO.sem_treinar;
           const detalhe = detalhar(alerta);
 
           return (
-            <li key={alerta.id} className="flex items-stretch gap-3 px-4 py-3.5 md:px-5">
+            <li
+              key={alerta.id}
+              className="flex items-stretch gap-2.5 px-4 py-3.5 md:px-5"
+            >
               <span
                 aria-hidden
-                className={cn("w-1 shrink-0 self-stretch rounded-full", estilo.faixa)}
+                className={cn(
+                  "w-1 shrink-0 self-stretch rounded-full",
+                  estilo.faixa,
+                )}
               />
 
               <div className="min-w-0 flex-1">
@@ -208,12 +268,14 @@ export function AlertasRealtime({
                       {alerta.aluno.nome}
                     </Link>
                   ) : (
-                    <span className="text-[15px] font-semibold text-neutral-950">Aluno</span>
+                    <span className="text-[15px] font-semibold text-neutral-950">
+                      Aluno
+                    </span>
                   )}
                   <span
                     className={cn(
                       "rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
-                      estilo.chip
+                      estilo.chip,
                     )}
                   >
                     {estilo.rotulo}
@@ -231,7 +293,10 @@ export function AlertasRealtime({
                     </span>
                   )}
                   {/* "há 38 minutos" pode virar "há 39" entre o servidor e o navegador. */}
-                  <span className="rotulo text-neutral-400" suppressHydrationWarning>
+                  <span
+                    className="rotulo text-neutral-400"
+                    suppressHydrationWarning
+                  >
                     {formatDistanceToNow(new Date(alerta.created_at), {
                       addSuffix: true,
                       locale: ptBR,
@@ -239,6 +304,31 @@ export function AlertasRealtime({
                   </span>
                 </p>
               </div>
+
+              {/* O alerta pode ser do próprio professor (ele também registra
+                  indicadores): conversar consigo mesmo não faz sentido. */}
+              {alerta.aluno_id !== professorId && (
+                <Link
+                  href={`/chat/${alerta.aluno_id}?rascunho=${encodeURIComponent(rascunhoDoAlerta(alerta))}`}
+                  aria-label={`Falar com ${alerta.aluno?.nome ?? "o aluno"} no chat`}
+                  title="Falar no chat"
+                  className={cn(
+                    "flex h-10 shrink-0 items-center gap-2 self-center rounded-full px-3 text-sm font-semibold transition-all duration-200 active:scale-[.96]",
+                    alerta.tipo === "indicador_vermelho"
+                      ? "bg-grafite text-white hover:bg-neutral-800"
+                      : "text-neutral-500 ring-1 ring-neutral-200 hover:bg-neutral-50 hover:text-neutral-950",
+                  )}
+                >
+                  <MessageCircle
+                    className="size-[18px] shrink-0"
+                    strokeWidth={1.9}
+                    aria-hidden
+                  />
+                  {alerta.tipo === "indicador_vermelho" && (
+                    <span className="hidden sm:inline">Chamar no chat</span>
+                  )}
+                </Link>
+              )}
 
               <button
                 type="button"
