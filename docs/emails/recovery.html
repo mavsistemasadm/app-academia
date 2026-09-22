@@ -32,7 +32,7 @@
               <table cellpadding="0" cellspacing="0" role="presentation">
                 <tr>
                   <td style="border-radius:999px;background:#0A8FA3;">
-                    <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 32px;color:#FFFFFF;text-decoration:none;font-size:16px;font-weight:600;border-radius:999px;">
+                    <a href="{{ .SiteURL }}/auth/confirmar?token_hash={{ .TokenHash }}&amp;type=recovery&amp;proximo=/redefinir-senha" style="display:inline-block;padding:14px 32px;color:#FFFFFF;text-decoration:none;font-size:16px;font-weight:600;border-radius:999px;">
                       Redefinir minha senha
                     </a>
                   </td>
@@ -43,7 +43,7 @@
                 Se o botão não funcionar, copie e cole este endereço no navegador:
               </p>
               <p style="margin:0 0 24px;color:#0A8FA3;font-size:11px;line-height:1.6;word-break:break-all;">
-                {{ .ConfirmationURL }}
+                {{ .SiteURL }}/auth/confirmar?token_hash={{ .TokenHash }}&amp;type=recovery&amp;proximo=/redefinir-senha
               </p>
 
               <p style="margin:0;padding-top:20px;border-top:1px solid #E6EBEB;color:#8A9496;font-size:13px;line-height:1.6;">

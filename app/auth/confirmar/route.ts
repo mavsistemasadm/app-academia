@@ -39,6 +39,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL(destino, origin));
   }
 
+  // Senha esquecida: o token segue intacto para /redefinir-senha, que só o
+  // gasta quando a pessoa salva a senha nova. Gastar aqui no GET deixava o
+  // link morto na mão de quem abre o e-mail: leitor de link do webmail ou
+  // prévia do WhatsApp abre antes, e o clique de verdade dava "link expirou".
+  if (destino === "/redefinir-senha" && tokenHash && tipo === "recovery") {
+    const url = new URL(destino, origin);
+    url.searchParams.set("token_hash", tokenHash);
+    return NextResponse.redirect(url);
+  }
+
   let falhou = true;
 
   if (code) {

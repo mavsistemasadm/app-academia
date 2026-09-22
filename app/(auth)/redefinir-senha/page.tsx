@@ -13,8 +13,9 @@ import { traduzirErroAuth } from "@/lib/utils/erros-auth";
 import { destinoDoPapel } from "@/lib/utils/papel";
 
 /**
- * Chega-se aqui pelo link do e-mail, já com sessão: `/auth/confirmar` trocou o
- * código do link por cookies. Sem sessão, o middleware manda para /login.
+ * Chega-se aqui pelo link do e-mail com `?token_hash=`, ainda sem sessão. O
+ * token vira sessão no envio do formulário, não na abertura da página. Links
+ * antigos (formato `code`) chegam já com sessão pelo `/auth/confirmar`.
  */
 export default function RedefinirSenhaPage() {
   const router = useRouter();
@@ -41,6 +42,21 @@ export default function RedefinirSenhaPage() {
     }
 
     setCarregando(true);
+
+    // O token do e-mail só é gasto aqui, no clique. Lido da URL na hora, e não
+    // com useSearchParams, para a página continuar estática sem Suspense.
+    const tokenHash = new URLSearchParams(window.location.search).get("token_hash");
+    if (tokenHash) {
+      const { error: erroLink } = await supabase.auth.verifyOtp({
+        type: "recovery",
+        token_hash: tokenHash,
+      });
+      if (erroLink) {
+        router.replace("/esqueci-senha?link=invalido");
+        return;
+      }
+      window.history.replaceState(null, "", "/redefinir-senha");
+    }
 
     const { data, error } = await supabase.auth.updateUser({ password: senha });
 

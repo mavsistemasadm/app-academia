@@ -43,6 +43,12 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse
   }
 
+  // Senha esquecida: chega sem sessão, com o token do e-mail na URL. A tela
+  // troca o token por sessão só quando a pessoa salva a senha nova.
+  if (pathname.startsWith('/redefinir-senha')) {
+    return supabaseResponse
+  }
+
   // Link de exames que o aluno manda ao médico: quem abre não tem conta. A
   // página valida o token no servidor e só mostra o que ele libera.
   if (pathname.startsWith('/exames/compartilhado/')) {
