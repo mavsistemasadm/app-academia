@@ -1,4 +1,3 @@
-import type { AuthError } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 
 import type { AvatarCondicao } from "@/lib/types";
@@ -6,7 +5,7 @@ import { buscarUsuarioPorEmail } from "@/lib/supabase/convites";
 import { getPerfilAtual } from "@/lib/supabase/perfil";
 import { createServiceClient } from "@/lib/supabase/servico";
 import { AVATAR_CONFIG } from "@/lib/utils/avatares";
-import { emailJaCadastrado } from "@/lib/utils/erros-auth";
+import { emailJaCadastrado, traduzirErroConvite } from "@/lib/utils/erros-auth";
 
 /**
  * Convite de aluno. Só professor chama; o e-mail sai pelo próprio Supabase
@@ -17,47 +16,6 @@ import { emailJaCadastrado } from "@/lib/utils/erros-auth";
  */
 
 const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-
-function traduzirErroConvite(error: AuthError): { mensagem: string; status: number } {
-  const codigo = error.code ?? "";
-  const texto = error.message ?? "";
-
-  if (
-    error.status === 429 ||
-    /rate_limit/.test(codigo) ||
-    /rate limit|too many/i.test(texto)
-  ) {
-    return {
-      mensagem:
-        "O limite de e-mails do Supabase foi atingido. Aguarde alguns minutos e tente de novo.",
-      status: 429,
-    };
-  }
-
-  if (
-    codigo === "email_address_invalid" ||
-    codigo === "validation_failed" ||
-    /invalid.*email|unable to validate email|invalid format/i.test(texto)
-  ) {
-    return { mensagem: "E-mail inválido. Confira o endereço digitado.", status: 400 };
-  }
-
-  if (
-    codigo === "email_address_not_authorized" ||
-    /not authorized/i.test(texto)
-  ) {
-    return {
-      mensagem:
-        "O Supabase recusou esse endereço. Configure um SMTP próprio no painel para enviar a qualquer e-mail.",
-      status: 400,
-    };
-  }
-
-  return {
-    mensagem: "Não foi possível enviar o convite agora. Tente novamente em instantes.",
-    status: 500,
-  };
-}
 
 export async function POST(request: NextRequest) {
   const perfil = await getPerfilAtual();

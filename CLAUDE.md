@@ -310,6 +310,12 @@ litros) · [x] km é a única medida registrada à mão pelo aluno
 convidados, e o aluno participa de quantos quiser · ranking e progresso saem de
 funções `security definer` e mostram só "Maria S.", foto e o número
 
+**26. Equipe** — [x] admin é professor com `eh_admin` (não é papel novo) ·
+[x] em `/equipe` o admin convida professor ou admin por e-mail e promove ou
+rebaixa quem já está na equipe; e-mail de aluno existente vira professor ·
+[x] a equipe nunca fica sem admin · [x] a trava de papel também barra
+`eh_admin` pelo app · [~] depende da migração 017 · falta tirar alguém da equipe
+
 **23. Check-in e treino com energia** — [x] comemoração com confete e
 sequência · [x] cronômetro e duração do treino para o professor ·
 [~] duração exata depende da migração 008
@@ -347,6 +353,9 @@ sequência · [x] cronômetro e duração do treino para o professor ·
      tabela `desafio_registros` e função `progresso_desafio`.
    - 015 capa e anexo do desafio: `imagem_url`, `arquivo_url`, `arquivo_nome`
      e o bucket público `desafios` (só professor escreve).
+   - 017 admin da equipe: coluna `profiles.eh_admin`, trava estendida e o
+     primeiro admin (`marlos.h.santos@gmail.com`). Sem ela a aba Equipe não
+     aparece para ninguém.
    - 011 anamnese editável: tabela `anamnese_perguntas` + `anamneses.respostas`
      (jsonb por id da pergunta). Sem ela o formulário usa `PERGUNTAS_PADRAO`
      de `lib/utils/anamnese.ts` e o editor fica só leitura. As colunas antigas

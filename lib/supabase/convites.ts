@@ -15,7 +15,7 @@ export interface ConvitePendente {
 }
 
 /** Todos os usuários do Auth. A academia é pequena; 1000 por página sobra. */
-async function listarTodosUsuarios(): Promise<User[]> {
+export async function listarTodosUsuarios(): Promise<User[]> {
   const supabase = createServiceClient()
   const todos: User[] = []
 

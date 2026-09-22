@@ -4,16 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils";
-import { NAV_PROFESSOR } from "@/lib/utils/navegacao";
+import { navDoProfessor } from "@/lib/utils/navegacao";
 
-export function NavProfessor() {
+export function NavProfessor({ ehAdmin = false }: { ehAdmin?: boolean }) {
   const caminho = usePathname();
 
   return (
     <nav aria-label="Seções do painel" className="border-b border-neutral-200/80 bg-white/90">
       {/* Rola na horizontal no celular em vez de quebrar linha. */}
       <ul className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-3 py-2 [scrollbar-width:none] md:px-6 [&::-webkit-scrollbar]:hidden">
-        {NAV_PROFESSOR.map(({ href, label, icone: Icone }) => {
+        {navDoProfessor(ehAdmin).map(({ href, label, icone: Icone }) => {
           const ativo = caminho === href || caminho.startsWith(`${href}/`);
 
           return (

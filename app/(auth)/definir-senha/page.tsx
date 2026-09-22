@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 import { traduzirErroAuth } from "@/lib/utils/erros-auth";
+import { destinoDoPapel } from "@/lib/utils/papel";
 
 const SENHA_MINIMA = 8;
 
@@ -102,15 +103,22 @@ export default function DefinirSenhaPage() {
 
     setCarregando(true);
 
-    const { error } = await supabase.auth.updateUser({ password: senha });
+    const { data, error } = await supabase.auth.updateUser({ password: senha });
 
-    if (error) {
-      setErro(traduzirErroAuth(error.message));
+    if (error || !data.user) {
+      setErro(traduzirErroAuth(error?.message));
       setCarregando(false);
       return;
     }
 
-    router.replace("/home");
+    // Convite de professor também cai aqui: cada papel vai para a sua tela.
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", data.user.id)
+      .single();
+
+    router.replace(destinoDoPapel(profile?.role));
     router.refresh();
   }
 

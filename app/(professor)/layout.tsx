@@ -7,6 +7,7 @@ import { BotaoSair } from "@/components/shared/BotaoSair";
 import { SinoNotificacoes } from "@/components/shared/SinoNotificacoes";
 import { BottomNavProfessor } from "@/components/professor/BottomNavProfessor";
 import { NavProfessor } from "@/components/professor/NavProfessor";
+import { ehAdmin } from "@/lib/supabase/equipe";
 import { getNotificacoesProfessor } from "@/lib/supabase/notificacoes";
 import { getPerfilAtual } from "@/lib/supabase/perfil";
 
@@ -71,13 +72,13 @@ export default async function ProfessorLayout({
 
         {/* No celular as seções vão para a barra de baixo. */}
         <div className="hidden md:block">
-          <NavProfessor />
+          <NavProfessor ehAdmin={ehAdmin(perfil)} />
         </div>
       </div>
 
       {/* pb-28 reserva espaço para a barra flutuante do celular. */}
       <div className="flex flex-1 flex-col pb-28 md:pb-0">{children}</div>
-      <BottomNavProfessor />
+      <BottomNavProfessor ehAdmin={ehAdmin(perfil)} />
     </div>
   );
 }

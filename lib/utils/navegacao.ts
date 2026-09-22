@@ -17,6 +17,7 @@ import {
   Flame,
   Trophy,
   User,
+  UserCog,
   Users,
   type LucideIcon,
 } from 'lucide-react'
@@ -123,3 +124,11 @@ export const NAV_PROFESSOR: ItemNav[] = [
  * como na do aluno.
  */
 export const NAV_PROFESSOR_MOBILE: ItemNav[] = NAV_PROFESSOR.slice(0, 4)
+
+/** Aba que só o admin vê (professor com eh_admin, migração 017). */
+export const NAV_EQUIPE: ItemNav = { href: '/equipe', label: 'Equipe', icone: UserCog }
+
+/** Abas do painel de quem está logado: o admin ganha a Equipe no fim. */
+export function navDoProfessor(ehAdmin: boolean): ItemNav[] {
+  return ehAdmin ? [...NAV_PROFESSOR, NAV_EQUIPE] : NAV_PROFESSOR
+}

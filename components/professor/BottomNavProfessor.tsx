@@ -7,14 +7,14 @@ import { Grid2x2 } from "lucide-react";
 
 import { BotaoSair } from "@/components/shared/BotaoSair";
 import { cn } from "@/lib/utils";
-import { NAV_PROFESSOR, NAV_PROFESSOR_MOBILE } from "@/lib/utils/navegacao";
+import { NAV_PROFESSOR_MOBILE, navDoProfessor } from "@/lib/utils/navegacao";
 import { vibrar } from "@/lib/utils/toque";
 
 const ITEM =
   "flex w-full flex-col items-center gap-1 rounded-[20px] px-0.5 py-2 text-[10.5px] font-medium tracking-tight whitespace-nowrap transition-all duration-200 active:scale-90";
 
 /** No celular o professor navega pela mesma barra flutuante do aluno. */
-export function BottomNavProfessor() {
+export function BottomNavProfessor({ ehAdmin = false }: { ehAdmin?: boolean }) {
   const caminho = usePathname();
   const [maisAberto, setMaisAberto] = useState(false);
 
@@ -72,12 +72,26 @@ export function BottomNavProfessor() {
         </ul>
       </nav>
 
-      {maisAberto && <FolhaMais caminho={caminho} aoFechar={() => setMaisAberto(false)} />}
+      {maisAberto && (
+        <FolhaMais
+          caminho={caminho}
+          ehAdmin={ehAdmin}
+          aoFechar={() => setMaisAberto(false)}
+        />
+      )}
     </>
   );
 }
 
-function FolhaMais({ caminho, aoFechar }: { caminho: string; aoFechar: () => void }) {
+function FolhaMais({
+  caminho,
+  ehAdmin,
+  aoFechar,
+}: {
+  caminho: string;
+  ehAdmin: boolean;
+  aoFechar: () => void;
+}) {
   // Trava a rolagem por baixo e fecha com Esc (sistema externo: DOM e teclado).
   useEffect(() => {
     const anterior = document.body.style.overflow;
@@ -90,7 +104,7 @@ function FolhaMais({ caminho, aoFechar }: { caminho: string; aoFechar: () => voi
     };
   }, [aoFechar]);
 
-  const restantes = NAV_PROFESSOR.filter(
+  const restantes = navDoProfessor(ehAdmin).filter(
     (item) => !NAV_PROFESSOR_MOBILE.some((m) => m.href === item.href)
   );
 

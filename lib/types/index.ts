@@ -56,6 +56,8 @@ export interface Profile {
   foto_url?: string
   data_nascimento?: string
   role: Role
+  /** Professor que cuida da equipe (migração 017). Sem ela, chega undefined. */
+  eh_admin?: boolean
   /** Lista: diabético + hipertenso + 60+ é a combinação mais comum da casa. */
   avatar_condicao?: AvatarCondicao[]
   observacoes_clinicas?: string

@@ -102,6 +102,7 @@ export async function middleware(request: NextRequest) {
     '/agenda-professor',
     '/desafios-professor',
     '/presenca',
+    '/equipe',
   ]
 
   if (user && rotasDoProfessor.some((r) => pathname.startsWith(r))) {
