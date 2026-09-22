@@ -86,8 +86,10 @@ export async function POST(request: NextRequest) {
 
   const servico = createServiceClient();
 
+  // Com `convite` preenchido o modelo de e-mail troca o texto de aluno pelo da
+  // equipe (docs/emails/invite.html). O convite de aluno não manda o campo.
   const { data, error } = await servico.auth.admin.inviteUserByEmail(email, {
-    data: { nome },
+    data: { nome, convite: "equipe" },
     redirectTo,
   });
 

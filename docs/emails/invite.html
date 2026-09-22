@@ -23,10 +23,10 @@
           <tr>
             <td style="padding:32px;">
               <h1 style="margin:0 0 12px;color:#0F1618;font-size:22px;line-height:1.25;font-weight:600;letter-spacing:-0.02em;">
-                Olá{{ if .Data.nome }}, {{ .Data.nome }}{{ end }}! Seu professor convidou você.
+                Olá{{ if .Data.nome }}, {{ .Data.nome }}{{ end }}! {{ if .Data.convite }}Você foi convidado para a equipe.{{ else }}Seu professor convidou você.{{ end }}
               </h1>
               <p style="margin:0 0 26px;color:#5C6466;font-size:15px;line-height:1.65;">
-                A partir de agora a Atitude Vital acompanha você entre um treino e outro: treino do dia, indicadores de saúde, medicamentos e evolução num lugar só. Para começar, crie a sua senha.
+                {{ if .Data.convite }}No painel do professor você acompanha os alunos entre um treino e outro: alertas em tempo real, treinos, aulas e agenda num lugar só. Para começar, crie a sua senha.{{ else }}A partir de agora a Atitude Vital acompanha você entre um treino e outro: treino do dia, indicadores de saúde, medicamentos e evolução num lugar só. Para começar, crie a sua senha.{{ end }}
               </p>
 
               <table cellpadding="0" cellspacing="0" role="presentation">
@@ -47,7 +47,7 @@
               </p>
 
               <p style="margin:0;padding-top:20px;border-top:1px solid #E6EBEB;color:#8A9496;font-size:13px;line-height:1.6;">
-                O link vale por 24 horas e só pode ser usado uma vez. Se ele expirar, peça ao seu professor para reenviar o convite. Não esperava este e-mail? Pode ignorar: nada acontece sem você clicar.
+                O link vale por 24 horas e só pode ser usado uma vez. Se ele expirar, {{ if .Data.convite }}peça a quem convidou você para reenviar.{{ else }}peça ao seu professor para reenviar o convite.{{ end }} Não esperava este e-mail? Pode ignorar: nada acontece sem você clicar.
               </p>
             </td>
           </tr>
