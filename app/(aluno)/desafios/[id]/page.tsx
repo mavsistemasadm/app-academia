@@ -240,7 +240,7 @@ export default async function DesafioPage({
                       <div className="min-w-0 flex-1">
                         <p className="text-[15px] font-semibold text-neutral-950">{titulo}</p>
                         <p className="text-[13px] text-neutral-500">
-                          {descricao} · {desafio.regras[chave]} pontos por dia
+                          {descricao} · {desafio.regras[chave]} {desafio.regras[chave] === 1 ? "ponto" : "pontos"} por dia
                         </p>
                       </div>
                       <p className="numero shrink-0 text-right text-[15px] font-semibold text-neutral-950">

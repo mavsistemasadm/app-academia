@@ -118,6 +118,8 @@ export async function GET(request: Request) {
         .from("profiles")
         .select("id, meta_agua_ml, avatar_condicao")
         .eq("role", "aluno")
+        // Conta desativada (quem saiu da equipe) não entra na lista.
+        .not("ativo", "is", false)
         .not("push_subscription", "is", null),
       supabase
         .from("hidratacao_registros")

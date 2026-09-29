@@ -48,6 +48,11 @@ interface GraficoIndicadorProps {
   faixaPeso?: [number, number] | null;
 }
 
+/** 72,5 e não 72.5: o aluno lê número em português. */
+function numeroBR(valor: number) {
+  return valor.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+}
+
 function rotularData(iso: string) {
   return format(new Date(`${iso}T12:00:00Z`), "dd/MM", { locale: ptBR });
 }
@@ -178,6 +183,7 @@ export function GraficoIndicador({
               tickLine={false}
               axisLine={false}
               tick={{ fontSize: 12, fill: CINZA_EIXO }}
+              tickFormatter={numeroBR}
               width={46}
             />
 
@@ -253,11 +259,11 @@ export function GraficoIndicador({
                       {rotularData(ponto.data)}
                     </th>
                     <td className="numero px-3 py-1.5 font-medium text-neutral-950">
-                      {ponto.valor}
+                      {numeroBR(ponto.valor)}
                     </td>
                     {ehPressao && (
                       <td className="numero px-3 py-1.5 font-medium text-neutral-950">
-                        {ponto.valorSecundario ?? "-"}
+                        {ponto.valorSecundario != null ? numeroBR(ponto.valorSecundario) : "-"}
                       </td>
                     )}
                   </tr>
@@ -290,8 +296,8 @@ function TooltipIndicador({
 
   const valor =
     tipo === "pressao" && ponto.valorSecundario != null
-      ? `${ponto.valor}/${ponto.valorSecundario}`
-      : String(ponto.valor);
+      ? `${numeroBR(ponto.valor)}/${numeroBR(ponto.valorSecundario)}`
+      : numeroBR(ponto.valor);
 
   return (
     <div className="rounded-xl bg-white px-3.5 py-2.5 shadow-[0_8px_24px_-12px_rgba(12,18,20,.3)] ring-1 ring-neutral-200/90">

@@ -71,7 +71,7 @@ export default async function BemEstarPage() {
                       {audio.descricao} · na voz de {audio.voz}
                     </p>
                     <p className="rotulo mt-1.5 text-neutral-400">
-                      {Math.round(audio.duracaoSegundos / 60)} min
+                      {Math.max(1, Math.round(audio.duracaoSegundos / 60))} min
                     </p>
                   </div>
                   <audio src={audio.url} controls preload="none" className="w-full">

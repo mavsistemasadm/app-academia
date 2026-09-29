@@ -115,7 +115,7 @@ export async function getPresencaProfessor(
         .select('aluno_id, data')
         .eq('concluido', true)
         .gte('data', inicio),
-      supabase.from('profiles').select('*').eq('role', 'aluno'),
+      supabase.from('profiles').select('*').eq('role', 'aluno').not('ativo', 'is', false),
     ])
 
   type Row = Omit<Checkin, 'aluno'> & { aluno: Profile | Profile[] | null }

@@ -101,6 +101,8 @@ export async function getAlunos(): Promise<Profile[]> {
     .from('profiles')
     .select('*')
     .eq('role', 'aluno')
+    // Conta desativada (quem saiu da equipe) não entra na lista.
+    .not('ativo', 'is', false)
     .order('nome', { ascending: true })
 
   return (data ?? []) as Profile[]

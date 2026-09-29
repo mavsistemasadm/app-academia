@@ -200,11 +200,17 @@ type AvatarCondicao =
 
 | Indicador  | 🟢 Verde       | 🟡 Amarelo      | 🔴 Vermelho        |
 |------------|---------------|-----------------|-------------------|
-| Pressão    | < 130/85      | 130–160/85–100  | > 160/100          |
-| Glicemia   | 70–125 mg/dL  | 126–199 mg/dL   | > 200 ou < 70      |
+| Pressão    | < 130/85      | 130–159/85–99   | ≥ 160/100          |
+| Glicemia   | 70–125 mg/dL  | 126–199 mg/dL   | ≥ 200 ou < 70      |
 | Saturação  | ≥ 95%         | 90–94%          | < 90%              |
 | FC         | 50–90 bpm     | 91–100 bpm      | > 100 ou < 50      |
 | IMC        | < 25          | 25–29,9         | ≥ 30               |
+
+Os limites exatos seguem a referência clínica: 160/100 já é hipertensão
+estágio 2 e 200 mg/dL é o corte diagnóstico da glicemia casual, por isso os
+dois caem no vermelho. `lib/utils/semaforo.ts` e o gatilho do banco
+(`calcular_semaforo_e_alertar`) usam exatamente esta tabela; mudar um exige
+mudar o outro.
 
 **Se vermelho**: criar registro em `alertas_professor` + notificar professor em tempo real.
 
@@ -314,7 +320,10 @@ funções `security definer` e mostram só "Maria S.", foto e o número
 [x] em `/equipe` o admin convida professor ou admin por e-mail e promove ou
 rebaixa quem já está na equipe; e-mail de aluno existente vira professor ·
 [x] a equipe nunca fica sem admin · [x] a trava de papel também barra
-`eh_admin` pelo app · [~] depende da migração 017 · falta tirar alguém da equipe
+`eh_admin` pelo app · [x] "Tirar da equipe" desativa a conta (bloqueia o
+login, vira aluno inativo, some das listas) e passa treinos, aulas,
+desafios, agenda e alertas abertos para o admin que tirou; volta pelo
+convite normal da equipe
 
 **27. Central de notificações** — [x] todo aviso vira linha em
 `notificacoes_usuario` com os canais sino, push e e-mail · [x] gatilhos do

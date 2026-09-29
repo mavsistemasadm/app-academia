@@ -46,7 +46,7 @@ const TEXTO_SITUACAO: Record<Situacao, { titulo: string; corpo: string }> = {
 };
 
 async function chamar(
-  metodo: "POST" | "PATCH",
+  metodo: "POST" | "PATCH" | "DELETE",
   corpo: object
 ): Promise<{ ok: true; situacao?: Situacao } | { ok: false; erro: string }> {
   try {
@@ -118,6 +118,26 @@ export function GerenciarEquipe({ meuId, membros, erroLista }: GerenciarEquipePr
       email: email.trim().toLowerCase(),
       situacao: resultado.situacao ?? "convidado",
     });
+    router.refresh();
+  }
+
+  async function tirarDaEquipe(membro: MembroEquipe) {
+    const certeza = window.confirm(
+      `Tirar ${membro.nome} da equipe? A conta deixa de entrar no app. ` +
+        "Os treinos, aulas, desafios, eventos e alertas abertos dessa pessoa passam para você."
+    );
+    if (!certeza) return;
+
+    setSalvando(membro.id);
+    setAvisoLista(null);
+
+    const resultado = await chamar("DELETE", { id: membro.id });
+    setSalvando(null);
+
+    if (!resultado.ok) {
+      setAvisoLista({ id: membro.id, texto: resultado.erro });
+      return;
+    }
     router.refresh();
   }
 
@@ -309,18 +329,31 @@ export function GerenciarEquipe({ meuId, membros, erroLista }: GerenciarEquipePr
                     )}
                   </div>
 
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => alternarAdmin(membro)}
-                    disabled={salvando !== null}
-                    className="h-10 rounded-full px-4 text-sm font-medium active:scale-[.98]"
-                  >
-                    {salvando === membro.id && (
-                      <Loader2 className="size-4 animate-spin" aria-hidden />
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => alternarAdmin(membro)}
+                      disabled={salvando !== null}
+                      className="h-10 rounded-full px-4 text-sm font-medium active:scale-[.98]"
+                    >
+                      {salvando === membro.id && (
+                        <Loader2 className="size-4 animate-spin" aria-hidden />
+                      )}
+                      {membro.ehAdmin ? "Tirar admin" : "Tornar admin"}
+                    </Button>
+                    {!souEu && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => tirarDaEquipe(membro)}
+                        disabled={salvando !== null}
+                        className="h-10 rounded-full px-4 text-sm font-medium text-saude-vermelho hover:bg-saude-vermelho-light hover:text-saude-vermelho active:scale-[.98]"
+                      >
+                        Tirar da equipe
+                      </Button>
                     )}
-                    {membro.ehAdmin ? "Tirar admin" : "Tornar admin"}
-                  </Button>
+                  </div>
                 </li>
               );
             })}

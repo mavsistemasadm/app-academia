@@ -100,6 +100,8 @@ export async function getPainelProfessor(
       .from('profiles')
       .select('*')
       .eq('role', 'aluno')
+      // Conta desativada (quem saiu da equipe) não entra na lista.
+      .not('ativo', 'is', false)
       .order('nome', { ascending: true }),
     // 30 dias cobrem o "último indicador" de qualquer aluno ativo.
     supabase

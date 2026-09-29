@@ -117,9 +117,11 @@ export default async function DesafiosPage() {
                           <p className="mt-1 text-[13px] text-neutral-500">
                             {dataCurta(desafio.inicio)} a {dataCurta(desafio.fim)}
                             {situacao === "em_andamento" && faltam >= 0 && (
-                              <> · {faltam === 0 ? "último dia" : `faltam ${faltam} dias`}</>
+                              <> · {faltam === 0 ? "último dia" : faltam === 1 ? "falta 1 dia" : `faltam ${faltam} dias`}</>
                             )}
-                            {situacao === "agendado" && <> · começa em {faltam} dias</>}
+                            {situacao === "agendado" && (
+                              <> · {faltam === 1 ? "começa amanhã" : `começa em ${faltam} dias`}</>
+                            )}
                           </p>
 
                           <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-neutral-500">
@@ -142,7 +144,7 @@ export default async function DesafiosPage() {
                                 ) : (
                                   <>
                                     <span className="numero font-semibold text-neutral-950">{meusPontos}</span>
-                                    pontos
+                                    {meusPontos === 1 ? "ponto" : "pontos"}
                                   </>
                                 )}
                                 {minhaPosicao !== null && <> · {minhaPosicao}º lugar</>}

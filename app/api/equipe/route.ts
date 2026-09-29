@@ -13,6 +13,9 @@ import { emailJaCadastrado, traduzirErroConvite } from "@/lib/utils/erros-auth";
  *       conta de aluno, a conta vira de professor.
  *       Resposta: { ok: true, situacao: "convidado" | "reenviado" | "promovido" }
  * PATCH { id, admin }           torna admin ou tira o admin de quem já é da equipe.
+ * DELETE { id }                 tira a pessoa da equipe: a conta é desativada
+ *       e o que ela cuidava (treinos, aulas, desafios, agenda, alertas
+ *       abertos) passa para o admin que pediu.
  *
  * O papel é gravado pela service role, que chega sem auth.uid() e por isso
  * passa pela trava de papel. Pelo app ninguém consegue se promover.
@@ -36,16 +39,20 @@ async function barrarQuemNaoEhAdmin() {
   return { perfil, resposta: null };
 }
 
-/** Põe a conta na equipe: papel no app_metadata (lido pelo gatilho) e no perfil. */
+/**
+ * Põe a conta na equipe: papel no app_metadata (lido pelo gatilho) e no
+ * perfil. Também reativa quem já tinha saído da equipe e volta agora.
+ */
 async function colocarNaEquipe(servico: Servico, id: string, admin: boolean) {
   const { error: erroAuth } = await servico.auth.admin.updateUserById(id, {
     app_metadata: { role: "professor" },
+    ban_duration: "none",
   });
   if (erroAuth) return false;
 
   const { data } = await servico
     .from("profiles")
-    .update({ role: "professor", eh_admin: admin })
+    .update({ role: "professor", eh_admin: admin, ativo: true })
     .eq("id", id)
     .select("role")
     .maybeSingle();
@@ -218,6 +225,97 @@ export async function PATCH(request: NextRequest) {
   if (error) {
     return NextResponse.json(
       { erro: "Não foi possível salvar agora. Tente de novo." },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json({ ok: true });
+}
+
+/*
+  Tirar da equipe. Não apaga a conta: o histórico (avaliações que a pessoa
+  lançou, mensagens) continua com o nome dela. O que precisa de alguém
+  cuidando muda de dono, senão os alertas dos alunos iriam para uma conta
+  que ninguém mais abre.
+*/
+export async function DELETE(request: NextRequest) {
+  const { perfil, resposta } = await barrarQuemNaoEhAdmin();
+  if (resposta) return resposta;
+
+  let corpo: { id?: unknown };
+  try {
+    corpo = await request.json();
+  } catch {
+    return NextResponse.json({ erro: "Corpo inválido" }, { status: 400 });
+  }
+
+  const id = typeof corpo.id === "string" ? corpo.id : "";
+  if (!id) return NextResponse.json({ erro: "Corpo inválido" }, { status: 400 });
+
+  if (id === perfil!.id) {
+    return NextResponse.json(
+      { erro: "Para sair da equipe, peça a outro admin que tire você." },
+      { status: 409 }
+    );
+  }
+
+  const servico = createServiceClient();
+
+  const { data: alvo } = await servico
+    .from("profiles")
+    .select("role, eh_admin")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (alvo?.role !== "professor") {
+    return NextResponse.json({ erro: "Essa pessoa não está na equipe." }, { status: 404 });
+  }
+
+  // O que tem dono vivo passa para quem está tirando a pessoa da equipe.
+  const novoDono = perfil!.id;
+  const transferencias = await Promise.all([
+    servico.from("treinos").update({ professor_id: novoDono }).eq("professor_id", id),
+    servico.from("aulas_horarios").update({ professor_id: novoDono }).eq("professor_id", id),
+    servico.from("desafios").update({ criado_por: novoDono }).eq("criado_por", id),
+    servico.from("eventos").update({ professor_id: novoDono }).eq("professor_id", id),
+    servico.from("notificacoes").update({ professor_id: novoDono }).eq("professor_id", id),
+    servico
+      .from("alertas_professor")
+      .update({ professor_id: novoDono })
+      .eq("professor_id", id)
+      .eq("resolvido", false),
+  ]);
+  if (transferencias.some((r) => r.error)) {
+    return NextResponse.json(
+      { erro: "Não conseguimos passar os treinos e aulas dessa pessoa para você. Tente de novo." },
+      { status: 500 }
+    );
+  }
+
+  // Sem acesso: não entra mais (ban) e deixa de ter visão de professor.
+  // O gatilho garante_um_admin (019) barra se fosse o último admin.
+  const { error: erroPerfil } = await servico
+    .from("profiles")
+    .update({ role: "aluno", eh_admin: false, ativo: false })
+    .eq("id", id);
+  if (erroPerfil) {
+    return NextResponse.json(
+      {
+        erro: erroPerfil.message.includes("pelo menos um admin")
+          ? "Essa pessoa é o único admin da equipe. Torne outra pessoa admin antes."
+          : "Não foi possível tirar da equipe agora. Tente de novo.",
+      },
+      { status: erroPerfil.message.includes("pelo menos um admin") ? 409 : 500 }
+    );
+  }
+
+  const { error: erroAuth } = await servico.auth.admin.updateUserById(id, {
+    app_metadata: { role: "aluno" },
+    ban_duration: "876000h",
+  });
+  if (erroAuth) {
+    return NextResponse.json(
+      { erro: "A pessoa saiu da equipe, mas o login ainda não foi bloqueado. Tente de novo." },
       { status: 500 }
     );
   }

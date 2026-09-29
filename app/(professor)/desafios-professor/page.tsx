@@ -19,6 +19,8 @@ export default async function DesafiosProfessorPage() {
         .from("profiles")
         .select("id, nome")
         .eq("role", "aluno")
+        // Conta desativada (quem saiu da equipe) não entra na lista.
+        .not("ativo", "is", false)
         .order("nome", { ascending: true }),
       supabase.from("desafio_participantes").select("desafio_id, aluno_id, status"),
     ]);

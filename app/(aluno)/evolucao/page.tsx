@@ -411,7 +411,7 @@ function TreinosPorMes({ porMes }: { porMes: { mes: string; concluidos: number }
         {porMes
           .map(
             ({ mes, concluidos }) =>
-              `${format(new Date(`${mes}-01T12:00:00Z`), "MMMM", { locale: ptBR })}: ${concluidos} treinos`
+              `${format(new Date(`${mes}-01T12:00:00Z`), "MMMM", { locale: ptBR })}: ${concluidos} ${concluidos === 1 ? "treino" : "treinos"}`
           )
           .join("; ")}
       </p>

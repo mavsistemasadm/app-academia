@@ -11,15 +11,15 @@ interface FaixaClinica {
 export const FAIXAS_CLINICAS: Record<IndicadorTipo, FaixaClinica> = {
   pressao: {
     verde: '< 130/85 mmHg',
-    amarelo: '130 a 160 / 85 a 100 mmHg',
-    vermelho: '> 160/100 mmHg',
+    amarelo: '130 a 159 / 85 a 99 mmHg',
+    vermelho: '≥ 160/100 mmHg',
     unidade: 'mmHg',
     label: 'Pressão Arterial',
   },
   glicemia: {
     verde: '70 a 125 mg/dL',
     amarelo: '126 a 199 mg/dL',
-    vermelho: '> 200 ou < 70 mg/dL',
+    vermelho: '≥ 200 ou < 70 mg/dL',
     unidade: 'mg/dL',
     label: 'Glicemia',
   },
