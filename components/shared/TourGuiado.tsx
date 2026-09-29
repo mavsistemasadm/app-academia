@@ -5,6 +5,10 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ArrowLeft, ArrowRight, X } from "lucide-react";
 
+import {
+  CHAVE_VIDEO_VISTO,
+  EVENTO_VIDEO_FECHADO,
+} from "@/components/shared/VideoBoasVindas";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -86,11 +90,19 @@ export function TourGuiado() {
   useEffect(() => {
     if (pathname !== "/home") return;
     const forcar = new URLSearchParams(window.location.search).get("tour") === "1";
+    // No primeiro acesso o vídeo de boas-vindas vem antes: o tour espera ele fechar.
+    const abrirDepoisDoVideo = () => setAtivo(true);
     createClient()
       .auth.getUser()
       .then(({ data: { user } }) => {
-        if (user && (forcar || !user.user_metadata?.[CHAVE_VISTO])) setAtivo(true);
+        if (!user || !(forcar || !user.user_metadata?.[CHAVE_VISTO])) return;
+        if (!forcar && !user.user_metadata?.[CHAVE_VIDEO_VISTO]) {
+          window.addEventListener(EVENTO_VIDEO_FECHADO, abrirDepoisDoVideo, { once: true });
+          return;
+        }
+        setAtivo(true);
       });
+    return () => window.removeEventListener(EVENTO_VIDEO_FECHADO, abrirDepoisDoVideo);
   }, [pathname]);
 
   // Passos cujo alvo não existe nesta tela (ex.: sem sino) são pulados.

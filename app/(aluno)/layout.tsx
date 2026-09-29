@@ -7,6 +7,7 @@ import { BotaoSair } from "@/components/shared/BotaoSair";
 import { BottomNav } from "@/components/shared/BottomNav";
 import { Sidebar } from "@/components/shared/Sidebar";
 import { TourGuiado } from "@/components/shared/TourGuiado";
+import { VideoBoasVindas } from "@/components/shared/VideoBoasVindas";
 import { getPerfilAtual } from "@/lib/supabase/perfil";
 
 export default async function AlunoLayout({
@@ -65,6 +66,8 @@ export default async function AlunoLayout({
       </div>
 
       <BottomNav />
+      {/* Primeiro acesso: o vídeo de boas-vindas abre antes do tour. */}
+      <VideoBoasVindas />
       {/* Abre sozinho na primeira visita à home (ou com ?tour=1). */}
       <TourGuiado />
     </div>
