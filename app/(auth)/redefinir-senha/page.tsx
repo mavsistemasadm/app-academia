@@ -59,7 +59,11 @@ export default function RedefinirSenhaPage() {
       window.history.replaceState(null, "", "/redefinir-senha");
     }
 
-    const { data, error } = await supabase.auth.updateUser({ password: senha });
+    // A marca diz ao convite que a pessoa já tem acesso (jaCriouSenha).
+    const { data, error } = await supabase.auth.updateUser({
+      password: senha,
+      data: { senha_definida: true },
+    });
 
     if (error || !data.user) {
       setErro(traduzirErroAuth(error?.message));

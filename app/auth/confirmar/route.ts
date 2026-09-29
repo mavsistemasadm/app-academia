@@ -53,7 +53,12 @@ export async function GET(request: NextRequest) {
   // gasta quando a pessoa salva a senha nova. Gastar aqui no GET deixava o
   // link morto na mão de quem abre o e-mail: leitor de link do webmail ou
   // prévia do WhatsApp abre antes, e o clique de verdade dava "link expirou".
-  if (destino === "/redefinir-senha" && tokenHash && tipo === "recovery") {
+  // O convite segue a mesma regra: o leitor de links do Hotmail gastava o
+  // convite da aluna antes dela abrir o e-mail.
+  if (
+    (destino === "/redefinir-senha" && tokenHash && tipo === "recovery") ||
+    (destino === "/definir-senha" && tokenHash && tipo === "invite")
+  ) {
     const url = new URL(destino, origin);
     url.searchParams.set("token_hash", tokenHash);
     return NextResponse.redirect(url);

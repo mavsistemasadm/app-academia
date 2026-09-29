@@ -84,12 +84,26 @@ export async function despacharPendentes(limite = 50) {
 
   const resultado = { processadas: 0, push: 0, email: 0, falhas: 0 }
 
-  for (const linha of (data ?? []) as Linha[]) {
+  // Conta inativada (aluno que o admin inativou, ou quem saiu da equipe) não
+  // recebe push nem e-mail: o aviso só fica no sino, para quando voltar.
+  const linhas = (data ?? []) as Linha[]
+  const ids = [...new Set(linhas.map((l) => l.usuario_id).filter((id): id is string => Boolean(id)))]
+  const inativos = new Set<string>()
+  if (ids.length) {
+    const { data: perfis } = await supabase.from('profiles').select('id').in('id', ids).eq('ativo', false)
+    for (const p of perfis ?? []) inativos.add(p.id as string)
+  }
+
+  for (const linha of linhas) {
     resultado.processadas += 1
     const agora = new Date().toISOString()
 
     const validade = (VALIDADE_HORAS[linha.tipo] ?? VALIDADE_PADRAO_HORAS) * 3_600_000
     if (Date.now() - Date.parse(linha.created_at) > validade) {
+      await supabase.from('notificacoes_usuario').update({ despachado_em: agora }).eq('id', linha.id)
+      continue
+    }
+    if (linha.usuario_id && inativos.has(linha.usuario_id)) {
       await supabase.from('notificacoes_usuario').update({ despachado_em: agora }).eq('id', linha.id)
       continue
     }

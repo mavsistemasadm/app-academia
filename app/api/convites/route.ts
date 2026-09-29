@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import type { AvatarCondicao } from "@/lib/types";
-import { buscarUsuarioPorEmail } from "@/lib/supabase/convites";
+import { buscarUsuarioPorEmail, jaCriouSenha } from "@/lib/supabase/convites";
 import { getPerfilAtual } from "@/lib/supabase/perfil";
 import { createServiceClient } from "@/lib/supabase/servico";
 import { AVATAR_CONFIG } from "@/lib/utils/avatares";
@@ -100,9 +100,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ erro: mensagem }, { status });
   }
 
-  // E-mail já cadastrado. Se a pessoa nunca entrou, manda um link para criar
-  // a senha pelo fluxo de recuperação (o convite não pode ser reenviado a um
-  // e-mail já confirmado). Se já entrou, ela tem acesso.
+  // E-mail já cadastrado. Se a pessoa ainda não criou a senha (o link pode ter
+  // sido gasto pelo leitor de links do webmail), manda um link para criar a
+  // senha pelo fluxo de recuperação: o convite não pode ser reenviado a um
+  // e-mail já confirmado. Se já criou, ela tem acesso.
   let existente;
   try {
     existente = await buscarUsuarioPorEmail(email);
@@ -110,7 +111,7 @@ export async function POST(request: NextRequest) {
     existente = null;
   }
 
-  if (existente && !existente.last_sign_in_at) {
+  if (existente && !jaCriouSenha(existente)) {
     const { error: erroReenvio } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo,
     });

@@ -21,9 +21,10 @@ type Estado = "verificando" | "sem-sessao" | "pronto";
  * Primeira senha do aluno convidado. Chega-se aqui pelo link do convite, por
  * dois caminhos:
  *
- * - `token_hash` (template personalizado): `/auth/confirmar` já criou a
- *   sessão nos cookies.
- * - `{{ .ConfirmationURL }}` (padrão): o convite não usa PKCE, então a sessão
+ * - `?token_hash=` (o modelo atual, docs/emails/invite.html): chega sem
+ *   sessão e o token só é gasto no envio do formulário. Assim o leitor de
+ *   links do webmail, que abre o e-mail antes da pessoa, não mata o convite.
+ * - `{{ .ConfirmationURL }}` (e-mails enviados antes da troca): o convite não usa PKCE, então a sessão
  *   vem no `#access_token` da URL. O servidor não enxerga o fragmento; quem o
  *   lê é o cliente do Supabase ao iniciar, logo abaixo.
  *
@@ -56,6 +57,12 @@ export default function DefinirSenhaPage() {
     async function verificar() {
       if (linkComErro) {
         if (ativo) setEstado("sem-sessao");
+        return;
+      }
+
+      // Token ainda não gasto: a tela abre direto e o envio valida o link.
+      if (query.get("token_hash")) {
+        if (ativo) setEstado("pronto");
         return;
       }
 
@@ -103,7 +110,27 @@ export default function DefinirSenhaPage() {
 
     setCarregando(true);
 
-    const { data, error } = await supabase.auth.updateUser({ password: senha });
+    // O token do convite só é gasto aqui, no clique. Lido da URL na hora, e
+    // não com useSearchParams, para a página continuar estática sem Suspense.
+    const tokenHash = new URLSearchParams(window.location.search).get("token_hash");
+    if (tokenHash) {
+      const { error: erroLink } = await supabase.auth.verifyOtp({
+        type: "invite",
+        token_hash: tokenHash,
+      });
+      if (erroLink) {
+        setCarregando(false);
+        setEstado("sem-sessao");
+        return;
+      }
+      window.history.replaceState(null, "", "/definir-senha");
+    }
+
+    // A marca diz ao convite que a pessoa já tem acesso (jaCriouSenha).
+    const { data, error } = await supabase.auth.updateUser({
+      password: senha,
+      data: { senha_definida: true },
+    });
 
     if (error || !data.user) {
       setErro(traduzirErroAuth(error?.message));

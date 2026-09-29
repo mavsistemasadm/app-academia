@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { buscarUsuarioPorEmail } from "@/lib/supabase/convites";
+import { buscarUsuarioPorEmail, jaCriouSenha } from "@/lib/supabase/convites";
 import { ehAdmin } from "@/lib/supabase/equipe";
 import { getPerfilAtual } from "@/lib/supabase/perfil";
 import { createServiceClient } from "@/lib/supabase/servico";
@@ -162,9 +162,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Nunca entrou: o convite não pode ser reenviado a e-mail já confirmado,
+  // Ainda sem senha: o convite não pode ser reenviado a e-mail já confirmado,
   // então o link para criar a senha sai pelo fluxo de recuperação.
-  if (!existente.last_sign_in_at) {
+  if (!jaCriouSenha(existente)) {
     await servico.auth.resetPasswordForEmail(email, { redirectTo });
   }
 

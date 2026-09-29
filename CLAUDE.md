@@ -290,7 +290,17 @@ que mostra também medições de 90 dias, medicamentos e a anamnese marcada
 
 **20. Convite de aluno** — [x] professor convida por nome e e-mail
 (`/alunos/convidar`) · [x] primeira senha em `/definir-senha` · [~] template
-de e-mail a configurar no Supabase
+de e-mail a configurar no Supabase · o link do convite usa `token_hash` e só é
+gasto quando a pessoa salva a senha (o leitor de links do Hotmail gastava o
+convite antes) · "já tem acesso" vem de `senha_definida` no user_metadata
+(`jaCriouSenha`), não de `last_sign_in_at`
+
+**29. Inativar e excluir aluno** — [x] só admin, no fim da ficha
+(`ContaDoAluno` → `/api/alunos`) · [x] inativar bloqueia o login, some das
+listas, lembretes, push e e-mail e guarda o histórico; reativa pela mesma
+ficha (lista "Inativos" em `/alunos`) · [x] excluir pede o nome completo,
+apaga os arquivos do aluno no storage e a conta; o resto cai pela cascata
+da 006
 
 **21. Tour guiado** — [x] abre na primeira visita à home (`TourGuiado`,
 marca `av-tour-visto-v1` no user_metadata) · `?tour=1` reabre

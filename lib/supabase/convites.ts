@@ -39,7 +39,26 @@ export async function buscarUsuarioPorEmail(email: string): Promise<User | null>
   return usuarios.find((u) => u.email?.toLowerCase() === alvo) ?? null
 }
 
-/** Quem foi convidado e ainda não clicou no link (nunca entrou). */
+/**
+ * A pessoa já criou a senha? /definir-senha e /redefinir-senha marcam
+ * `senha_definida` no user_metadata. Não dá para confiar em last_sign_in_at:
+ * o leitor de links do Hotmail/Outlook abre o convite antes da pessoa, o
+ * Supabase conta isso como login e o link morre sem senha nenhuma criada.
+ *
+ * Conta antiga, sem a marca: se o último login veio muito depois da
+ * confirmação do e-mail, a pessoa voltou por conta própria, então tem senha.
+ */
+export function jaCriouSenha(usuario: User): boolean {
+  if (usuario.user_metadata?.senha_definida === true) return true
+  if (!usuario.last_sign_in_at) return false
+
+  const confirmado = Date.parse(usuario.email_confirmed_at ?? '')
+  const ultimo = Date.parse(usuario.last_sign_in_at)
+  if (!Number.isFinite(confirmado)) return true
+  return ultimo - confirmado > 10 * 60_000
+}
+
+/** Quem foi convidado e ainda não criou a senha. */
 export async function listarConvitesPendentes(): Promise<ConvitePendente[]> {
   const usuarios = await listarTodosUsuarios()
 
@@ -47,7 +66,7 @@ export async function listarConvitesPendentes(): Promise<ConvitePendente[]> {
     .filter(
       (u) =>
         Boolean(u.invited_at) &&
-        !u.last_sign_in_at &&
+        !jaCriouSenha(u) &&
         u.app_metadata?.role !== 'professor'
     )
     .map((u) => ({

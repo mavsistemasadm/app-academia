@@ -17,7 +17,9 @@ import {
 } from "lucide-react";
 
 import { CardIndicador, CHIP_SEMAFORO } from "@/components/aluno/CardIndicador";
+import { ContaDoAluno } from "@/components/professor/ContaDoAluno";
 import { cn } from "@/lib/utils";
+import { ehAdmin } from "@/lib/supabase/equipe";
 import { getDetalheAluno } from "@/lib/supabase/painel-professor";
 import { getPerfilAtual } from "@/lib/supabase/perfil";
 import { getTreinosRecentes } from "@/lib/supabase/professor";
@@ -150,6 +152,7 @@ export default async function DetalheAlunoPage({
           <div className="min-w-0">
             <p className="rotulo text-primary">
               Ficha do aluno{idade !== null && ` · ${idade} anos`}
+              {perfil.ativo === false && <span className="text-neutral-400"> · inativo</span>}
             </p>
             <h1 className="mt-1.5 text-[28px] leading-[1.1] font-semibold tracking-[-0.03em] text-neutral-950 md:text-[34px]">
               {perfil.nome}
@@ -614,6 +617,10 @@ export default async function DetalheAlunoPage({
           </section>
         )}
       </div>
+
+      {ehAdmin(professor) && (
+        <ContaDoAluno id={perfil.id} nome={perfil.nome} ativo={perfil.ativo !== false} />
+      )}
 
       <p className="rotulo text-neutral-400">
         Atualizado às {horaAtual()} · fuso da academia
