@@ -37,7 +37,7 @@ export default async function AcompanharPage({
         titulo={perfil.role === "familiar" ? "Quem você acompanha" : "Acompanhar um familiar"}
         descricao={
           acompanhados.length === 0
-            ? "Recebeu um código de um familiar que treina no centro? Digite aqui e acompanhe a saúde dele."
+            ? "Recebeu um código de um familiar que treina no centro? Digite aqui e acompanhe a saúde dessa pessoa."
             : "Indicadores e frequência de quem você acompanha."
         }
       />
@@ -45,7 +45,7 @@ export default async function AcompanharPage({
       <div className="flex flex-col gap-9 px-5 md:gap-12 md:px-0">
         {acompanhados.length === 0 && (
           <div className="w-full max-w-xl">
-            <AceitarConvite familiarId={perfil.id} codigoInicial={codigo} />
+            <AceitarConvite codigoInicial={codigo} />
           </div>
         )}
 
@@ -187,7 +187,7 @@ export default async function AcompanharPage({
               anamnese ficam entre o aluno e o centro.
             </p>
             <div className="w-full max-w-xl">
-              <AceitarConvite familiarId={perfil.id} codigoInicial={codigo} />
+              <AceitarConvite codigoInicial={codigo} />
             </div>
           </>
         )}

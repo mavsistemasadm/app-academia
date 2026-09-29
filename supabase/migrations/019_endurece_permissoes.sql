@@ -273,3 +273,252 @@ $$;
 create unique index if not exists alertas_professor_rotina_por_dia
   on public.alertas_professor (aluno_id, tipo, (dados->>'data'))
   where tipo in ('medicamento_nao_tomado', 'sem_treinar');
+
+-- ── 10. Todo professor lê os treinos (a ficha é da casa inteira) ─
+-- Com a policy do item 1, um professor só enxergava os treinos que ele
+-- mesmo criou: abrindo o aluno da Rita, via "nenhum treino montado" e, ao
+-- criar um, puxava os alertas do aluno para si. Ler é de todos; editar
+-- continua só de quem criou.
+
+drop policy if exists professor_le_treinos on public.treinos;
+create policy professor_le_treinos on public.treinos
+  for select to authenticated
+  using (public.eh_professor());
+
+drop policy if exists professor_le_exercicios on public.exercicios;
+create policy professor_le_exercicios on public.exercicios
+  for select to authenticated
+  using (public.eh_professor());
+
+-- ── 11. Aula reaberta avisa a turma ────────────────────────────
+-- Quem recebeu "você não precisa vir" precisa saber que a aula voltou.
+
+create or replace function public.notificar_aula_reaberta()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_aula record;
+  v_inscrito record;
+begin
+  if old.data < (now() at time zone 'America/Sao_Paulo')::date then
+    return old;
+  end if;
+
+  select titulo, hora, ativo into v_aula from aulas_horarios where id = old.horario_id;
+  if v_aula.titulo is null or not coalesce(v_aula.ativo, true) then
+    return old;
+  end if;
+
+  for v_inscrito in
+    select aluno_id from aula_inscricoes
+    where horario_id = old.horario_id and data = old.data
+  loop
+    perform public.notificar(
+      v_inscrito.aluno_id, 'aula_reaberta',
+      v_aula.titulo || ' de ' || to_char(old.data, 'DD/MM') || ' vai acontecer',
+      'A aula das ' || to_char(v_aula.hora, 'HH24:MI') || ' foi reaberta e sua vaga continua garantida.',
+      '/aulas',
+      array['push', 'email'],
+      'aula-reaberta:' || old.horario_id || ':' || old.data || ':' || extract(epoch from now())::bigint,
+      true
+    );
+  end loop;
+
+  return old;
+exception when others then
+  raise warning 'notificar_aula_reaberta: %', sqlerrm;
+  return old;
+end;
+$$;
+
+drop trigger if exists trigger_notificar_aula_reaberta on public.aula_cancelamentos;
+create trigger trigger_notificar_aula_reaberta
+  after delete on public.aula_cancelamentos
+  for each row execute function public.notificar_aula_reaberta();
+
+-- ── 12. Aceitar convite de familiar com conta que já existe ────
+-- A linha pendente não tem familiar_id, então a RLS não a deixava ser
+-- lida e o update pela tela afetava zero linhas: "código inválido" sempre.
+-- A função confere código, pendência e o e-mail do convite.
+
+create or replace function public.aceitar_convite_familiar(p_codigo text)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_id uuid;
+begin
+  if auth.uid() is null then
+    return null;
+  end if;
+
+  update familiares_acesso
+     set familiar_id = auth.uid(), status = 'ativo', aceito_em = now()
+   where codigo = upper(trim(p_codigo))
+     and status = 'pendente'
+     and familiar_id is null
+     and aluno_id <> auth.uid()
+     and lower(email) = lower(coalesce(auth.email(), ''))
+  returning id into v_id;
+
+  return v_id;
+end;
+$$;
+
+revoke all on function public.aceitar_convite_familiar(text) from public, anon;
+grant execute on function public.aceitar_convite_familiar(text) to authenticated;
+
+-- ── 13. Registro de km com teto ────────────────────────────────
+-- "50" digitado no lugar de "5,0" ganhava o ranking. `not valid` não
+-- barra a migração se já houver registro antigo acima do teto.
+
+alter table public.desafio_registros
+  drop constraint if exists desafio_registros_quantidade_razoavel;
+alter table public.desafio_registros
+  add constraint desafio_registros_quantidade_razoavel
+  check (quantidade <= 200) not valid;
+
+
+-- ── 14. Textos dos avisos sem presumir o gênero de quem ensina ──
+-- A professora do centro é a Rita; "seu professor" não serve para todos.
+
+create or replace function public.notificar_treino()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.aluno_id is null or not coalesce(new.ativo, true) then
+    return new;
+  end if;
+
+  if tg_op = 'UPDATE' and old.nome is not distinct from new.nome
+     and old.descricao is not distinct from new.descricao
+     and old.dia_semana is not distinct from new.dia_semana
+     and old.ativo is not distinct from new.ativo then
+    return new;
+  end if;
+
+  perform public.notificar(
+    new.aluno_id, 'treino',
+    case when tg_op = 'INSERT' then 'Treino novo: ' else 'Treino atualizado: ' end || new.nome,
+    'A equipe preparou o treino. Dá uma olhada antes de ir.',
+    '/treino',
+    array['sino', 'push'],
+    'treino:' || new.id || ':' || (now() at time zone 'America/Sao_Paulo')::date
+  );
+  return new;
+exception when others then
+  raise warning 'notificar_treino: %', sqlerrm;
+  return new;
+end;
+$$;
+
+create or replace function public.notificar_exercicio()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_treino record;
+  v_id uuid := coalesce(new.treino_id, old.treino_id);
+begin
+  select id, aluno_id, nome, ativo into v_treino from treinos where id = v_id;
+  if v_treino.aluno_id is null or not coalesce(v_treino.ativo, true) then
+    return coalesce(new, old);
+  end if;
+
+  perform public.notificar(
+    v_treino.aluno_id, 'treino',
+    'Treino atualizado: ' || v_treino.nome,
+    'A equipe ajustou os exercícios. Dá uma olhada antes de ir.',
+    '/treino',
+    array['sino', 'push'],
+    'treino:' || v_treino.id || ':' || (now() at time zone 'America/Sao_Paulo')::date
+  );
+  return coalesce(new, old);
+exception when others then
+  raise warning 'notificar_exercicio: %', sqlerrm;
+  return coalesce(new, old);
+end;
+$$;
+
+create or replace function public.notificar_alerta_professor()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_nome text := coalesce((select nome from profiles where id = new.aluno_id), 'Aluno');
+  v_primeiro text := public.primeiro_nome(new.aluno_id);
+  v_titulo text;
+  v_corpo text := new.mensagem;
+  v_leitura text;
+  v_familiar record;
+begin
+  if new.tipo = 'indicador_vermelho' then
+    v_leitura := case new.dados->>'tipo'
+      when 'pressao' then 'pressão ' || round((new.dados->>'valor')::numeric)::text || '/' || coalesce(round((new.dados->>'valor2')::numeric)::text, '?')
+      when 'glicemia' then 'glicemia ' || round((new.dados->>'valor')::numeric)::text || ' mg/dL'
+      when 'saturacao' then 'saturação ' || round((new.dados->>'valor')::numeric)::text || '%'
+      when 'fc' then 'frequência cardíaca ' || round((new.dados->>'valor')::numeric)::text || ' bpm'
+      else null
+    end;
+    v_titulo := v_nome || ': indicador crítico';
+    if v_leitura is not null then
+      v_corpo := v_primeiro || ' registrou ' || v_leitura || '. Verifique antes do treino.';
+    end if;
+  elsif new.tipo = 'humor_ruim' then
+    v_titulo := v_nome || ': como está hoje';
+  elsif new.tipo = 'medicamento_nao_tomado' then
+    v_titulo := v_nome || ': medicamento';
+  elsif new.tipo = 'sem_treinar' then
+    v_titulo := v_nome || ': frequência';
+  elsif new.tipo = 'treino_no_vermelho' then
+    v_titulo := v_nome || ': treinando no vermelho';
+  else
+    v_titulo := v_nome || ': alerta';
+  end if;
+
+  perform public.notificar(
+    new.professor_id, 'alerta', v_titulo, v_corpo,
+    '/alunos/' || new.aluno_id,
+    case when new.tipo in ('indicador_vermelho', 'treino_no_vermelho')
+      then array['push', 'email'] else array['push'] end,
+    'alerta:' || new.id,
+    new.tipo in ('indicador_vermelho', 'treino_no_vermelho')
+  );
+
+  if new.tipo = 'indicador_vermelho' then
+    for v_familiar in
+      select familiar_id from familiares_acesso
+      where aluno_id = new.aluno_id and status = 'ativo'
+        and receber_alertas and familiar_id is not null
+    loop
+      perform public.notificar(
+        v_familiar.familiar_id, 'alerta_familiar',
+        v_primeiro || ' registrou uma medição fora da faixa',
+        coalesce('A leitura foi ' || v_leitura || '. ', '') ||
+          'A equipe da Atitude Vital já foi avisada e vai conversar antes do treino.',
+        '/acompanhar',
+        array['email'],
+        'alerta:' || new.id,
+        true
+      );
+    end loop;
+  end if;
+
+  return new;
+exception when others then
+  raise warning 'notificar_alerta_professor: %', sqlerrm;
+  return new;
+end;
+$$;

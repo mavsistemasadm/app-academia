@@ -47,7 +47,7 @@ export default async function ChatPage() {
           <p className="max-w-xs text-[15px] leading-relaxed text-neutral-500">
             {perfil.role === "professor"
               ? "Assim que houver alunos cadastrados, eles aparecem aqui."
-              : "Assim que o centro cadastrar seu professor, ele aparece aqui."}
+              : "Assim que o centro cadastrar a equipe, quem cuida do seu treino aparece aqui."}
           </p>
         </div>
       ) : (

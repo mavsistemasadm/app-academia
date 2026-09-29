@@ -22,6 +22,8 @@ export function RegistroDesafio({
   alunoId,
   metrica,
   hoje,
+  inicio,
+  fim,
   registros,
   bloqueado,
 }: {
@@ -29,13 +31,18 @@ export function RegistroDesafio({
   alunoId: string;
   metrica: Metrica;
   hoje: string;
+  /** Só conta o que cai no período do desafio. */
+  inicio: string;
+  fim: string;
   registros: Registro[];
   /** Desafio encerrado ou fora do período: só leitura. */
   bloqueado: boolean;
 }) {
   const router = useRouter();
   const [quantidade, setQuantidade] = useState("");
-  const [data, setData] = useState(hoje);
+  // Registro antes do início ou depois do fim não entra na conta do desafio.
+  const dataMaxima = fim < hoje ? fim : hoje;
+  const [data, setData] = useState(dataMaxima);
   const [salvando, setSalvando] = useState(false);
   const [apagando, setApagando] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
@@ -48,6 +55,15 @@ export function RegistroDesafio({
     const valor = Number(quantidade.replace(",", "."));
     if (!Number.isFinite(valor) || valor <= 0) {
       setErro("Diga quanto foi, por exemplo 2,5.");
+      return;
+    }
+    // "50" no lugar de "5,0" ganharia o ranking; o banco também barra acima de 200.
+    if (valor > 200) {
+      setErro("Valor alto demais para um registro. Confira a vírgula, por exemplo 5,0.");
+      return;
+    }
+    if (data < inicio || data > dataMaxima) {
+      setErro("Escolha um dia dentro do período do desafio.");
       return;
     }
 
@@ -72,9 +88,14 @@ export function RegistroDesafio({
   }
 
   async function apagar(id: string) {
+    setErro(null);
     setApagando(id);
-    await createClient().from("desafio_registros").delete().eq("id", id);
+    const { error } = await createClient().from("desafio_registros").delete().eq("id", id);
     setApagando(null);
+    if (error) {
+      setErro("Não conseguimos apagar o registro. Tente de novo.");
+      return;
+    }
     iniciarTransicao(() => router.refresh());
   }
 
@@ -116,7 +137,8 @@ export function RegistroDesafio({
               <Input
                 id="rd-data"
                 type="date"
-                max={hoje}
+                min={inicio}
+                max={dataMaxima}
                 value={data}
                 onChange={(e) => setData(e.target.value)}
                 disabled={salvando}

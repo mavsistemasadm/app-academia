@@ -55,7 +55,7 @@ export function HistoricoIndicadores({
           Ainda sem medição registrada
         </p>
         <p className="max-w-sm text-[15px] leading-relaxed text-neutral-500">
-          Assim que você registrar a primeira, ela aparece aqui e seu professor
+          Assim que você registrar a primeira, ela aparece aqui e a equipe
           passa a acompanhar.
         </p>
         <Link

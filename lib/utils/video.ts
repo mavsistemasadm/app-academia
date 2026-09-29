@@ -13,9 +13,10 @@ export function interpretarVideo(url: string | null | undefined): FonteVideo {
   const limpo = url.trim()
   if (!limpo) return null
 
+  // Link colado sem "https://" (youtu.be/abc) também vale.
   let endereco: URL
   try {
-    endereco = new URL(limpo)
+    endereco = new URL(/^https?:\/\//i.test(limpo) ? limpo : `https://${limpo}`)
   } catch {
     return null
   }
@@ -36,13 +37,22 @@ export function interpretarVideo(url: string | null | undefined): FonteVideo {
   }
 
   if (host === 'vimeo.com' || host === 'player.vimeo.com') {
-    const id = endereco.pathname.match(/(\d+)/)?.[1]
-    return id
-      ? { tipo: 'vimeo', embedUrl: `https://player.vimeo.com/video/${id}` }
-      : null
+    // vimeo.com/123 · vimeo.com/123/abcdef (não listado, o hash é a chave)
+    // · vimeo.com/showcase/1/video/123: o id é o último número do caminho.
+    const partes = endereco.pathname.split('/').filter(Boolean)
+    const posId = partes.map((p) => /^\d+$/.test(p)).lastIndexOf(true)
+    if (posId < 0) return null
+    const id = partes[posId]
+    const hash = endereco.searchParams.get('h') ?? partes[posId + 1]
+    const comHash = hash && /^[\da-f]+$/i.test(hash) ? `?h=${hash}` : ''
+    return { tipo: 'vimeo', embedUrl: `https://player.vimeo.com/video/${id}${comHash}` }
   }
 
-  return { tipo: 'arquivo', url: limpo }
+  // Arquivo só do nosso storage ou com extensão de vídeo: link de Drive ou
+  // Instagram viraria um player quebrado.
+  const ehStorage = host.endsWith('.supabase.co')
+  const ehVideo = /\.(mp4|webm|mov|m4v)$/i.test(endereco.pathname)
+  return ehStorage || ehVideo ? { tipo: 'arquivo', url: endereco.toString() } : null
 }
 
 function youtubeEmbed(id: string) {

@@ -322,7 +322,7 @@ export interface DetalheAluno {
   perfil: Profile
   indicadores: RegistroIndicador[]
   humores: { data: string; humor: HumorTipo; observacao: string | null }[]
-  treinos: { id: string; nome: string; diaSemana: string[]; ativo: boolean }[]
+  treinos: { id: string; nome: string; diaSemana: string[]; ativo: boolean; professorId: string }[]
   medicamentos: Medicamento[]
   avaliacoes: AvaliacaoFisica[]
   anamnese: Anamnese | null
@@ -371,7 +371,7 @@ export async function getDetalheAluno(
       .order('data', { ascending: false }),
     supabase
       .from('treinos')
-      .select('id, nome, dia_semana, ativo')
+      .select('id, nome, dia_semana, ativo, professor_id')
       .eq('aluno_id', alunoId)
       .order('created_at', { ascending: false }),
     supabase
@@ -430,6 +430,7 @@ export async function getDetalheAluno(
       nome: t.nome,
       diaSemana: t.dia_semana ?? [],
       ativo: t.ativo,
+      professorId: t.professor_id,
     })),
     medicamentos: (medicamentos ?? []) as Medicamento[],
     avaliacoes: listaAvaliacoes,

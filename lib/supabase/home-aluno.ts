@@ -14,11 +14,14 @@ import {
   hojeISO,
   horaAtual,
   inicioDaSemanaISO,
+  normalizarDiaSemana,
+  type DiaSemana,
 } from '@/lib/utils/datas'
 import {
   resumirIndicador,
   type RegistroIndicador,
 } from '@/lib/utils/indicadores'
+import { ultimoDeCadaTipo } from './indicadores'
 import { createClient } from './server'
 
 export interface MedicamentoPendente {
@@ -52,6 +55,8 @@ export interface HomeAlunoData {
   indicadores: Partial<Record<IndicadorTipo, RegistroIndicador>>
   treinosNaSemana: number
   treinosPlanejados: number
+  /** Dias de treino da semana que já passaram (sem contar hoje). */
+  treinosPrevistosAteAgora: number
   medicamentosPendentes: MedicamentoPendente[]
   treinoHoje: TreinoHoje | null
   humorHoje: HumorTipo | null
@@ -83,7 +88,7 @@ export async function getHomeAluno(perfil: Profile): Promise<HomeAlunoData> {
   const inicioSemana = inicioDaSemanaISO()
 
   const [
-    { data: indicadoresRaw },
+    { data: indicadoresRaw, total: totalDeIndicadores },
     { data: avaliacao },
     { data: medicamentos },
     { data: confirmacoes },
@@ -92,13 +97,14 @@ export async function getHomeAluno(perfil: Profile): Promise<HomeAlunoData> {
     { data: humor },
     { data: eventos },
   ] = await Promise.all([
-    // Últimos registros; o mais recente de cada tipo é escolhido abaixo.
-    supabase
-      .from('indicadores')
-      .select('*')
-      .eq('aluno_id', perfil.id)
-      .order('created_at', { ascending: false })
-      .limit(60),
+    // O mais recente de cada tipo, um por tipo.
+    Promise.all([
+      ultimoDeCadaTipo(supabase, perfil.id),
+      supabase
+        .from('indicadores')
+        .select('id', { count: 'exact', head: true })
+        .eq('aluno_id', perfil.id),
+    ]).then(([data, contagem]) => ({ data, total: contagem.count ?? 0 })),
     supabase
       .from('avaliacoes_fisicas')
       .select('altura')
@@ -221,10 +227,21 @@ export async function getHomeAluno(perfil: Profile): Promise<HomeAlunoData> {
     : null
 
   // Dias distintos previstos entre todos os treinos ativos.
-  const diasPlanejados = new Set<string>()
+  const diasPlanejados = new Set<DiaSemana>()
   for (const t of listaTreinos) {
-    for (const d of t.dia_semana ?? []) diasPlanejados.add(d.toLowerCase())
+    for (const d of t.dia_semana ?? []) {
+      const dia = normalizarDiaSemana(d)
+      if (dia) diasPlanejados.add(dia)
+    }
   }
+
+  // Na segunda de manhã ninguém está atrasado: só contam os dias que já
+  // passaram. A semana começa na segunda.
+  const ORDEM: DiaSemana[] = ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom']
+  const posicaoHoje = ORDEM.indexOf(diaSemana)
+  const treinosPrevistosAteAgora = [...diasPlanejados].filter(
+    (d) => ORDEM.indexOf(d) < posicaoHoje
+  ).length
 
   const treinosNaSemana = execucoes.filter((e) => e.concluido).length
   const humorHoje = (humor?.humor as HumorTipo | undefined) ?? null
@@ -271,10 +288,11 @@ export async function getHomeAluno(perfil: Profile): Promise<HomeAlunoData> {
     indicadores,
     treinosNaSemana,
     treinosPlanejados: diasPlanejados.size,
+    treinosPrevistosAteAgora,
     medicamentosPendentes,
     treinoHoje,
     humorHoje,
-    totalIndicadores: listaIndicadores.length,
+    totalIndicadores: totalDeIndicadores,
     proximoEvento: eventos?.[0]
       ? { titulo: eventos[0].titulo, dataInicio: eventos[0].data_inicio }
       : null,

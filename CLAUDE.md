@@ -376,7 +376,10 @@ sequência · [x] cronômetro e duração do treino para o professor ·
      comunicados e avaliações só para professor; chat só em nome próprio e
      com professor numa ponta; aluno não edita medição; prazo de 2 h para
      desmarcar aula no banco; equipe nunca sem admin; funções de apoio da
-     018 fora do alcance do app. **Aplicar antes de entregar.**
+     018 fora do alcance do app; todo professor lê os treinos (edita só quem
+     criou); aula reaberta avisa a turma; aceite de convite de familiar por
+     `aceitar_convite_familiar()`; teto de 200 no registro de km; textos dos
+     avisos sem "seu professor". **Aplicar antes de entregar.**
    - 011 anamnese editável: tabela `anamnese_perguntas` + `anamneses.respostas`
      (jsonb por id da pergunta). Sem ela o formulário usa `PERGUNTAS_PADRAO`
      de `lib/utils/anamnese.ts` e o editor fica só leitura. As colunas antigas

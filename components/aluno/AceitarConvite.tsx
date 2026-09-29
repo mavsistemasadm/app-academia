@@ -10,10 +10,8 @@ import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 
 export function AceitarConvite({
-  familiarId,
   codigoInicial = "",
 }: {
-  familiarId: string;
   /** Vem do link `/familia?codigo=` de quem já tinha conta. */
   codigoInicial?: string;
 }) {
@@ -35,27 +33,20 @@ export function AceitarConvite({
     setSalvando(true);
 
     /*
-      A policy `familiar_aceita_convite` só permite escrever numa linha
-      pendente e sem dono, e obriga `familiar_id = auth.uid()`. Se o código
-      não existir ou já tiver sido usado, o update afeta zero linhas — daí o
-      `select` no retorno servir de confirmação.
+      A linha pendente ainda não tem dono, então a RLS nem deixa a tela
+      lê-la. Quem confere código, pendência e o e-mail do convite é a
+      função `aceitar_convite_familiar` (migração 019), que devolve o id.
     */
-    const { data, error } = await createClient()
-      .from("familiares_acesso")
-      .update({
-        familiar_id: familiarId,
-        status: "ativo",
-        aceito_em: new Date().toISOString(),
-      })
-      .eq("codigo", limpo)
-      .eq("status", "pendente")
-      .is("familiar_id", null)
-      .select("id");
+    const { data, error } = await createClient().rpc("aceitar_convite_familiar", {
+      p_codigo: limpo,
+    });
 
     setSalvando(false);
 
-    if (error || !data?.length) {
-      setErro("Código inválido ou já utilizado. Peça outro ao seu familiar.");
+    if (error || !data) {
+      setErro(
+        "Não deu certo. Confira o código e se você entrou com o mesmo e-mail que recebeu o convite. Se continuar, peça um código novo."
+      );
       return;
     }
 

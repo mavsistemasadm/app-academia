@@ -114,12 +114,24 @@ export function ExecucaoTreino({ alunoId, treino, hoje }: ExecucaoTreinoProps) {
       const agora = new Date().toISOString();
       const base = { treino_id: treino.id, aluno_id: alunoId, data: hoje };
 
-      const criar = (linha: Record<string, unknown>) =>
-        supabase
+      // Insert, e não upsert: se outro aparelho já abriu a execução de hoje,
+      // o upsert regravaria `iniciado_em` e encurtaria a duração. Na
+      // duplicata, usa a linha que já existe.
+      const criar = async (linha: Record<string, unknown>) => {
+        const inserido = await supabase
           .from("treino_execucoes")
-          .upsert(linha, { onConflict: "treino_id,aluno_id,data" })
+          .insert(linha)
           .select("*")
           .single();
+        if (inserido.error?.code !== "23505") return inserido;
+        return supabase
+          .from("treino_execucoes")
+          .select("*")
+          .eq("treino_id", treino.id)
+          .eq("aluno_id", alunoId)
+          .eq("data", hoje)
+          .single();
+      };
 
       let resposta = await criar({ ...base, iniciado_em: agora });
       // Migração 008 ainda não aplicada: grava sem a coluna nova.
@@ -810,7 +822,7 @@ function DialogEsforco({
           <DialogDescription className="text-[15px] leading-relaxed text-neutral-500">
             {parcial
               ? `Faltaram ${restantes} ${restantes === 1 ? "série" : "séries"}. Sem problema, conte o esforço do que você fez.`
-              : "Seu professor usa essa nota para ajustar a próxima semana."}
+              : "A equipe usa essa nota para ajustar a próxima semana."}
           </DialogDescription>
         </DialogHeader>
 

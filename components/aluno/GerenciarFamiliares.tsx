@@ -46,27 +46,44 @@ export function GerenciarFamiliares({
   const router = useRouter();
   const [convidando, setConvidando] = useState(false);
   const [copiado, setCopiado] = useState<string | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+  const [ocupado, setOcupado] = useState<string | null>(null);
   const [, iniciarTransicao] = useTransition();
 
-  async function alterarStatus(
-    familiar: FamiliarAcesso,
-    status: "ativo" | "revogado"
-  ) {
-    await createClient()
-      .from("familiares_acesso")
-      .update({ status })
-      .eq("id", familiar.id);
-
+  // Remover acesso é decisão de privacidade: se falhar, a pessoa precisa saber.
+  async function executar(familiar: FamiliarAcesso, acao: () => PromiseLike<{ error: unknown }>) {
+    setErro(null);
+    setOcupado(familiar.id);
+    const { error } = await acao();
+    setOcupado(null);
+    if (error) {
+      setErro("Não conseguimos salvar a mudança. Confira a internet e tente de novo.");
+      return;
+    }
     iniciarTransicao(() => router.refresh());
   }
 
-  async function alterarAlertas(familiar: FamiliarAcesso, receber: boolean) {
-    await createClient()
-      .from("familiares_acesso")
-      .update({ receber_alertas: receber })
-      .eq("id", familiar.id);
+  function alterarStatus(familiar: FamiliarAcesso, status: "ativo" | "revogado") {
+    executar(familiar, () =>
+      createClient().from("familiares_acesso").update({ status }).eq("id", familiar.id)
+    );
+  }
 
-    iniciarTransicao(() => router.refresh());
+  function alterarAlertas(familiar: FamiliarAcesso, receber: boolean) {
+    executar(familiar, () =>
+      createClient()
+        .from("familiares_acesso")
+        .update({ receber_alertas: receber })
+        .eq("id", familiar.id)
+    );
+  }
+
+  // Convite com e-mail errado, ou que não vai mais ser usado: o código deixa
+  // de valer e o mesmo e-mail pode ser convidado de novo.
+  function cancelarConvite(familiar: FamiliarAcesso) {
+    executar(familiar, () =>
+      createClient().from("familiares_acesso").delete().eq("id", familiar.id)
+    );
   }
 
   function mensagemConvite(familiar: FamiliarAcesso) {
@@ -117,6 +134,12 @@ export function GerenciarFamiliares({
           </Button>
         </div>
 
+        {erro && (
+          <p role="alert" className="text-sm text-saude-vermelho">
+            {erro}
+          </p>
+        )}
+
         {familiares.length === 0 ? (
           <div className="rounded-2xl bg-card px-5 py-6 ring-1 ring-neutral-200/90">
             <p className="text-[15px] font-medium text-neutral-950">
@@ -124,7 +147,7 @@ export function GerenciarFamiliares({
             </p>
             <p className="mt-1 text-[15px] leading-relaxed text-neutral-500">
               Gere um convite e mande para um filho, cônjuge ou cuidador.
-              Ele cria um acesso só de acompanhante, sem precisar ser aluno.
+              Quem recebe cria um acesso só de acompanhante, sem precisar ser aluno.
             </p>
           </div>
         ) : (
@@ -200,6 +223,14 @@ export function GerenciarFamiliares({
                         já usa o app, é só digitar o código em Acompanhar um
                         familiar.
                       </p>
+                      <button
+                        type="button"
+                        onClick={() => cancelarConvite(familiar)}
+                        disabled={ocupado === familiar.id}
+                        className="w-fit text-sm font-medium text-saude-vermelho underline-offset-4 hover:underline disabled:opacity-50"
+                      >
+                        Cancelar convite
+                      </button>
                     </div>
                   )}
 
@@ -209,6 +240,7 @@ export function GerenciarFamiliares({
                         type="checkbox"
                         checked={Boolean(familiar.receber_alertas)}
                         onChange={(e) => alterarAlertas(familiar, e.target.checked)}
+                        disabled={ocupado === familiar.id}
                         className="mt-0.5 size-5 shrink-0 accent-primary"
                       />
                       <span className="text-[15px] leading-snug text-neutral-700">
@@ -316,7 +348,7 @@ function DialogConvite({
     if (error) {
       setErro(
         error.code === "23505"
-          ? "Esse e-mail já foi convidado."
+          ? "Esse e-mail já tem um convite. Cancele o antigo na lista e convide de novo."
           : "Não conseguimos criar o convite."
       );
       return;
@@ -338,7 +370,7 @@ function DialogConvite({
               Convidar familiar
             </DialogTitle>
             <DialogDescription>
-              Ele vê só seus indicadores e sua frequência. Você pode remover o
+              A pessoa vê só seus indicadores e sua frequência. Você pode remover o
               acesso quando quiser.
             </DialogDescription>
           </DialogHeader>

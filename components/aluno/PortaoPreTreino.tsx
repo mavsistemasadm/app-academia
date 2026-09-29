@@ -24,6 +24,8 @@ interface PortaoPreTreinoProps {
   /** O indicador que a condição clínica do aluno exige antes de treinar. */
   tipo: IndicadorTipo;
   altura: number | null;
+  /** Medição vermelha de hoje: reabre direto no aviso, sem pedir de novo. */
+  leituraVermelha?: Indicador | null;
   /** Renderizado quando o aluno é liberado para treinar. */
   children: React.ReactNode;
 }
@@ -36,6 +38,40 @@ interface Resultado {
   faixa: { valor: number; valorSecundario: number | null } | null;
 }
 
+/** A leitura já salva, do jeito que o portão mostra. */
+function montarResultado(
+  indicador: Indicador,
+  tipo: IndicadorTipo,
+  altura: number | null
+): Resultado {
+  const config = CONFIG_INDICADORES[tipo];
+  const registro = resumirIndicador(indicador, altura);
+
+  return {
+    status: registro.status,
+    texto:
+      tipo === "peso"
+        ? registro.valorFormatado
+        : `${registro.valorFormatado} ${config.unidade}`,
+    mensagem:
+      getMensagemAlerta(
+        tipo,
+        registro.status,
+        registro.valorPrincipal,
+        registro.valorSecundario ?? undefined
+      ) || SEMAFORO_CONFIG[registro.status].mensagem,
+    faixa:
+      tipo === "peso"
+        ? registro.imc
+          ? { valor: registro.imc, valorSecundario: null }
+          : null
+        : {
+            valor: registro.valorPrincipal,
+            valorSecundario: registro.valorSecundario ?? null,
+          },
+  };
+}
+
 /**
  * Módulo 13 — o app pergunta o indicador crítico *antes* do treino começar.
  * No vermelho o gatilho do banco já avisa o professor; aqui o aluno vê o
@@ -45,6 +81,7 @@ export function PortaoPreTreino({
   alunoId,
   tipo,
   altura,
+  leituraVermelha = null,
   children,
 }: PortaoPreTreinoProps) {
   const router = useRouter();
@@ -54,7 +91,9 @@ export function PortaoPreTreino({
   const [valor2, setValor2] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
-  const [resultado, setResultado] = useState<Resultado | null>(null);
+  const [resultado, setResultado] = useState<Resultado | null>(() =>
+    leituraVermelha ? montarResultado(leituraVermelha, tipo, altura) : null
+  );
   const [liberado, setLiberado] = useState(false);
 
   if (liberado) {
@@ -117,34 +156,11 @@ export function PortaoPreTreino({
       return;
     }
 
-    const registro = resumirIndicador(data as Indicador, altura);
-
-    setResultado({
-      status: registro.status,
-      texto:
-        tipo === "peso"
-          ? registro.valorFormatado
-          : `${registro.valorFormatado} ${config.unidade}`,
-      mensagem:
-        getMensagemAlerta(
-          tipo,
-          registro.status,
-          registro.valorPrincipal,
-          registro.valorSecundario ?? undefined
-        ) || SEMAFORO_CONFIG[registro.status].mensagem,
-      faixa:
-        tipo === "peso"
-          ? registro.imc
-            ? { valor: registro.imc, valorSecundario: null }
-            : null
-          : {
-              valor: registro.valorPrincipal,
-              valorSecundario: registro.valorSecundario ?? null,
-            },
-    });
+    const leitura = montarResultado(data as Indicador, tipo, altura);
+    setResultado(leitura);
 
     // Verde e amarelo seguem direto; o vermelho exige uma confirmação extra.
-    if (registro.status !== "vermelho") {
+    if (leitura.status !== "vermelho") {
       setLiberado(true);
       router.refresh();
     }
@@ -173,13 +189,13 @@ export function PortaoPreTreino({
             Não treine ainda
           </p>
           <h2 className="mt-2 text-[22px] leading-tight font-semibold tracking-[-0.025em] text-neutral-950">
-            Fale com seu professor antes de começar
+            Fale com a equipe antes de começar
           </h2>
           <p className="mt-2 text-[15px] leading-relaxed text-neutral-700">
             {resultado.mensagem}
           </p>
           <p className="mt-2 text-[15px] leading-relaxed font-semibold text-neutral-950">
-            Ele já recebeu um aviso sobre essa medição.
+            A equipe já recebeu um aviso sobre essa medição.
           </p>
         </div>
 
@@ -195,7 +211,7 @@ export function PortaoPreTreino({
             }}
             className="h-12 w-full rounded-full bg-white text-[15px] font-semibold text-neutral-950 ring-1 ring-saude-vermelho/25 hover:bg-white/80"
           >
-            Já falei com o professor, ver o treino
+            Já falei com a equipe, ver o treino
           </Button>
           <Button
             type="button"

@@ -111,7 +111,7 @@ export async function getMinhasAulas(
 ): Promise<MinhaAula[]> {
   const { data } = await supabase
     .from('aula_inscricoes')
-    .select('id, data, horario_id, aulas_horarios(titulo, hora, duracao_min, local)')
+    .select('id, data, horario_id, aulas_horarios(titulo, hora, duracao_min, local, ativo)')
     .eq('aluno_id', alunoId)
     .order('data', { ascending: false })
     .limit(120)
@@ -121,8 +121,8 @@ export async function getMinhasAulas(
     data: string
     horario_id: string
     aulas_horarios:
-      | { titulo: string; hora: string; duracao_min: number; local: string | null }
-      | { titulo: string; hora: string; duracao_min: number; local: string | null }[]
+      | { titulo: string; hora: string; duracao_min: number; local: string | null; ativo: boolean }
+      | { titulo: string; hora: string; duracao_min: number; local: string | null; ativo: boolean }[]
       | null
   }
 
@@ -154,7 +154,8 @@ export async function getMinhasAulas(
       local: h?.local ?? null,
       hora: h?.hora ?? '00:00:00',
       duracaoMin: h?.duracao_min ?? 60,
-      cancelada: caiu.has(`${linha.horario_id}:${linha.data}`),
+      // Horário desligado da grade também não acontece.
+      cancelada: caiu.has(`${linha.horario_id}:${linha.data}`) || h?.ativo === false,
     }
   })
 }

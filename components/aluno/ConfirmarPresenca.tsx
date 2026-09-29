@@ -21,10 +21,12 @@ export function ConfirmarPresenca({
   const router = useRouter();
   const [confirmado, setConfirmado] = useState(confirmadoInicial);
   const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
   const [, iniciarTransicao] = useTransition();
 
   async function responder(resposta: boolean) {
     const anterior = confirmado;
+    setErro(null);
     setConfirmado(resposta);
     setSalvando(true);
 
@@ -39,6 +41,7 @@ export function ConfirmarPresenca({
 
     if (error) {
       setConfirmado(anterior);
+      setErro("Não conseguimos salvar sua resposta. Tente de novo.");
       return;
     }
 
@@ -86,6 +89,11 @@ export function ConfirmarPresenca({
         <X className="size-4" aria-hidden />
         Não vou
       </button>
+      {erro && (
+        <p role="alert" className="w-full text-sm text-saude-vermelho">
+          {erro}
+        </p>
+      )}
     </div>
   );
 }

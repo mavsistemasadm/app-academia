@@ -48,6 +48,8 @@ export function DosesDoDia({ alunoId, doses, hoje }: DosesDoDiaProps) {
 
   const [estado, setEstado] = useState<Record<string, SituacaoDose>>({});
   const [erro, setErro] = useState<string | null>(null);
+  // Dose em gravação: "Tomei" e "X" em seguida chegariam em qualquer ordem.
+  const [pendentes, setPendentes] = useState<string[]>([]);
   const [, iniciarTransicao] = useTransition();
 
   function situacaoDe(dose: Dose) {
@@ -56,11 +58,13 @@ export function DosesDoDia({ alunoId, doses, hoje }: DosesDoDiaProps) {
 
   async function registrar(dose: Dose, status: MedicamentoStatus) {
     const chave = `${dose.medicamentoId}:${dose.horario}`;
+    if (pendentes.includes(chave)) return;
     const anterior = situacaoDe(dose);
     const nova: SituacaoDose = status === "tomou" ? "tomada" : "pulada";
 
     setEstado((atual) => ({ ...atual, [chave]: nova }));
     setErro(null);
+    setPendentes((atual) => [...atual, chave]);
 
     const { error } = await createClient()
       .from("medicamento_confirmacoes")
@@ -75,6 +79,8 @@ export function DosesDoDia({ alunoId, doses, hoje }: DosesDoDiaProps) {
         },
         { onConflict: "medicamento_id,data,horario" }
       );
+
+    setPendentes((atual) => atual.filter((c) => c !== chave));
 
     if (error) {
       setEstado((atual) => ({ ...atual, [chave]: anterior }));
@@ -181,6 +187,7 @@ export function DosesDoDia({ alunoId, doses, hoje }: DosesDoDiaProps) {
                   <button
                     type="button"
                     onClick={() => registrar(dose, "tomou")}
+                    disabled={pendentes.includes(`${dose.medicamentoId}:${dose.horario}`)}
                     className={cn(
                       "flex h-12 flex-1 items-center justify-center gap-2 rounded-full text-[15px] font-semibold transition-all duration-200 active:scale-[.98]",
                       emDestaque
@@ -194,6 +201,7 @@ export function DosesDoDia({ alunoId, doses, hoje }: DosesDoDiaProps) {
                   <button
                     type="button"
                     onClick={() => registrar(dose, "nao_tomou")}
+                    disabled={pendentes.includes(`${dose.medicamentoId}:${dose.horario}`)}
                     aria-label={`Não tomei ${dose.nome} das ${dose.horario}`}
                     className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-neutral-400 ring-1 ring-neutral-200 transition-all duration-200 hover:bg-neutral-50 hover:text-neutral-600 active:scale-[.98]"
                   >

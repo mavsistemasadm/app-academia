@@ -117,7 +117,7 @@ export default async function DesafioPage({
           <>
             {dataLonga(desafio.inicio)} a {dataLonga(desafio.fim)}
             {situacao === "em_andamento" && (
-              <> · {faltam === 0 ? "hoje é o último dia" : `faltam ${faltam} dias`}</>
+              <> · {faltam === 0 ? "hoje é o último dia" : faltam === 1 ? "falta 1 dia" : `faltam ${faltam} dias`}</>
             )}
             {desafio.descricao && (
               <>
@@ -219,6 +219,8 @@ export default async function DesafioPage({
                 alunoId={perfil.id}
                 metrica={desafio.metrica}
                 hoje={hoje}
+                inicio={desafio.inicio}
+                fim={desafio.fim}
                 registros={registros}
                 bloqueado={situacao !== "em_andamento"}
               />

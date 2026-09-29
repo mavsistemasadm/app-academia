@@ -40,7 +40,7 @@ export default function LoginPage() {
   const erroVisivel =
     erro ??
     (linkInvalido && !linkDescartado
-      ? "Esse link expirou ou já foi usado. Se era um convite, peça ao seu professor para reenviar."
+      ? "Esse link expirou ou já foi usado. Se era um convite, peça ao centro para reenviar."
       : null);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {

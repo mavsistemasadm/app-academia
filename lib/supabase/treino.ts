@@ -1,5 +1,6 @@
 import type {
   Exercicio,
+  Indicador,
   IndicadorTipo,
   Profile,
   TreinoExecucao,
@@ -62,6 +63,11 @@ export interface TreinoAlunoData {
    * começar. `null` quando não há exigência ou quando ele já mediu hoje.
    */
   medirAntes: IndicadorTipo | null
+  /**
+   * A medição de hoje, quando ela saiu vermelha. O portão volta direto na
+   * tela de aviso: atualizar a página não pode pular a confirmação.
+   */
+  leituraVermelha: Indicador | null
   /** Da última avaliação física — o portão precisa dela para o IMC. */
   altura: number | null
 }
@@ -103,17 +109,22 @@ export async function getTreinoAluno(
       exigido
         ? supabase
             .from('indicadores')
-            .select('id')
+            .select('*')
             .eq('aluno_id', alunoId)
             .eq('tipo', exigido)
-            .gte('created_at', `${hoje}T00:00:00`)
+            // Meia-noite da academia, não a de Greenwich.
+            .gte('created_at', `${hoje}T00:00:00-03:00`)
+            .order('created_at', { ascending: false })
             .limit(1)
         : Promise.resolve({ data: null }),
     ])
 
   const altura = (avaliacao?.altura as number | undefined) ?? null
-  // Já mediu hoje: não faz sentido cobrar de novo a cada vez que abre a tela.
-  const medirAntes = exigido && !mediuHoje?.length ? exigido : null
+  // Já mediu hoje e não deu vermelho: não faz sentido cobrar de novo a cada
+  // vez que abre a tela. No vermelho o portão continua de pé.
+  const ultimaHoje = (mediuHoje?.[0] as Indicador | undefined) ?? null
+  const leituraVermelha = ultimaHoje?.status_semaforo === 'vermelho' ? ultimaHoje : null
+  const medirAntes = exigido && (!ultimaHoje || leituraVermelha) ? exigido : null
 
   const lista = (treinos ?? []) as TreinoRow[]
   const doDia = lista.find((t) => ehHoje(t.dia_semana, diaSemana)) ?? null
@@ -127,7 +138,7 @@ export async function getTreinoAluno(
       totalExercicios: t.exercicios?.length ?? 0,
     }))
 
-  if (!doDia) return { treino: null, outros, hoje, medirAntes: null, altura }
+  if (!doDia) return { treino: null, outros, hoje, medirAntes: null, leituraVermelha: null, altura }
 
   // `*` traz iniciado_em/duracao_segundos quando a migração 008 existe, sem
   // quebrar antes dela.
@@ -199,6 +210,7 @@ export async function getTreinoAluno(
     hoje,
     // Treino já iniciado não volta para o portão no meio da série.
     medirAntes: execucao ? null : medirAntes,
+    leituraVermelha: execucao ? null : leituraVermelha,
     altura,
   }
 }

@@ -13,7 +13,7 @@ import { Activity, Dumbbell, HeartHandshake, ShieldCheck } from "lucide-react";
 const DESTAQUES = [
   { icone: Dumbbell, texto: "Treino do dia, série a série, com vídeo" },
   { icone: Activity, texto: "Pressão, glicemia e medicamentos no semáforo" },
-  { icone: HeartHandshake, texto: "Seu professor avisado quando algo foge do normal" },
+  { icone: HeartHandshake, texto: "A equipe avisada quando algo foge do normal" },
 ];
 
 export default function AuthLayout({

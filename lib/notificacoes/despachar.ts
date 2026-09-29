@@ -42,6 +42,7 @@ const BOTAO: Record<string, string> = {
   alerta: 'Ver ficha do aluno',
   alerta_familiar: 'Acompanhar',
   aula_cancelada: 'Ver minhas aulas',
+  aula_reaberta: 'Ver minhas aulas',
   convite_familiar: 'Criar meu acesso',
   resumo_semanal: 'Ver presença',
   resumo_mensal: 'Ver meu relatório',

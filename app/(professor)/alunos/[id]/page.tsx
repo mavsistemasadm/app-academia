@@ -491,6 +491,17 @@ export default async function DetalheAlunoPage({
             <ul className={cn(CARD, "divide-y divide-neutral-200/80 overflow-hidden")}>
               {treinos.map((treino) => (
                 <li key={treino.id}>
+                  {/* Só quem montou edita; os outros professores veem o treino. */}
+                  {treino.professorId !== professor.id ? (
+                    <div className="flex items-center gap-3 px-5 py-3.5">
+                      <span className="min-w-0 flex-1 truncate text-[15px] font-semibold text-neutral-950">
+                        {treino.nome}
+                      </span>
+                      <span className="shrink-0 rounded-full bg-neutral-100 px-2.5 py-0.5 text-[11px] font-semibold text-neutral-500">
+                        {treino.ativo ? "De outro professor" : "Inativo"}
+                      </span>
+                    </div>
+                  ) : (
                   <Link
                     href={`/treinos/${treino.id}`}
                     className="group flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-neutral-50"
@@ -508,6 +519,7 @@ export default async function DetalheAlunoPage({
                       aria-hidden
                     />
                   </Link>
+                  )}
                 </li>
               ))}
             </ul>

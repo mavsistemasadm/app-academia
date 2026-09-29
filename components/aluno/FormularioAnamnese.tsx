@@ -174,7 +174,7 @@ export function FormularioAnamnese({
         {salvo && !erro && (
           <p role="status" className="flex items-center gap-2 text-sm text-saude-verde">
             <Check className="size-4 shrink-0" aria-hidden />
-            Anamnese salva. Seu professor já consegue ver.
+            Anamnese salva. A equipe já consegue ver.
           </p>
         )}
       </div>

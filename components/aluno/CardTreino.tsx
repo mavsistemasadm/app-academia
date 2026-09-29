@@ -46,7 +46,7 @@ export function CardTreino({ treino }: CardTreinoProps) {
           Dia sem treino marcado
         </h3>
         <p className="text-sm leading-relaxed text-neutral-500">
-          Seu professor ainda não montou um treino para este dia da semana.
+          A equipe ainda não montou um treino para este dia da semana.
           Descanso também conta.
         </p>
       </div>

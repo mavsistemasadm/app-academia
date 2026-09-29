@@ -43,7 +43,7 @@ export function traduzirErroAula(mensagem?: string): string {
   if (texto.includes('AULA_CANCELADA')) return 'Esta aula foi cancelada pelo centro.'
   if (texto.includes('AULA_JA_PASSOU')) return 'Esse horário já passou.'
   if (texto.includes('AULA_INDISPONIVEL')) return 'Essa aula saiu da grade.'
-  if (texto.includes('duplicate key')) return 'Você já está inscrito nessa aula.'
+  if (texto.includes('duplicate key')) return 'Você já marcou essa aula.'
   return 'Não conseguimos marcar agora. Tente de novo.'
 }
 

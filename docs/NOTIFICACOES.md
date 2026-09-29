@@ -17,7 +17,8 @@ Auth com os modelos de `docs/emails/`, pelo SMTP do Resend.
 | Dose vencida sem confirmação | ✓ | ✓ | | cron (lembrete) |
 | Hora de beber água | | ✓ | | cron (10h, 14h, 17h) |
 | Evento ou aula em uma hora | ✓ | ✓ | | cron |
-| Aula cancelada | ✓ | ✓ | ✓ | gatilho `aula_cancelamentos` |
+| Aula cancelada (ou horário desligado/excluído com gente marcada) | ✓ | ✓ | ✓ | gatilho `aula_cancelamentos` |
+| Aula reaberta | ✓ | ✓ | ✓ | gatilho `aula_cancelamentos` (delete, migração 019) |
 | Comunicado | ✓ | ✓ | se importante | gatilho `notificacoes` |
 | Evento novo na agenda | ✓ | ✓ | | gatilho `eventos` |
 | Mensagem do professor | ✓ | ✓ | | gatilho `mensagens` |

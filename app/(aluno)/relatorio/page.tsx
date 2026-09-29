@@ -11,7 +11,7 @@ import { getPerfilAtual } from "@/lib/supabase/perfil";
 import { getRelatorioMensal } from "@/lib/supabase/relatorio";
 import { respostasParaLeitura } from "@/lib/utils/anamnese";
 import { rotularCondicoes } from "@/lib/utils/avatares";
-import { hojeISO, naAcademia, somarDiasISO } from "@/lib/utils/datas";
+import { hojeISO, naAcademia } from "@/lib/utils/datas";
 import { CONFIG_INDICADORES } from "@/lib/utils/indicadores";
 import { HUMOR_CONFIG } from "@/lib/utils/saudacao";
 
@@ -46,9 +46,12 @@ export default async function RelatorioPage({
   );
 
   // Os três meses mais recentes, para o seletor.
-  const opcoesMes = Array.from({ length: 3 }, (_, i) =>
-    somarDiasISO(`${mesAtual}-01`, -i * 30).slice(0, 7)
-  ).filter((valor, indice, todos) => todos.indexOf(valor) === indice);
+  // Conta em meses, não em 30 dias: de 1º de março, 30 dias para trás caía
+  // em janeiro e fevereiro sumia.
+  const opcoesMes = Array.from({ length: 3 }, (_, i) => {
+    const [ano, mes] = mesAtual.split("-").map(Number);
+    return new Date(Date.UTC(ano, mes - 1 - i, 1)).toISOString().slice(0, 7);
+  });
 
   const adesao =
     relatorio.adesaoMedicamento.previstas > 0
@@ -124,7 +127,7 @@ export default async function RelatorioPage({
             <span className="font-semibold text-neutral-950">{perfil.nome}</span> ·{" "}
             {rotularCondicoes(perfil.avatar_condicao)}
             {perfil.data_nascimento &&
-              ` · nascido em ${format(new Date(`${perfil.data_nascimento}T12:00:00Z`), "dd/MM/yyyy")}`}
+              ` · nascimento em ${format(new Date(`${perfil.data_nascimento}T12:00:00Z`), "dd/MM/yyyy")}`}
           </p>
           <p className="text-[13px] text-neutral-500">
             Período de {format(new Date(`${relatorio.inicio}T12:00:00Z`), "dd/MM/yyyy")} a{" "}

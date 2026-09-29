@@ -12,7 +12,7 @@ import { HUMOR_CONFIG } from "@/lib/utils/saudacao";
 const OPCOES: { humor: HumorTipo; label: string }[] = [
   { humor: "otimo", label: "Ótimo" },
   { humor: "disposto", label: "Bem" },
-  { humor: "cansado", label: "Cansado" },
+  { humor: "cansado", label: "Sem energia" },
   { humor: "dormiu_mal", label: "Dormi mal" },
   { humor: "enfermo", label: "Mal" },
 ];
@@ -33,11 +33,16 @@ export function RegistroHumor({
   const [humor, setHumor] = useState<HumorTipo | null>(humorInicial);
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, iniciarTransicao] = useTransition();
+  // Dois toques rápidos ("Mal" e depois "Bem") mandariam duas gravações que
+  // chegam em qualquer ordem: a tela diria uma coisa e o banco outra.
+  const [enviando, setEnviando] = useState(false);
 
   async function registrar(novo: HumorTipo) {
+    if (enviando) return;
     const anterior = humor;
     setHumor(novo); // otimista — a resposta do banco não muda a escolha
     setErro(null);
+    setEnviando(true);
 
     const { error } = await createClient()
       .from("humor_diario")
@@ -45,6 +50,8 @@ export function RegistroHumor({
         { aluno_id: alunoId, data: hoje, humor: novo },
         { onConflict: "aluno_id,data" }
       );
+
+    setEnviando(false);
 
     if (error) {
       setHumor(anterior);
@@ -66,7 +73,7 @@ export function RegistroHumor({
         <p className="mt-0.5 text-sm text-neutral-500">
           {humor
             ? "Pode trocar se mudar de ideia."
-            : "Seu professor vê e ajusta o treino se precisar."}
+            : "A equipe vê e ajusta o treino se precisar."}
         </p>
       </div>
 
@@ -79,7 +86,7 @@ export function RegistroHumor({
               key={opcao}
               type="button"
               onClick={() => registrar(opcao)}
-              disabled={salvando}
+              disabled={salvando || enviando}
               aria-pressed={selecionado}
               className={cn(
                 "flex flex-col items-center gap-1.5 rounded-2xl px-1 py-3 transition-all duration-200",

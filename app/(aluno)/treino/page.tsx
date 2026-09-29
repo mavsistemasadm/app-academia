@@ -37,7 +37,7 @@ export default async function TreinoPage() {
   const perfil = await getPerfilAtual();
   if (!perfil) redirect("/login");
 
-  const { treino, outros, hoje, medirAntes, altura } =
+  const { treino, outros, hoje, medirAntes, leituraVermelha, altura } =
     await getTreinoAluno(perfil);
 
   return (
@@ -54,7 +54,7 @@ export default async function TreinoPage() {
         descricao={
           treino
             ? (treino.descricao ??
-              `${treino.exercicios.length} ${treino.exercicios.length === 1 ? "exercício" : "exercícios"} preparados pelo seu professor.`)
+              `${treino.exercicios.length} ${treino.exercicios.length === 1 ? "exercício" : "exercícios"} preparados pela equipe.`)
             : "Nada marcado para hoje."
         }
       />
@@ -66,6 +66,7 @@ export default async function TreinoPage() {
               alunoId={perfil.id}
               tipo={medirAntes}
               altura={altura}
+              leituraVermelha={leituraVermelha}
             >
               <ExecucaoTreino alunoId={perfil.id} treino={treino} hoje={hoje} />
             </PortaoPreTreino>
@@ -86,8 +87,8 @@ export default async function TreinoPage() {
             </h2>
             <p className="max-w-xs text-[15px] leading-relaxed text-neutral-500">
               {treino
-                ? "Seu professor começou o treino, mas ainda não incluiu os exercícios. Assim que ele terminar, aparece aqui."
-                : "Seu professor não marcou treino para este dia da semana. Descansar também faz parte da evolução."}
+                ? "A equipe começou o treino, mas ainda não incluiu os exercícios. Assim que terminar, aparece aqui."
+                : "Não há treino marcado para este dia da semana. Descansar também faz parte da evolução."}
             </p>
           </div>
         )}

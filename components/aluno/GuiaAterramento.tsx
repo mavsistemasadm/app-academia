@@ -66,7 +66,7 @@ export function GuiaAterramento() {
             </h3>
             <p className="mt-2 text-[15px] leading-relaxed text-white/65">
               Se ainda estiver difícil, faça de novo ou mande uma mensagem para
-              o seu professor. Você não precisa passar por isso sozinho.
+              a equipe. Você não precisa passar por isso sem apoio.
             </p>
           </div>
         </div>

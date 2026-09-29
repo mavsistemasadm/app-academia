@@ -132,7 +132,7 @@ export default async function HomePage() {
             texto:
               treino.seriesFeitas > 0
                 ? `${treino.nome}: ${treino.seriesFeitas} de ${treino.totalSeries} séries feitas. Continue de onde parou.`
-                : `${treino.nome}, com ${treino.totalExercicios} ${treino.totalExercicios === 1 ? "exercício" : "exercícios"}. Seu professor já deixou tudo pronto.`,
+                : `${treino.nome}, com ${treino.totalExercicios} ${treino.totalExercicios === 1 ? "exercício" : "exercícios"}. A equipe já deixou tudo pronto.`,
             acao: treino.seriesFeitas > 0 ? "Continuar treino" : "Começar treino",
             href: "/treino",
           },
@@ -143,7 +143,7 @@ export default async function HomePage() {
           {
             tom: "ciano" as const,
             titulo: "Como você acordou?",
-            texto: "Um toque para contar ao seu professor como está o dia. Ele ajusta o treino se precisar.",
+            texto: "Um toque para contar à equipe como está o dia. O treino é ajustado se precisar.",
             acao: "Registrar humor",
             href: "#humor",
           },
@@ -377,9 +377,13 @@ export default async function HomePage() {
                 ? undefined
                 : dados.treinosNaSemana >= dados.treinosPlanejados
                   ? "verde"
-                  : dados.treinosNaSemana >= dados.treinosPlanejados / 2
-                    ? "amarelo"
-                    : "vermelho"
+                  : dados.treinosPrevistosAteAgora === 0
+                    ? undefined
+                    : dados.treinosNaSemana >= dados.treinosPrevistosAteAgora
+                      ? "verde"
+                      : dados.treinosNaSemana >= dados.treinosPrevistosAteAgora / 2
+                        ? "amarelo"
+                        : "vermelho"
             }
             badge={
               dados.treinosPlanejados > 0

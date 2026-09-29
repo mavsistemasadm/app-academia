@@ -6,7 +6,7 @@ import { DIAS_DE_AGENDA, getAulasDoPeriodo, getGrade, getInscritos } from "@/lib
 import { getPerfilAtual } from "@/lib/supabase/perfil";
 import { createClient } from "@/lib/supabase/server";
 import { hojeISO, horaAtual, somarDiasISO } from "@/lib/utils/datas";
-import { horaCurta } from "@/lib/utils/aulas";
+import { horaFim } from "@/lib/utils/aulas";
 
 export default async function AulasProfessorPage() {
   const perfil = await getPerfilAtual();
@@ -23,7 +23,8 @@ export default async function AulasProfessorPage() {
   ]);
 
   const agora = horaAtual();
-  const proximas = aulas.filter((a) => a.data > hoje || horaCurta(a.hora) >= agora);
+  // Aula em andamento continua na lista: o professor ainda confere a turma.
+  const proximas = aulas.filter((a) => a.data > hoje || horaFim(a.hora, a.duracaoMin) > agora);
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-6 md:gap-8 md:px-6 md:py-8">

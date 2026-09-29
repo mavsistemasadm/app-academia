@@ -48,7 +48,7 @@ export function VideoExercicio({ url, nome }: VideoExercicioProps) {
         />
       ) : (
         <iframe
-          src={`${fonte.embedUrl}${fonte.tipo === "youtube" ? "&autoplay=1" : "?autoplay=1"}`}
+          src={`${fonte.embedUrl}${fonte.embedUrl.includes("?") ? "&" : "?"}autoplay=1`}
           title={`Demonstração do exercício ${nome}`}
           allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen

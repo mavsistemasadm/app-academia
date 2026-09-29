@@ -21,7 +21,8 @@ export async function getConversas(perfil: Profile): Promise<Conversa[]> {
       .select('*')
       .or(`de.eq.${perfil.id},para.eq.${perfil.id}`)
       .order('created_at', { ascending: false })
-      .limit(300),
+      // A lista pega a última de cada conversa; com folga para a turma toda.
+      .limit(2000),
     supabase
       .from('profiles')
       .select('id, nome, foto_url, avatar_condicao')
@@ -90,7 +91,9 @@ export async function getConversa(
       .or(
         `and(de.eq.${perfil.id},para.eq.${contatoId}),and(de.eq.${contatoId},para.eq.${perfil.id})`
       )
-      .order('created_at', { ascending: true })
+      // As 200 mais recentes, e não as 200 primeiras: conversa longa
+      // continuaria abrindo no passado.
+      .order('created_at', { ascending: false })
       .limit(200),
   ])
 
@@ -106,6 +109,6 @@ export async function getConversa(
 
   return {
     contato: contato as PerfilResumo,
-    mensagens: (mensagens ?? []) as Mensagem[],
+    mensagens: ((mensagens ?? []) as Mensagem[]).reverse(),
   }
 }

@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { DIAS_SEMANA, type DiaSemana } from "@/lib/utils/datas";
 import type { TreinoEdicao } from "@/lib/supabase/professor";
+import { interpretarVideo } from "@/lib/utils/video";
 
 const NOME_DIA: Record<DiaSemana, string> = {
   dom: "Dom",
@@ -103,6 +104,7 @@ export function FormularioTreino({
 
   /** Ids que estavam no banco e o professor removeu da tela. */
   const removidos = useRef<string[]>([]);
+  const idSalvo = useRef<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
 
@@ -113,11 +115,18 @@ export function FormularioTreino({
   }
 
   function removerLinha(chave: string) {
-    setLinhas((atuais) => {
-      const alvo = atuais.find((l) => l.chave === chave);
-      if (alvo?.id) removidos.current.push(alvo.id);
-      return atuais.filter((l) => l.chave !== chave);
-    });
+    const alvo = linhas.find((l) => l.chave === chave);
+    // Exercício salvo leva junto as séries que o aluno já marcou nele.
+    if (
+      alvo?.id &&
+      !window.confirm(
+        `Remover "${alvo.nome || "este exercício"}" apaga também o histórico de séries do aluno nele. Remover mesmo assim?`
+      )
+    ) {
+      return;
+    }
+    if (alvo?.id) removidos.current.push(alvo.id);
+    setLinhas((atuais) => atuais.filter((l) => l.chave !== chave));
   }
 
   function mover(indice: number, direcao: -1 | 1) {
@@ -143,6 +152,13 @@ export function FormularioTreino({
       return setErro("Inclua ao menos um exercício com nome.");
     }
 
+    const seriesInvalida = validos.find(
+      (l) => l.series.trim() && !(Number.isInteger(Number(l.series)) && Number(l.series) > 0)
+    );
+    if (seriesInvalida) {
+      return setErro(`Séries de "${seriesInvalida.nome.trim()}": use só o número, por exemplo 3.`);
+    }
+
     setSalvando(true);
 
     const dadosTreino = {
@@ -154,11 +170,15 @@ export function FormularioTreino({
       ativo,
     };
 
-    const { data: salvo, error: erroTreino } = treino
+    // Depois do primeiro salvamento o treino já existe: tentar de novo após
+    // uma falha nos exercícios atualiza o mesmo, em vez de criar outro.
+    const idExistente = treino?.id ?? idSalvo.current;
+
+    const { data: salvo, error: erroTreino } = idExistente
       ? await supabase
           .from("treinos")
           .update(dadosTreino)
-          .eq("id", treino.id)
+          .eq("id", idExistente)
           .select("id")
           .single()
       : await supabase.from("treinos").insert(dadosTreino).select("id").single();
@@ -169,13 +189,16 @@ export function FormularioTreino({
     }
 
     const treinoId = salvo.id as string;
+    idSalvo.current = treinoId;
 
+    let falhouRemover = false;
     if (removidos.current.length > 0) {
-      await supabase
+      const { error: erroRemover } = await supabase
         .from("exercicios")
         .delete()
         .in("id", removidos.current);
-      removidos.current = [];
+      if (erroRemover) falhouRemover = true;
+      else removidos.current = [];
     }
 
     /*
@@ -209,17 +232,28 @@ export function FormularioTreino({
         ? supabase
             .from("exercicios")
             .insert(paraInserir.map((l) => camposDe(l, validos.indexOf(l))))
-            .then(({ error }) => error)
+            .select("id")
+            .then(({ data, error }) => {
+              // Guarda os ids novos: tentar de novo atualiza, não duplica.
+              if (!error && data) {
+                const novos = new Map(paraInserir.map((l, i) => [l.chave, data[i]?.id as string]));
+                setLinhas((atuais) =>
+                  atuais.map((l) => (novos.get(l.chave) ? { ...l, id: novos.get(l.chave) } : l))
+                );
+              }
+              return error;
+            })
         : Promise.resolve(null),
     ]);
 
-    setSalvando(false);
-
-    if (erros.some(Boolean)) {
+    if (erros.some(Boolean) || falhouRemover) {
+      setSalvando(false);
       return setErro(
-        "O treino foi salvo, mas algum exercício falhou. Confira a lista."
+        "O treino foi salvo, mas algum exercício falhou. Confira a lista e salve de novo."
       );
     }
+
+    // Sem liberar o botão: a navegação já começou e um segundo toque duplicaria.
 
     router.push("/treinos");
     router.refresh();
@@ -442,6 +476,11 @@ function LinhaExercicioForm({
   async function enviarVideo(arquivo: File) {
     setErroUpload(null);
 
+    if (!arquivo.type.startsWith("video/")) {
+      setErroUpload("Escolha um arquivo de vídeo (MP4, MOV ou WebM).");
+      return;
+    }
+
     if (arquivo.size > TAMANHO_MAXIMO_VIDEO) {
       setErroUpload("Vídeo acima de 200 MB. Grave um trecho mais curto.");
       return;
@@ -450,7 +489,8 @@ function LinhaExercicioForm({
     setEnviando(true);
 
     const supabase = createClient();
-    const extensao = arquivo.name.split(".").pop() ?? "mp4";
+    const nomeExt = arquivo.name.includes(".") ? arquivo.name.split(".").pop() : null;
+    const extensao = (nomeExt || arquivo.type.split("/")[1] || "mp4").toLowerCase();
     // O primeiro nível do caminho precisa ser o id de quem envia (RLS).
     const caminho = `${professorId}/${crypto.randomUUID()}.${extensao}`;
 
@@ -562,9 +602,15 @@ function LinhaExercicioForm({
             Vídeo de demonstração
           </span>
           {linha.videoUrl && !erroUpload && (
-            <span className="rounded-full bg-saude-verde-light px-2.5 py-0.5 text-[11px] font-semibold text-[#15803d]">
-              Vídeo vinculado
-            </span>
+            interpretarVideo(linha.videoUrl) ? (
+              <span className="rounded-full bg-saude-verde-light px-2.5 py-0.5 text-[11px] font-semibold text-[#15803d]">
+                Vídeo vinculado
+              </span>
+            ) : (
+              <span className="rounded-full bg-saude-amarelo-light px-2.5 py-0.5 text-[11px] font-semibold text-[#b45309]">
+                Link não reconhecido
+              </span>
+            )
           )}
         </div>
 

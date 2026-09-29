@@ -146,7 +146,7 @@ export default function DefinirSenhaPage() {
                 Esse link não vale mais
               </p>
               <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">
-                O convite expirou ou já foi usado. Peça ao seu professor para reenviar o
+                O convite expirou ou já foi usado. Peça ao centro para reenviar o
                 convite. Chega um e-mail novo em poucos minutos.
               </p>
               <p className="mt-2 text-sm leading-relaxed text-neutral-500">

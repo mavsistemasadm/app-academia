@@ -93,7 +93,7 @@ export default async function BemEstarPage() {
               Precisa falar com alguém?
             </p>
             <p className="text-sm text-neutral-500">
-              Mande uma mensagem para o seu professor. Ele lê.
+              Mande uma mensagem para a equipe. Alguém lê e responde.
             </p>
           </div>
           <ChevronRight

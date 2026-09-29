@@ -79,8 +79,10 @@ export async function getRelatorioMensal(
       .from('indicadores')
       .select('*')
       .eq('aluno_id', perfil.id)
-      .gte('created_at', `${inicio}T00:00:00`)
-      .lte('created_at', `${fim}T23:59:59`)
+      // O mês da academia: da meia-noite de São Paulo do dia 1 até a do
+      // dia 1 seguinte. Sem o fuso, 21h às 23h59 do último dia caíam fora.
+      .gte('created_at', `${inicio}T00:00:00-03:00`)
+      .lt('created_at', `${somarDiasISO(fim, 1)}T00:00:00-03:00`)
       .order('created_at', { ascending: true }),
     supabase
       .from('treino_execucoes')

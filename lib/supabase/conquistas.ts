@@ -271,7 +271,7 @@ export async function getConquistasAluno(
   // Carimba as novas para que na próxima visita já não apareçam como novidade.
   const novas = conquistas.filter((c) => c.nova)
   if (novas.length > 0 && opcoes.marcarVistas !== false) {
-    await supabase.from('aluno_conquistas').upsert(
+    const { error: erroVistas } = await supabase.from('aluno_conquistas').upsert(
       novas.map((c) => ({
         aluno_id: alunoId,
         chave: c.chave,
@@ -279,6 +279,8 @@ export async function getConquistasAluno(
       })),
       { onConflict: 'aluno_id,chave' }
     )
+    // Sem carimbo, as mesmas badges voltam como "nova" a cada visita.
+    if (erroVistas) console.error('Conquistas não marcadas como vistas:', erroVistas.message)
   }
 
   return {

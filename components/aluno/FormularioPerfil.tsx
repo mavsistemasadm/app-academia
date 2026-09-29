@@ -58,6 +58,11 @@ export function FormularioPerfil({ perfil }: { perfil: Profile }) {
   async function enviarFoto(arquivo: File) {
     setErro(null);
 
+    if (!arquivo.type.startsWith("image/")) {
+      setErro("Escolha uma imagem (JPG ou PNG).");
+      return;
+    }
+
     if (arquivo.size > TAMANHO_MAXIMO_FOTO) {
       setErro("A foto passa de 5 MB. Tente uma imagem menor.");
       return;
@@ -80,8 +85,23 @@ export function FormularioPerfil({ perfil }: { perfil: Profile }) {
     }
 
     const { data } = supabase.storage.from("avatares").getPublicUrl(caminho);
-    setFotoUrl(data.publicUrl);
+
+    // Grava na hora: esperar o "Salvar" do fim do formulário fazia a foto
+    // sumir de quem trocava e saía da tela.
+    const { error: erroPerfil } = await supabase
+      .from("profiles")
+      .update({ foto_url: data.publicUrl })
+      .eq("id", perfil.id);
+
     setEnviandoFoto(false);
+
+    if (erroPerfil) {
+      setErro("A foto subiu, mas não conseguimos salvar no perfil. Tente de novo.");
+      return;
+    }
+
+    setFotoUrl(data.publicUrl);
+    iniciarTransicao(() => router.refresh());
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {

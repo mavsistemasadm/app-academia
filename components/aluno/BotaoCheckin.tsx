@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
@@ -47,25 +47,36 @@ export function BotaoCheckin({
   const [comemoracao, setComemoracao] = useState<{ dias: number; hora: string } | null>(null);
   const [, iniciarTransicao] = useTransition();
 
+  // Trava síncrona: dois toques antes do re-render gravariam duas vezes.
+  const gravando = useRef(false);
+
   async function entrar() {
+    if (gravando.current) return;
+    gravando.current = true;
     setSalvando(true);
     setErro(null);
 
-    const { data, error } = await createClient()
+    const supabase = createClient();
+    // Insert, e não upsert: se outro aparelho já registrou hoje, o upsert
+    // reescreveria a hora de chegada e apagaria a saída.
+    let resposta = await supabase
       .from("checkins")
-      .upsert(
-        {
-          aluno_id: alunoId,
-          data: hoje,
-          entrada: new Date().toISOString(),
-          saida: null,
-        },
-        { onConflict: "aluno_id,data" }
-      )
+      .insert({ aluno_id: alunoId, data: hoje, entrada: new Date().toISOString() })
       .select("*")
       .single();
+    const jaExistia = resposta.error?.code === "23505";
+    if (jaExistia) {
+      resposta = await supabase
+        .from("checkins")
+        .select("*")
+        .eq("aluno_id", alunoId)
+        .eq("data", hoje)
+        .single();
+    }
+    const { data, error } = resposta;
 
     setSalvando(false);
+    gravando.current = false;
 
     if (error || !data) {
       setErro("Não conseguimos registrar sua chegada. Tente de novo.");
@@ -74,6 +85,10 @@ export function BotaoCheckin({
 
     const novo = data as Checkin;
     setCheckin(novo);
+    if (jaExistia) {
+      iniciarTransicao(() => router.refresh());
+      return;
+    }
     // Sem check-in antes, a sequência do servidor parava em ontem: hoje soma um.
     setComemoracao({
       dias: checkinInicial ? Math.max(1, sequencia) : sequencia + 1,

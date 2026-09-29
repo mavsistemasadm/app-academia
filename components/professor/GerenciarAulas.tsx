@@ -33,6 +33,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { AulaNoDia, HorarioDaGrade, InscritoNaAula } from "@/lib/supabase/aulas";
 import { AVATAR_OPCOES } from "@/lib/utils/avatares";
 import { DIAS_DA_GRADE, horaCurta, horaFim, vagasRestantes } from "@/lib/utils/aulas";
+import { hojeISO } from "@/lib/utils/datas";
 
 const TITULO_SECAO = "text-lg font-semibold tracking-[-0.02em] text-neutral-950 md:text-xl";
 const CARD_LISTA =
@@ -75,17 +76,58 @@ export function GerenciarAulas({
     iniciarTransicao(() => router.refresh());
   }
 
+  /*
+    Quem já marcou uma data futura precisa saber que a aula não vai
+    acontecer. Cancelar essas datas dispara o aviso (push e e-mail) pelo
+    gatilho do banco, o mesmo do cancelamento avulso.
+  */
+  async function cancelarDatasComInscritos(horarioId: string, motivo: string) {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("aula_inscricoes")
+      .select("data")
+      .eq("horario_id", horarioId)
+      .gte("data", hojeISO());
+    if (error) return { error };
+
+    const datas = [...new Set((data ?? []).map((l) => l.data as string))];
+    if (datas.length === 0) return { error: null, datas: 0 };
+
+    const { error: erroCancelar } = await supabase
+      .from("aula_cancelamentos")
+      .upsert(
+        datas.map((d) => ({ horario_id: horarioId, data: d, motivo })),
+        { onConflict: "horario_id,data", ignoreDuplicates: true }
+      );
+    return { error: erroCancelar, datas: datas.length };
+  }
+
   function alternarAtivo(horario: HorarioDaGrade) {
-    executar(() =>
-      createClient()
+    executar(async () => {
+      if (horario.ativo) {
+        const r = await cancelarDatasComInscritos(horario.id, "Horário retirado da grade");
+        if (r.error) return r;
+      }
+      return createClient()
         .from("aulas_horarios")
         .update({ ativo: !horario.ativo, updated_at: new Date().toISOString() })
-        .eq("id", horario.id)
-    );
+        .eq("id", horario.id);
+    });
   }
 
   function excluirHorario(horario: HorarioDaGrade) {
-    executar(() => createClient().from("aulas_horarios").delete().eq("id", horario.id));
+    const certeza = window.confirm(
+      `Excluir "${horario.titulo}" apaga o horário e o histórico de quem já fez essa aula. ` +
+        "Quem marcou datas futuras recebe o aviso de cancelamento. " +
+        "Para só tirar da grade, use Desligar. Excluir mesmo assim?"
+    );
+    if (!certeza) return;
+
+    executar(async () => {
+      const r = await cancelarDatasComInscritos(horario.id, "Horário retirado da grade");
+      if (r.error) return r;
+      return createClient().from("aulas_horarios").delete().eq("id", horario.id);
+    });
   }
 
   function cancelarAula(aula: AulaNoDia, motivo: string) {
@@ -462,7 +504,14 @@ function DialogHorario({
     if (titulo.trim().length < 2) return setErro("Dê um nome à aula.");
     if (dias.length === 0) return setErro("Escolha pelo menos um dia da semana.");
     if (!/^\d{2}:\d{2}$/.test(hora)) return setErro("Informe o horário, por exemplo 18:00.");
-    if (Number(vagas) < 1) return setErro("A aula precisa de pelo menos uma vaga.");
+    const numVagas = Number(vagas);
+    if (!Number.isInteger(numVagas) || numVagas < 1 || numVagas > 200) {
+      return setErro("Vagas: um número inteiro de 1 a 200.");
+    }
+    const numDuracao = Number(duracao);
+    if (!Number.isInteger(numDuracao) || numDuracao < 10 || numDuracao > 240) {
+      return setErro("Duração: de 10 a 240 minutos.");
+    }
     if (!paraTodos && condicoes.length === 0) {
       return setErro("Escolha as condições ou deixe a aula para todos.");
     }
@@ -470,12 +519,28 @@ function DialogHorario({
     setSalvando(true);
     const supabase = createClient();
 
+    // Mudar dia ou hora deixaria quem já marcou com a data antiga: a vaga
+    // ficaria num dia em que a aula não existe mais. Melhor um horário novo.
+    if (horario && (dias[0] !== horario.diaSemana || `${hora}:00` !== horario.hora.slice(0, 8))) {
+      const { count } = await supabase
+        .from("aula_inscricoes")
+        .select("id", { count: "exact", head: true })
+        .eq("horario_id", horario.id)
+        .gte("data", hojeISO());
+      if ((count ?? 0) > 0) {
+        setSalvando(false);
+        return setErro(
+          "Há alunos marcados neste horário. Para mudar o dia ou a hora, desligue este e crie um horário novo."
+        );
+      }
+    }
+
     const base = {
       titulo: titulo.trim(),
       local: local.trim() || null,
       hora: `${hora}:00`,
-      duracao_min: Math.max(1, Number(duracao) || 60),
-      vagas: Math.max(1, Number(vagas) || 1),
+      duracao_min: numDuracao,
+      vagas: numVagas,
       para_todos: paraTodos,
       avatar_condicao: paraTodos ? null : condicoes,
       updated_at: new Date().toISOString(),

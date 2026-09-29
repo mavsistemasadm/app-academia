@@ -37,7 +37,7 @@ const PASSOS: Passo[] = [
     alvo: "checkin",
     titulo: "Check-in e treino",
     texto:
-      "Chegou na academia? Toque em Cheguei. Logo abaixo fica o treino que seu professor montou para hoje.",
+      "Chegou na academia? Toque em Cheguei. Logo abaixo fica o treino que a equipe montou para hoje.",
   },
   {
     alvo: "indicadores",
@@ -49,12 +49,12 @@ const PASSOS: Passo[] = [
     alvo: "humor",
     titulo: "Como você está",
     texto:
-      "Registre seu humor num toque: seu professor vê e ajusta o treino. Ao lado ficam os atalhos do dia a dia.",
+      "Registre seu humor num toque: a equipe vê e ajusta o treino. Ao lado ficam os atalhos do dia a dia.",
   },
   {
     alvo: "sino",
     titulo: "Avisos do centro",
-    texto: "Comunicados, lembretes e mensagens do seu professor chegam no sininho.",
+    texto: "Comunicados, lembretes e mensagens da equipe chegam no sininho.",
   },
   {
     alvo: "navegacao",

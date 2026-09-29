@@ -39,7 +39,7 @@ export default async function IndicadoresPage() {
         titulo="Indicadores"
         descricao={
           criticos > 0
-            ? "Você tem medição fora da faixa segura. Seu professor já foi avisado."
+            ? "Você tem medição fora da faixa segura. A equipe já foi avisada."
             : "Registre suas medições e veja onde cada uma cai na faixa saudável."
         }
       />

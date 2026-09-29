@@ -31,8 +31,9 @@ export default function RedefinirSenhaPage() {
     event.preventDefault();
     setErro(null);
 
-    if (senha.length < 6) {
-      setErro("A senha precisa ter no mínimo 6 caracteres.");
+    // Mesmo mínimo de /definir-senha e do cadastro de familiar.
+    if (senha.length < 8) {
+      setErro("A senha precisa ter no mínimo 8 caracteres.");
       return;
     }
 
@@ -97,7 +98,7 @@ export default function RedefinirSenhaPage() {
                 name="senha"
                 type={mostrarSenha ? "text" : "password"}
                 autoComplete="new-password"
-                placeholder="Mínimo 6 caracteres"
+                placeholder="Mínimo 8 caracteres"
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
                 required

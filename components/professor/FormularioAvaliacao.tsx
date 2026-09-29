@@ -88,6 +88,23 @@ export function FormularioAvaliacao({
     event.preventDefault();
     setErro(null);
 
+    if (!data) {
+      setErro("Informe a data da avaliação.");
+      return;
+    }
+
+    // Campo preenchido com algo que não é número positivo sumiria calado.
+    const invalido = CAMPOS.find((c) => {
+      const texto = valores[c.id as CampoId].trim();
+      if (!texto) return false;
+      const n = lerNumero(texto);
+      return n === null || !Number.isFinite(n) || n <= 0;
+    });
+    if (invalido) {
+      setErro(`${invalido.rotulo}: use só o número, por exemplo ${invalido.exemplo}.`);
+      return;
+    }
+
     const preenchidos = Object.values(valores).some((v) => v.trim());
     if (!preenchidos && !testeForca.trim()) {
       setErro("Preencha ao menos uma medida.");
@@ -114,12 +131,12 @@ export function FormularioAvaliacao({
       observacoes: observacoes.trim() || null,
     });
 
-    setSalvando(false);
-
     if (error) {
+      setSalvando(false);
       setErro("Não conseguimos salvar a avaliação. Confira a conexão e tente de novo.");
       return;
     }
+    // Sem liberar o botão: a navegação já começou e um segundo toque duplicaria.
 
     router.push(`/alunos/${alunoId}`);
     router.refresh();

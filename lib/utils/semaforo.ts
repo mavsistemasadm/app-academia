@@ -166,7 +166,7 @@ export const SEMAFORO_CONFIG = {
     border: '#FCA5A5',
     emoji: '🔴',
     label: 'Cuidado',
-    mensagem: 'Seu professor foi notificado',
+    mensagem: 'A equipe foi avisada',
   },
 }
 
@@ -180,16 +180,16 @@ export function getMensagemAlerta(
 
   switch (tipo) {
     case 'pressao':
-      return `Pressão ${valor}/${valor2} mmHg está acima do limite seguro para treino. Aguarde orientação do seu professor.`
+      return `Pressão ${valor}/${valor2} mmHg está acima do limite seguro para treino. Aguarde orientação da equipe.`
     case 'glicemia':
       if (valor < 70)
-        return `Glicemia ${valor} mg/dL está baixa. Coma algo antes de treinar e informe seu professor.`
-      return `Glicemia ${valor} mg/dL está elevada. Evite treino intenso e consulte seu professor.`
+        return `Glicemia ${valor} mg/dL está baixa. Coma algo antes de treinar e avise a equipe.`
+      return `Glicemia ${valor} mg/dL está elevada. Evite treino intenso e fale com a equipe.`
     case 'saturacao':
       return `Saturação ${valor}% está abaixo do seguro. Não treine hoje e procure orientação médica.`
     case 'fc':
-      return `Frequência cardíaca ${valor} bpm fora do padrão. Seu professor foi notificado.`
+      return `Frequência cardíaca ${valor} bpm fora do padrão. A equipe foi avisada.`
     default:
-      return 'Indicador fora do padrão. Seu professor foi notificado.'
+      return 'Indicador fora do padrão. A equipe foi avisada.'
   }
 }

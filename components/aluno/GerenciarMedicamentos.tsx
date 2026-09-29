@@ -43,14 +43,23 @@ export function GerenciarMedicamentos({
   const router = useRouter();
   const [emEdicao, setEmEdicao] = useState<Medicamento | null>(null);
   const [criando, setCriando] = useState(false);
+  const [erroLista, setErroLista] = useState<string | null>(null);
+  const [alternando, setAlternando] = useState<string | null>(null);
   const [, iniciarTransicao] = useTransition();
 
   async function alternarAtivo(medicamento: Medicamento) {
-    await createClient()
+    setErroLista(null);
+    setAlternando(medicamento.id);
+    const { error } = await createClient()
       .from("medicamentos")
       .update({ ativo: !medicamento.ativo })
       .eq("id", medicamento.id);
+    setAlternando(null);
 
+    if (error) {
+      setErroLista("Não conseguimos atualizar o medicamento. Tente de novo.");
+      return;
+    }
     iniciarTransicao(() => router.refresh());
   }
 
@@ -101,6 +110,7 @@ export function GerenciarMedicamentos({
               <button
                 type="button"
                 onClick={() => alternarAtivo(medicamento)}
+                disabled={alternando === medicamento.id}
                 aria-label={
                   medicamento.ativo
                     ? `Pausar ${medicamento.nome}`
@@ -122,7 +132,13 @@ export function GerenciarMedicamentos({
             </li>
           ))}
         </ul>
-      ) : (
+      ) : null}
+      {erroLista && (
+        <p role="alert" className="text-sm text-saude-vermelho">
+          {erroLista}
+        </p>
+      )}
+      {medicamentos.length === 0 && (
         <div className="flex items-center gap-3.5 rounded-2xl bg-card px-5 py-4 ring-1 ring-neutral-200/90">
           <Pill className="size-5 shrink-0 text-neutral-400" strokeWidth={1.8} aria-hidden />
           <p className="text-sm text-neutral-500">
@@ -217,7 +233,8 @@ function FormularioMedicamento({
       return;
     }
 
-    const validos = horarios.filter(Boolean).sort();
+    // Horário repetido viraria duas doses iguais que se confirmam juntas.
+    const validos = [...new Set(horarios.filter(Boolean))].sort();
     if (validos.length === 0) {
       setErro("Informe ao menos um horário.");
       return;
@@ -254,6 +271,15 @@ function FormularioMedicamento({
 
   async function excluir() {
     if (!medicamento) return;
+    // Excluir leva junto todo o histórico de doses que o professor e o
+    // relatório do médico usam. Pausar guarda tudo.
+    if (
+      !window.confirm(
+        `Excluir ${medicamento.nome} apaga também o histórico de doses. Se parou de tomar, prefira Pausar. Excluir mesmo assim?`
+      )
+    ) {
+      return;
+    }
 
     setExcluindo(true);
 

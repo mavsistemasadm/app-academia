@@ -211,7 +211,7 @@ export default async function ConquistasPage() {
                 Você conquistou todas
               </p>
               <p className="max-w-xs text-[15px] leading-relaxed text-neutral-500">
-                Isso é constância de verdade. Seu professor está vendo.
+                Isso é constância de verdade. A equipe está vendo.
               </p>
             </div>
           ) : (

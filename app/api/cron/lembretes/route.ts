@@ -186,7 +186,7 @@ export async function GET(request: Request) {
   // ── 4. Aula marcada que começa em uma hora ──────────────────────
   const { data: inscricoes } = await supabase
     .from("aula_inscricoes")
-    .select("aluno_id, horario_id, data, aulas_horarios(titulo, hora, local)")
+    .select("aluno_id, horario_id, data, aulas_horarios(titulo, hora, local, ativo)")
     .eq("data", hoje);
 
   type InscricaoComAula = {
@@ -194,8 +194,8 @@ export async function GET(request: Request) {
     horario_id: string;
     data: string;
     aulas_horarios:
-      | { titulo: string; hora: string; local: string | null }
-      | { titulo: string; hora: string; local: string | null }[]
+      | { titulo: string; hora: string; local: string | null; ativo: boolean }
+      | { titulo: string; hora: string; local: string | null; ativo: boolean }[]
       | null;
   };
 
@@ -217,7 +217,8 @@ export async function GET(request: Request) {
     const aula = Array.isArray(inscricao.aulas_horarios)
       ? inscricao.aulas_horarios[0]
       : inscricao.aulas_horarios;
-    if (!aula) continue;
+    // Horário desligado da grade não acontece, mesmo com inscrição antiga.
+    if (!aula || aula.ativo === false) continue;
 
     const minutosDaAula = paraMinutos(aula.hora.slice(0, 5));
     const faltam = minutosDaAula - agoraMin;

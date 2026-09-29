@@ -32,6 +32,15 @@ import { createClient } from "@/lib/supabase/client";
 import { AVATAR_OPCOES } from "@/lib/utils/avatares";
 import { naAcademia } from "@/lib/utils/datas";
 
+/*
+  `datetime-local` entrega "2026-10-10T19:00" sem fuso. Com o -03:00 da
+  academia o instante é o mesmo em qualquer aparelho, mesmo num celular com
+  o fuso de outra cidade.
+*/
+function instanteDoCampo(valor: string): Date {
+  return new Date(`${valor.slice(0, 16)}:00-03:00`);
+}
+
 const TEXTAREA =
   "w-full resize-none rounded-[14px] border border-input bg-card px-3.5 py-3 text-base transition-colors outline-none placeholder:text-neutral-400 hover:border-neutral-300 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-60";
 const TITULO_SECAO = "text-lg font-semibold tracking-[-0.02em] text-neutral-950 md:text-xl";
@@ -54,8 +63,19 @@ export function GerenciarAgenda({
   const [criandoAviso, setCriandoAviso] = useState(false);
   const [, iniciarTransicao] = useTransition();
 
+  const [erroExclusao, setErroExclusao] = useState<string | null>(null);
+  const [excluindo, setExcluindo] = useState<string | null>(null);
+
   async function excluirEvento(id: string) {
-    await createClient().from("eventos").delete().eq("id", id);
+    if (!window.confirm("Excluir este evento? Quem confirmou presença deixa de ver.")) return;
+    setErroExclusao(null);
+    setExcluindo(id);
+    const { error } = await createClient().from("eventos").delete().eq("id", id);
+    setExcluindo(null);
+    if (error) {
+      setErroExclusao("Não conseguimos excluir o evento. Tente de novo.");
+      return;
+    }
     iniciarTransicao(() => router.refresh());
   }
 
@@ -95,6 +115,12 @@ export function GerenciarAgenda({
                 <span className="rotulo text-neutral-400">{proximos.length} marcados</span>
               )}
             </div>
+
+            {erroExclusao && (
+              <p role="alert" className="text-sm text-saude-vermelho">
+                {erroExclusao}
+              </p>
+            )}
 
             {proximos.length === 0 ? (
               <div className="flex flex-col items-center gap-2 rounded-2xl bg-card px-6 py-10 text-center ring-1 ring-neutral-200/90">
@@ -148,6 +174,7 @@ export function GerenciarAgenda({
                     <button
                       type="button"
                       onClick={() => excluirEvento(evento.id)}
+                      disabled={excluindo === evento.id}
                       aria-label={`Excluir ${evento.titulo}`}
                       className="flex size-10 shrink-0 items-center justify-center rounded-full text-neutral-400 ring-1 ring-neutral-200 transition-all duration-200 hover:bg-saude-vermelho-light hover:text-saude-vermelho hover:ring-transparent active:scale-[.96]"
                     >
@@ -263,23 +290,24 @@ function DialogEvento({
 
     if (titulo.trim().length < 3) return setErro("Dê um título ao evento.");
     if (!inicio) return setErro("Escolha a data e a hora de início.");
+    const instanteInicio = instanteDoCampo(inicio);
+    const instanteFim = fim ? instanteDoCampo(fim) : null;
+    if (instanteInicio.getTime() < Date.now()) return setErro("Escolha uma data futura.");
+    if (instanteFim && instanteFim <= instanteInicio) {
+      return setErro("O fim precisa ser depois do início.");
+    }
     if (!paraTodos && condicoes.length === 0) {
       return setErro("Escolha ao menos uma condição, ou marque 'todos'.");
     }
 
     setSalvando(true);
 
-    /*
-      `datetime-local` entrega o horário local do navegador sem fuso. O
-      professor está em São Paulo, então `new Date()` interpreta certo — e
-      o toISOString grava em UTC, que é o que a coluna timestamptz espera.
-    */
     const { error } = await createClient().from("eventos").insert({
       professor_id: professorId,
       titulo: titulo.trim(),
       descricao: descricao.trim() || null,
-      data_inicio: new Date(inicio).toISOString(),
-      data_fim: fim ? new Date(fim).toISOString() : null,
+      data_inicio: instanteInicio.toISOString(),
+      data_fim: instanteFim ? instanteFim.toISOString() : null,
       para_todos: paraTodos,
       avatar_condicao: paraTodos ? null : condicoes,
     });
