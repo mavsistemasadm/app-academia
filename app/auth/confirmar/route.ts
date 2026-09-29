@@ -11,6 +11,16 @@ import { createClient } from "@/lib/supabase/server";
  * Aceita os dois formatos: `code` (PKCE, o padrão do @supabase/ssr) e
  * `token_hash` + `type` (quando o template do e-mail é personalizado).
  */
+function caminhoInterno(proximo: string | null, origin: string): string | null {
+  if (!proximo?.startsWith("/") || proximo.includes("\\")) return null;
+  try {
+    const url = new URL(proximo, origin);
+    return url.origin === origin ? `${url.pathname}${url.search}` : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
 
@@ -19,10 +29,10 @@ export async function GET(request: NextRequest) {
   const tipo = searchParams.get("type") as EmailOtpType | null;
   const proximo = searchParams.get("proximo");
 
-  // Só caminho interno: `//site.com` ou URL absoluta viraria redirecionamento
-  // aberto a partir de um link que parece ser da academia.
-  const destino =
-    proximo?.startsWith("/") && !proximo.startsWith("//") ? proximo : "/home";
+  // Só caminho interno: `//site.com`, `/\site.com` ou URL absoluta virariam
+  // redirecionamento aberto a partir de um link que parece ser da academia.
+  // Quem decide é o próprio parser de URL: tem que continuar na nossa origem.
+  const destino = caminhoInterno(proximo, origin) ?? "/home";
 
   const supabase = await createClient();
 

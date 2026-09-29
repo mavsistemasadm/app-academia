@@ -106,6 +106,7 @@ export async function middleware(request: NextRequest) {
     '/alunos',
     '/treinos',
     '/agenda-professor',
+    '/aulas-professor',
     '/desafios-professor',
     '/presenca',
     '/equipe',
@@ -139,6 +140,6 @@ export async function middleware(request: NextRequest) {
 */
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|sw\\.js|manifest\\.webmanifest|offline|icones|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|sw\\.js|manifest\\.webmanifest|offline|icones|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp4|webm)$).*)',
   ],
 }

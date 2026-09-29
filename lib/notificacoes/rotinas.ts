@@ -144,7 +144,8 @@ export async function alertarSumidos(supabase: Servico) {
       aluno_id: aluno.id,
       tipo: 'sem_treinar',
       mensagem: `Sem aparecer há ${dias} dias. Uma mensagem agora faz diferença.`,
-      dados: { dias },
+      // A data entra no índice único da 019: um alerta por aluno por dia.
+      dados: { dias, data: hojeISO() },
     })
     if (!error) criados += 1
   }
