@@ -6,6 +6,7 @@ import { AlertCircle, Check, Loader2, Users, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { instanteNaAcademia } from "@/lib/utils/datas";
 import type { AulaNoDia } from "@/lib/supabase/aulas";
 import {
   horaCurta,
@@ -26,7 +27,7 @@ export function MarcarAula({
 }: {
   aula: AulaNoDia;
   alunoId: string;
-  /** Instante do servidor, no fuso da academia: evita depender do relógio do celular. */
+  /** Instante real do servidor: evita depender do relógio do celular. */
   agoraISO: string;
 }) {
   const router = useRouter();
@@ -36,7 +37,8 @@ export function MarcarAula({
   const [, iniciarTransicao] = useTransition();
 
   const restantes = vagasRestantes(aula.vagas, aula.ocupadas);
-  const comeca = new Date(`${aula.data}T${horaCurta(aula.hora)}:00`);
+  // Com o fuso explícito, servidor (UTC) e celular calculam o mesmo instante.
+  const comeca = instanteNaAcademia(aula.data, horaCurta(aula.hora));
   const agora = new Date(agoraISO);
   const jaPassou = comeca.getTime() <= agora.getTime();
   const horasAteAula = (comeca.getTime() - agora.getTime()) / 3600000;

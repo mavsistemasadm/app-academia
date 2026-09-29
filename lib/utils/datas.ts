@@ -79,6 +79,15 @@ export function diaSemanaAtual(quando = new Date()): DiaSemana {
   return DIAS_SEMANA[comoData(hojeISO(quando)).getUTCDay()]
 }
 
+/**
+ * O instante real de uma data e hora "de parede" da academia (`2026-10-01`,
+ * `18:00`). São Paulo não tem horário de verão desde 2019, então é sempre
+ * -03:00. Dá o mesmo resultado no servidor em UTC e no celular do aluno.
+ */
+export function instanteNaAcademia(dataISO: string, hhmm: string): Date {
+  return new Date(`${dataISO}T${hhmm.slice(0, 5)}:00-03:00`)
+}
+
 /** Soma (ou subtrai, com número negativo) dias a uma data `YYYY-MM-DD`. */
 export function somarDiasISO(iso: string, dias: number): string {
   const data = comoData(iso)

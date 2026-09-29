@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { getAgendaDoAluno, getMinhasAulas } from "@/lib/supabase/aulas";
 import { getPerfilAtual } from "@/lib/supabase/perfil";
 import { createClient } from "@/lib/supabase/server";
-import { horaAtual, naAcademia } from "@/lib/utils/datas";
+import { horaAtual } from "@/lib/utils/datas";
 import { horaCurta, horaFim } from "@/lib/utils/aulas";
 
 const CARD_LISTA =
@@ -31,8 +31,9 @@ export default async function AulasPage() {
     getMinhasAulas(supabase, perfil.id),
   ]);
 
-  // Instante do servidor no fuso da academia: o relógio do celular pode mentir.
-  const agoraISO = naAcademia(new Date()).toISOString();
+  // Instante real do servidor: o relógio do celular pode mentir. O horário
+  // da aula vira instante com o fuso explícito em MarcarAula.
+  const agoraISO = new Date().toISOString();
   const horaAgora = horaAtual();
 
   // Some da agenda o que já começou hoje: ninguém marca aula que passou.

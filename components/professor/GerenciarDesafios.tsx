@@ -33,6 +33,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { hojeISO, somarDiasISO } from "@/lib/utils/datas";
 import type { DesafioDoProfessor } from "@/lib/supabase/desafios";
 import {
   formatarQuantidade,
@@ -323,12 +324,12 @@ function DialogDesafio({
   const [nome, setNome] = useState(item?.desafio.nome ?? modelo?.nome ?? "");
   const [descricao, setDescricao] = useState(item?.desafio.descricao ?? modelo?.descricao ?? "");
   const [inicio, setInicio] = useState(
-    () => item?.desafio.inicio ?? new Date().toISOString().slice(0, 10)
+    // toISOString é UTC: depois das 21h em São Paulo já daria amanhã.
+    () => item?.desafio.inicio ?? hojeISO()
   );
   const [fim, setFim] = useState(
     () =>
-      item?.desafio.fim ??
-      new Date(Date.now() + (modelo?.dias ?? 30) * 86400000).toISOString().slice(0, 10)
+      item?.desafio.fim ?? somarDiasISO(hojeISO(), modelo?.dias ?? 30)
   );
   const [aberto, setAberto] = useState(item?.desafio.aberto ?? true);
   const [tipo, setTipo] = useState<TipoDesafio>(item?.desafio.tipo ?? modelo?.tipo ?? "pontos");
@@ -406,25 +407,32 @@ function DialogDesafio({
     const novos = convidados.filter((id) => !participantes.includes(id));
     const retirados = participantes.filter((id) => !convidados.includes(id));
 
+    let falhouConvite = false;
     if (novos.length > 0) {
-      await supabase.from("desafio_participantes").insert(
+      const { error: erroNovos } = await supabase.from("desafio_participantes").insert(
         novos.map((alunoId) => ({
           desafio_id: data.id,
           aluno_id: alunoId,
           status: "convidado",
         }))
       );
+      falhouConvite ||= Boolean(erroNovos);
     }
     if (retirados.length > 0) {
-      await supabase
+      const { error: erroRetirados } = await supabase
         .from("desafio_participantes")
         .delete()
         .eq("desafio_id", data.id)
         .eq("status", "convidado")
         .in("aluno_id", retirados);
+      falhouConvite ||= Boolean(erroRetirados);
     }
 
     setSalvando(false);
+    if (falhouConvite) {
+      setErro("O desafio foi salvo, mas os convites não. Tente salvar de novo.");
+      return;
+    }
     onPronto();
   }
 
