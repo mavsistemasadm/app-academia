@@ -13,7 +13,7 @@ O objetivo central: **o aluno sentir que está sendo cuidado 24h por dia pelo ce
 
 ## STACK
 
-- **Next.js 14** com App Router e TypeScript
+- **Next.js 16** (React 19) com App Router e TypeScript
 - **Supabase** — banco PostgreSQL, auth, storage, realtime
 - **Tailwind CSS** + **shadcn/ui**
 - **Vercel** para deploy
@@ -323,8 +323,12 @@ o cron varre o que ficou para trás · [x] e-mail com a marca pelo Resend
 (`lib/email`) · [x] rotinas diárias em `lib/notificacoes/rotinas.ts`: sumidos,
 doses esquecidas, conquistas e marcos (e-mail motivacional), resumo semanal da
 equipe e resumo mensal do aluno · [x] professor liga o push no painel ·
-lista completa em `docs/NOTIFICACOES.md` · [~] depende da migração 018 e dos
-dois segredos no Vault
+lista completa em `docs/NOTIFICACOES.md` · migração 018 e segredos do Vault
+aplicados em 29/09/2026
+
+**28. Vídeo de boas-vindas** — [x] `public/boas-vindas.mp4` (H.264 720p,
+convertido do .mov do iPhone) abre no primeiro acesso, antes do tour
+(`VideoBoasVindas`, marca `av-boas-vindas-visto-v1` no user_metadata)
 
 **23. Check-in e treino com energia** — [x] comemoração com confete e
 sequência · [x] cronômetro e duração do treino para o professor ·
@@ -366,10 +370,13 @@ sequência · [x] cronômetro e duração do treino para o professor ·
    - 017 admin da equipe: coluna `profiles.eh_admin`, trava estendida e o
      primeiro admin (`marlos.h.santos@gmail.com`). Sem ela a aba Equipe não
      aparece para ninguém.
-   - 018 central de notificações: tabela `notificacoes_usuario`, pg_net,
-     os gatilhos de cada evento, `familiares_acesso.receber_alertas` e
-     `notificacoes.importante`. Depois dela, criar no Vault
-     `notificacoes_url` e `notificacoes_segredo` (o mesmo `CRON_SECRET`).
+   - 018 central de notificações: já aplicada, com os dois segredos no
+     Vault (`notificacoes_url` e `notificacoes_segredo` = `CRON_SECRET`).
+   - 019 endurece permissões: escrita em treinos, exercícios, eventos,
+     comunicados e avaliações só para professor; chat só em nome próprio e
+     com professor numa ponta; aluno não edita medição; prazo de 2 h para
+     desmarcar aula no banco; equipe nunca sem admin; funções de apoio da
+     018 fora do alcance do app. **Aplicar antes de entregar.**
    - 011 anamnese editável: tabela `anamnese_perguntas` + `anamneses.respostas`
      (jsonb por id da pergunta). Sem ela o formulário usa `PERGUNTAS_PADRAO`
      de `lib/utils/anamnese.ts` e o editor fica só leitura. As colunas antigas
@@ -399,10 +406,11 @@ o domínio da Vercel precisa estar em Authentication → URL Configuration.
 
 ## DADOS DE TESTE
 
-`node supabase/scripts/popular_dados_teste.mjs` povoa o banco com uma academia
+`node supabase/scripts/popular_dados_teste.mjs --confirmo` povoa o banco com uma academia
 inteira: uma professora, oito alunos de condições diferentes e dois meses de
 história. Roda quantas vezes quiser — apaga o que semeou antes e o sorteio tem
-semente fixa, então o resultado é sempre o mesmo.
+semente fixa, então o resultado é sempre o mesmo. **Não rode em produção**:
+desde a 018 os eventos e comunicados semeados mandam push aos alunos reais.
 
 Todo mundo entra com a senha `teste1234`:
 

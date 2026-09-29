@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 # Aplica migrações no Supabase de produção pela Management API.
 #
-#   bash scripts/aplicar_migracoes.sh                 # aplica 007 a 010
-#   bash scripts/aplicar_migracoes.sh 011_algo 012_x  # aplica as que passar
+#   bash scripts/aplicar_migracoes.sh 019_endurece_permissoes
+#   bash scripts/aplicar_migracoes.sh 018_central_de_notificacoes 019_endurece_permissoes
+#
+# Sem argumento não faz nada: rodar tudo de novo num banco que já tem as
+# migrações quebraria na 001. Projeto novo: passe todas, da 001 à última.
 #
 # Precisa de SUPABASE_ACCESS_TOKEN no ambiente (token pessoal da conta
 # Supabase). A service role do .env.local não roda DDL. Para no primeiro
@@ -11,7 +14,13 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-PROJETO="vcrrcmekwebbegszewii"
+# O projeto sai da URL do Supabase no .env.local: o script mexe sempre no
+# mesmo banco que o app usa, nunca num id esquecido no código.
+PROJETO=$(grep '^NEXT_PUBLIC_SUPABASE_URL=' .env.local 2>/dev/null | sed -E 's#.*https://([^.]+)\.supabase\.co.*#\1#')
+if [ -z "$PROJETO" ]; then
+  echo "Não achei NEXT_PUBLIC_SUPABASE_URL no .env.local." >&2
+  exit 1
+fi
 API="https://api.supabase.com/v1/projects/$PROJETO/database/query"
 
 if [ -z "${SUPABASE_ACCESS_TOKEN:-}" ]; then
@@ -30,7 +39,10 @@ sql() {
 
 MIGRACOES=("$@")
 if [ ${#MIGRACOES[@]} -eq 0 ]; then
-  MIGRACOES=(007_exames 008_duracao_treino 009_realtime_notificacoes 010_alerta_sem_travessao)
+  echo "Diga quais migrações aplicar, por exemplo: bash scripts/aplicar_migracoes.sh 019_endurece_permissoes" >&2
+  echo "Disponíveis:" >&2
+  ls supabase/migrations | sed 's/\.sql$//' >&2
+  exit 1
 fi
 
 for m in "${MIGRACOES[@]}"; do

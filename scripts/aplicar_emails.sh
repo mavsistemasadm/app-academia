@@ -10,7 +10,13 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-PROJETO="vcrrcmekwebbegszewii"
+# O projeto sai da URL do Supabase no .env.local: o script mexe sempre no
+# mesmo banco que o app usa, nunca num id esquecido no código.
+PROJETO=$(grep '^NEXT_PUBLIC_SUPABASE_URL=' .env.local 2>/dev/null | sed -E 's#.*https://([^.]+)\.supabase\.co.*#\1#')
+if [ -z "$PROJETO" ]; then
+  echo "Não achei NEXT_PUBLIC_SUPABASE_URL no .env.local." >&2
+  exit 1
+fi
 SITE="https://ctatitudevital.com.br"
 
 if [ -z "${SUPABASE_ACCESS_TOKEN:-}" ]; then

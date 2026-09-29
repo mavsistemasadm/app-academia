@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# O modelo das variáveis é versionado; os valores de verdade, nunca.
+!.env.example
+
+# Vídeo bruto do celular: o app usa o boas-vindas.mp4 convertido.
+public/*.mov

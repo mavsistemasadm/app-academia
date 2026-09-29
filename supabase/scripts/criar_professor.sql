@@ -13,7 +13,7 @@
 
 do $$
 declare
-  v_email text := 'marlos.h.santos@gmail.com';  -- ← troque aqui
+  v_email text := 'professor@exemplo.com.br';  -- ← troque aqui
   v_id uuid;
 begin
   select id into v_id from auth.users where email = v_email;
@@ -33,4 +33,5 @@ begin
    where id = v_id;
 end $$;
 
-select id, nome, email, role from public.profiles where email = 'marlos.h.santos@gmail.com';
+-- Confira (troque o e-mail aqui também):
+select id, nome, email, role from public.profiles where email = 'professor@exemplo.com.br';

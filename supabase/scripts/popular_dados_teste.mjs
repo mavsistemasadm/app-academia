@@ -5,7 +5,11 @@
  * trás — o bastante para os gráficos, o streak, o calendário de humor e a
  * lista de sumidos terem o que mostrar.
  *
- *   node supabase/scripts/popular_dados_teste.mjs
+ *   node supabase/scripts/popular_dados_teste.mjs --confirmo
+ *
+ * O --confirmo existe porque o .env.local aponta para produção. Desde a
+ * migração 018 os eventos e comunicados semeados disparam push para todos
+ * os alunos do banco, inclusive os reais. Use num projeto de testes.
  *
  * Roda com a service role, então ignora RLS. Só faz sentido em banco de
  * desenvolvimento. É idempotente: apaga o que semeou antes (todo usuário
@@ -21,6 +25,16 @@ import { readFileSync } from 'node:fs'
 for (const linha of readFileSync(new URL('../../.env.local', import.meta.url), 'utf8').split('\n')) {
   const m = linha.match(/^([A-Z_]+)=(.*)$/)
   if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim()
+}
+
+if (!process.argv.includes('--confirmo')) {
+  console.error(
+    'Este script escreve no banco do .env.local (hoje, o de produção) e os\n' +
+      'eventos e comunicados de teste disparam push para os alunos reais.\n' +
+      'Rode num projeto de testes e confirme com:\n' +
+      '  node supabase/scripts/popular_dados_teste.mjs --confirmo'
+  )
+  process.exit(1)
 }
 
 const URL_BASE = process.env.NEXT_PUBLIC_SUPABASE_URL
