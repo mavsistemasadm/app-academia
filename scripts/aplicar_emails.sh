@@ -11,7 +11,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 PROJETO="vcrrcmekwebbegszewii"
-SITE="https://app-academia-eta.vercel.app"
+SITE="https://ctatitudevital.com.br"
 
 if [ -z "${SUPABASE_ACCESS_TOKEN:-}" ]; then
   echo "Falta SUPABASE_ACCESS_TOKEN no ambiente." >&2
@@ -27,7 +27,7 @@ const ler = (n) => fs.readFileSync(`docs/emails/${n}.html`, "utf8")
 const config = {
   site_url: site,
   // O ** aceita a query ?proximo=… que o app usa depois de confirmar o link.
-  uri_allow_list: [`${site}/**`, "http://localhost:3000/**", "http://localhost:3005/**"].join(","),
+  uri_allow_list: [`${site}/**`, "https://www.ctatitudevital.com.br/**", "https://app-academia-eta.vercel.app/**", "http://localhost:3000/**", "http://localhost:3005/**"].join(","),
 }
 
 for (const nome of Object.keys(assuntos)) {

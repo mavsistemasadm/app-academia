@@ -57,4 +57,4 @@ update public.profiles
    and role = 'professor';
 
 -- Confira: deve aparecer uma linha com eh_admin = true.
---   select nome, email, role, eh_admin from profiles where role = 'professor';
+--   select nome, email, role, eh_admin from profiles where role = 'professor'

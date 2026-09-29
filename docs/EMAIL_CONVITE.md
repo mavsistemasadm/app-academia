@@ -21,12 +21,12 @@ São três ajustes no painel do Supabase (projeto da Atitude Vital).
 
 **Authentication → URL Configuration**
 
-- **Site URL:** `https://app-academia-eta.vercel.app`
+- **Site URL:** `https://ctatitudevital.com.br`
 - **Redirect URLs** — adicione as duas (o `**` aceita a query `?proximo=…`):
 
 ```
 http://localhost:3005/**
-https://app-academia-eta.vercel.app/**
+https://ctatitudevital.com.br/**
 ```
 
 Sem isso o Supabase ignora o `redirectTo` do convite e manda o aluno para a
