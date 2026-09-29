@@ -1,5 +1,7 @@
 import type { Indicador } from '@/lib/types'
 import { hojeISO, somarDiasISO } from '@/lib/utils/datas'
+import type { SupabaseClient } from '@supabase/supabase-js'
+
 import { createClient } from './server'
 
 /**
@@ -127,9 +129,14 @@ export interface ConquistasData {
 
 export async function getConquistasAluno(
   alunoId: string,
-  metaAguaMl: number
+  metaAguaMl: number,
+  /**
+   * O cron passa a service role e `marcarVistas: false`: ele só descobre as
+   * novas para avisar; quem carimba como vista é a tela, quando o aluno abre.
+   */
+  opcoes: { supabase?: SupabaseClient; marcarVistas?: boolean } = {}
 ): Promise<ConquistasData> {
-  const supabase = await createClient()
+  const supabase = opcoes.supabase ?? (await createClient())
 
   const hoje = hojeISO()
   const inicioJanela = somarDiasISO(hoje, -89)
@@ -256,13 +263,14 @@ export async function getConquistasAluno(
         : conquistada
           ? 'Conquistada'
           : 'Ainda não',
-      nova: conquistada && jaRegistradas.get(regra.chave) === undefined,
+      // Sem linha ainda, ou com a linha que o cron criou ao avisar.
+      nova: conquistada && jaRegistradas.get(regra.chave) !== true,
     }
   })
 
   // Carimba as novas para que na próxima visita já não apareçam como novidade.
   const novas = conquistas.filter((c) => c.nova)
-  if (novas.length > 0) {
+  if (novas.length > 0 && opcoes.marcarVistas !== false) {
     await supabase.from('aluno_conquistas').upsert(
       novas.map((c) => ({
         aluno_id: alunoId,

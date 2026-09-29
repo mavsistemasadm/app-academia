@@ -17,6 +17,14 @@ export type TipoNotificacao =
   | 'indicador'
   | 'humor'
   | 'frequencia'
+  | 'treino'
+  | 'avaliacao'
+  | 'desafio'
+  | 'conquista'
+  | 'familia'
+  | 'exame'
+  | 'anamnese'
+  | 'equipe'
 
 /** Uma linha do sininho — já pronta para exibir, sem consulta no cliente. */
 export interface ItemNotificacao {
@@ -57,6 +65,51 @@ function valeParaOAluno(
 function resumir(texto: string | null, audio: string | null) {
   if (texto?.trim()) return texto.trim()
   return audio ? 'Mensagem de áudio' : 'Nova mensagem'
+}
+
+/** Tipo gravado em `notificacoes_usuario` (migração 018) para o ícone do sino. */
+const TIPO_AVISO: Record<string, TipoNotificacao> = {
+  treino: 'treino',
+  avaliacao: 'avaliacao',
+  desafio: 'desafio',
+  conquista: 'conquista',
+  marco: 'conquista',
+  familiar: 'familia',
+  exame: 'exame',
+  exame_link: 'exame',
+  anamnese: 'anamnese',
+  primeiro_acesso: 'equipe',
+  evento: 'evento',
+}
+
+/**
+ * Os avisos que nasceram de um evento (treino novo, avaliação, conquista...)
+ * e pediram o canal 'sino'. Antes da migração 018 a tabela não existe e a
+ * consulta só volta vazia.
+ */
+async function avisosDoSino(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  usuarioId: string
+): Promise<ItemNotificacao[]> {
+  const limite = new Date(Date.now() - 30 * DIA_MS).toISOString()
+  const { data } = await supabase
+    .from('notificacoes_usuario')
+    .select('id, tipo, titulo, corpo, url, urgente, created_at')
+    .eq('usuario_id', usuarioId)
+    .contains('canais', ['sino'])
+    .gte('created_at', limite)
+    .order('created_at', { ascending: false })
+    .limit(30)
+
+  return (data ?? []).map((a) => ({
+    id: `aviso:${a.id}`,
+    tipo: TIPO_AVISO[a.tipo as string] ?? 'comunicado',
+    titulo: a.titulo as string,
+    texto: a.corpo as string,
+    href: (a.url as string | null) ?? '/home',
+    criadoEm: a.created_at as string,
+    urgente: Boolean(a.urgente),
+  }))
 }
 
 /**
@@ -131,7 +184,7 @@ export async function getNotificacoesAluno(
   const limiteComunicados = new Date(agora.getTime() - 30 * DIA_MS).toISOString()
   const limiteEventos = new Date(agora.getTime() + 2 * DIA_MS).toISOString()
 
-  const [{ data: comunicados }, { data: eventos }, medicamentos, mensagens, aulas] =
+  const [{ data: comunicados }, { data: eventos }, medicamentos, mensagens, aulas, avisos] =
     await Promise.all([
       supabase
         .from('notificacoes')
@@ -150,9 +203,10 @@ export async function getNotificacoesAluno(
       mensagensNaoLidas(supabase, perfil.id),
       // As aulas que o aluno marcou para hoje e amanhã.
       getMinhasAulas(supabase, perfil.id),
+      avisosDoSino(supabase, perfil.id),
     ])
 
-  const itens: ItemNotificacao[] = [...mensagens]
+  const itens: ItemNotificacao[] = [...mensagens, ...avisos]
 
   for (const c of comunicados ?? []) {
     if (!valeParaOAluno(c, condicoes)) continue
@@ -252,6 +306,7 @@ const TIPO_ALERTA: Record<AlertaTipo, TipoNotificacao> = {
   humor_ruim: 'humor',
   medicamento_nao_tomado: 'medicamento',
   sem_treinar: 'frequencia',
+  treino_no_vermelho: 'indicador',
 }
 
 const ROTULO_ALERTA: Record<AlertaTipo, string> = {
@@ -259,6 +314,7 @@ const ROTULO_ALERTA: Record<AlertaTipo, string> = {
   humor_ruim: 'humor',
   medicamento_nao_tomado: 'medicamento',
   sem_treinar: 'frequência',
+  treino_no_vermelho: 'treino no vermelho',
 }
 
 export async function getNotificacoesProfessor(
@@ -266,7 +322,7 @@ export async function getNotificacoesProfessor(
 ): Promise<ItemNotificacao[]> {
   const supabase = await createClient()
 
-  const [{ data: alertas }, mensagens] = await Promise.all([
+  const [{ data: alertas }, mensagens, avisos] = await Promise.all([
     supabase
       .from('alertas_professor')
       .select(
@@ -277,6 +333,7 @@ export async function getNotificacoesProfessor(
       .order('created_at', { ascending: false })
       .limit(30),
     mensagensNaoLidas(supabase, perfil.id),
+    avisosDoSino(supabase, perfil.id),
   ])
 
   type Row = {
@@ -288,7 +345,7 @@ export async function getNotificacoesProfessor(
     aluno: { nome: string } | { nome: string }[] | null
   }
 
-  const itens: ItemNotificacao[] = [...mensagens]
+  const itens: ItemNotificacao[] = [...mensagens, ...avisos]
 
   for (const a of (alertas ?? []) as Row[]) {
     const aluno = Array.isArray(a.aluno) ? a.aluno[0] : a.aluno
@@ -300,7 +357,7 @@ export async function getNotificacoesProfessor(
       texto: a.mensagem,
       href: `/alunos/${a.aluno_id}`,
       criadoEm: a.created_at,
-      urgente: a.tipo === 'indicador_vermelho',
+      urgente: a.tipo === 'indicador_vermelho' || a.tipo === 'treino_no_vermelho',
     })
   }
 

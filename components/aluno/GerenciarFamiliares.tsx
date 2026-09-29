@@ -60,6 +60,15 @@ export function GerenciarFamiliares({
     iniciarTransicao(() => router.refresh());
   }
 
+  async function alterarAlertas(familiar: FamiliarAcesso, receber: boolean) {
+    await createClient()
+      .from("familiares_acesso")
+      .update({ receber_alertas: receber })
+      .eq("id", familiar.id);
+
+    iniciarTransicao(() => router.refresh());
+  }
+
   function mensagemConvite(familiar: FamiliarAcesso) {
     const link = `${window.location.origin}/familia?codigo=${familiar.codigo}`;
     return (
@@ -185,12 +194,31 @@ export function GerenciarFamiliares({
                         </button>
                       </div>
                       <p className="w-full text-[13px] leading-relaxed text-neutral-500">
-                        O convite leva um link. Quem recebe cria o acesso com o
-                        e-mail {familiar.email} e já passa a acompanhar você. Se a
-                        pessoa já usa o app, é só digitar o código em Acompanhar
-                        um familiar.
+                        Mandamos o convite por e-mail para {familiar.email}. Se
+                        não chegar, envie pelo celular: quem recebe cria o acesso
+                        com esse e-mail e já passa a acompanhar você. Se a pessoa
+                        já usa o app, é só digitar o código em Acompanhar um
+                        familiar.
                       </p>
                     </div>
+                  )}
+
+                  {familiar.status !== "revogado" && (
+                    <label className="flex cursor-pointer items-start gap-3 rounded-2xl bg-neutral-50 px-4 py-3.5">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(familiar.receber_alertas)}
+                        onChange={(e) => alterarAlertas(familiar, e.target.checked)}
+                        className="mt-0.5 size-5 shrink-0 accent-primary"
+                      />
+                      <span className="text-[15px] leading-snug text-neutral-700">
+                        Avisar por e-mail quando um indicador meu ficar vermelho
+                        <span className="mt-0.5 block text-[13px] text-neutral-500">
+                          O professor é avisado sempre. Aqui você decide se{" "}
+                          {familiar.nome.split(" ")[0]} também fica sabendo.
+                        </span>
+                      </span>
+                    </label>
                   )}
 
                   {familiar.status === "ativo" && (

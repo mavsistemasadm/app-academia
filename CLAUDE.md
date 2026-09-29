@@ -316,6 +316,16 @@ rebaixa quem já está na equipe; e-mail de aluno existente vira professor ·
 [x] a equipe nunca fica sem admin · [x] a trava de papel também barra
 `eh_admin` pelo app · [~] depende da migração 017 · falta tirar alguém da equipe
 
+**27. Central de notificações** — [x] todo aviso vira linha em
+`notificacoes_usuario` com os canais sino, push e e-mail · [x] gatilhos do
+banco criam os avisos e o pg_net chama `/api/notificacoes/despachar` na hora;
+o cron varre o que ficou para trás · [x] e-mail com a marca pelo Resend
+(`lib/email`) · [x] rotinas diárias em `lib/notificacoes/rotinas.ts`: sumidos,
+doses esquecidas, conquistas e marcos (e-mail motivacional), resumo semanal da
+equipe e resumo mensal do aluno · [x] professor liga o push no painel ·
+lista completa em `docs/NOTIFICACOES.md` · [~] depende da migração 018 e dos
+dois segredos no Vault
+
 **23. Check-in e treino com energia** — [x] comemoração com confete e
 sequência · [x] cronômetro e duração do treino para o professor ·
 [~] duração exata depende da migração 008
@@ -356,6 +366,10 @@ sequência · [x] cronômetro e duração do treino para o professor ·
    - 017 admin da equipe: coluna `profiles.eh_admin`, trava estendida e o
      primeiro admin (`marlos.h.santos@gmail.com`). Sem ela a aba Equipe não
      aparece para ninguém.
+   - 018 central de notificações: tabela `notificacoes_usuario`, pg_net,
+     os gatilhos de cada evento, `familiares_acesso.receber_alertas` e
+     `notificacoes.importante`. Depois dela, criar no Vault
+     `notificacoes_url` e `notificacoes_segredo` (o mesmo `CRON_SECRET`).
    - 011 anamnese editável: tabela `anamnese_perguntas` + `anamneses.respostas`
      (jsonb por id da pergunta). Sem ela o formulário usa `PERGUNTAS_PADRAO`
      de `lib/utils/anamnese.ts` e o editor fica só leitura. As colunas antigas
@@ -363,11 +377,18 @@ sequência · [x] cronômetro e duração do treino para o professor ·
      (`coluna_legada`).
 4. **Convite por e-mail** — feito em 17/09/2026: `bash scripts/aplicar_emails.sh`
    manda os modelos de `docs/emails/*.html` (marca Atitude Vital), os assuntos
-   em português, a Site URL de produção e as Redirect URLs. Falta só desligar
-   "Allow new users to sign up" no painel do Supabase (o cadastro público saiu;
-   /cadastro redireciona ao login) e, para convidar a turma inteira sem o
-   limite do SMTP do Supabase, configurar um SMTP próprio (o projeto financeiro
-   usa Resend com remetente da marca).
+   em português, a Site URL de produção e as Redirect URLs. O cadastro público
+   foi desligado no Supabase (`disable_signup`) em 28/09/2026; convite, equipe
+   e familiar criam conta pela API de admin e não são afetados.
+   SMTP próprio ligado em 29/09/2026: domínio `envio.ctatitudevital.com.br`
+   verificado no Resend (conta do peritos-academy, sa-east-1), chave só de
+   envio em `RESEND_API_KEY` e Site URL em `https://ctatitudevital.com.br`.
+   A mesma chave manda os e-mails da central de notificações (módulo 27) e
+   precisa estar também nas variáveis da Vercel.
+
+5. **Domínio próprio** `ctatitudevital.com.br` (Registro.br, modo avançado
+   de DNS): `A` na raiz → `76.76.21.21`, `www` → `cname.vercel-dns.com`, e os
+   registros do Resend em `*.envio`. Os dois nomes estão no projeto da Vercel.
 
 **Já resolvido:** projeto na Vercel (time Pro) com as sete variáveis nos três
 ambientes; "esqueci a senha" (`/esqueci-senha` → e-mail →

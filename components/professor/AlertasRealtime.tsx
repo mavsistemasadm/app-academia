@@ -13,8 +13,9 @@ import { createClient } from "@/lib/supabase/client";
 import { CONFIG_INDICADORES } from "@/lib/utils/indicadores";
 
 /*
-  Severidade à esquerda, tipo no chip. Vermelho só para indicador crítico —
-  é o que exige ação na hora; humor e medicamento são amarelo; frequência, neutro.
+  Severidade à esquerda, tipo no chip. Vermelho para indicador crítico e para
+  quem foi treinar mesmo assim, que exigem ação na hora; humor e medicamento
+  são amarelo; frequência, neutro.
 */
 const ESTILO: Record<
   AlertaTipo,
@@ -24,6 +25,11 @@ const ESTILO: Record<
     faixa: "bg-saude-vermelho",
     chip: "bg-saude-vermelho-light text-[#b91c1c]",
     rotulo: "Indicador crítico",
+  },
+  treino_no_vermelho: {
+    faixa: "bg-saude-vermelho",
+    chip: "bg-saude-vermelho-light text-[#b91c1c]",
+    rotulo: "Treinando no vermelho",
   },
   humor_ruim: {
     faixa: "bg-saude-amarelo",

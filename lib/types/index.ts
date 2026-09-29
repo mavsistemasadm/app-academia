@@ -45,6 +45,7 @@ export type AlertaTipo =
   | 'medicamento_nao_tomado'
   | 'humor_ruim'
   | 'sem_treinar'
+  | 'treino_no_vermelho'
 
 // ── Database types ──────────────────────────────────────────────
 
@@ -257,6 +258,8 @@ export interface FamiliarAcesso {
   status: FamiliarStatus
   created_at: string
   aceito_em?: string
+  /** O aluno autorizou e-mail quando um indicador ficar vermelho (018). */
+  receber_alertas?: boolean
   aluno?: PerfilResumo
 }
 

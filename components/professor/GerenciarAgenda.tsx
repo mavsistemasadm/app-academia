@@ -455,6 +455,7 @@ function DialogComunicado({
 
   const [titulo, setTitulo] = useState("");
   const [corpo, setCorpo] = useState("");
+  const [importante, setImportante] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
 
@@ -473,6 +474,8 @@ function DialogComunicado({
       titulo: titulo.trim(),
       corpo: corpo.trim(),
       para_todos: true,
+      // O banco manda push para todos; o importante vai também por e-mail.
+      ...(importante ? { importante: true } : {}),
     });
 
     setSalvando(false);
@@ -481,6 +484,7 @@ function DialogComunicado({
 
     setTitulo("");
     setCorpo("");
+    setImportante(false);
     onFechar();
     router.refresh();
   }
@@ -492,7 +496,7 @@ function DialogComunicado({
           <DialogHeader>
             <DialogTitle>Comunicado</DialogTitle>
             <DialogDescription>
-              Aparece na agenda de todos os alunos.
+              Aparece na agenda e chega no celular de todos os alunos.
             </DialogDescription>
           </DialogHeader>
 
@@ -514,6 +518,19 @@ function DialogComunicado({
             disabled={salvando}
             className={TEXTAREA}
           />
+
+          <label className="flex cursor-pointer items-center gap-3 rounded-[14px] px-4 py-3 ring-1 ring-neutral-200 transition-colors hover:bg-neutral-50">
+            <input
+              type="checkbox"
+              checked={importante}
+              onChange={(e) => setImportante(e.target.checked)}
+              disabled={salvando}
+              className="size-5 accent-primary"
+            />
+            <span className="text-sm text-neutral-700">
+              Importante: enviar também por e-mail
+            </span>
+          </label>
 
           {erro && (
             <p role="alert" className="text-sm text-saude-vermelho">

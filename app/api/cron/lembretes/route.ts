@@ -1,5 +1,13 @@
 import { NextResponse } from "next/server";
 
+import { despacharPendentes } from "@/lib/notificacoes/despachar";
+import {
+  alertarDosesEsquecidas,
+  alertarSumidos,
+  avisarConquistas,
+  enviarResumoMensal,
+  enviarResumoSemanal,
+} from "@/lib/notificacoes/rotinas";
 import { enviarPush } from "@/lib/push/servidor";
 import { createServiceClient } from "@/lib/supabase/servico";
 import {
@@ -7,9 +15,12 @@ import {
   ehHoje,
   hojeISO,
   horaAtual,
+  horaCheiaAtual,
 } from "@/lib/utils/datas";
 
 export const dynamic = "force-dynamic";
+// As rotinas das 8h e 9h percorrem todos os alunos; 15 s não bastam.
+export const maxDuration = 300;
 
 /** Janela de cobrança da dose: nem cedo demais, nem tarde demais. */
 const ATRASO_MINIMO_MIN = 10;
@@ -24,9 +35,11 @@ function paraMinutos(hhmm: string): number {
 }
 
 /**
- * Roda de 15 em 15 minutos (ver `vercel.json`) e dispara três coisas:
- * medicamento atrasado, lembrete de água, evento e aula que começam em uma
- * hora.
+ * Roda de 15 em 15 minutos (ver `vercel.json`) e dispara: medicamento
+ * atrasado, lembrete de água, evento e aula que começam em uma hora. Numa
+ * hora fixa do dia roda também as rotinas de `lib/notificacoes/rotinas.ts`
+ * (sumidos, doses esquecidas, conquistas, resumos) e, a cada volta, entrega
+ * o que tiver ficado para trás na fila de notificações.
  *
  * O `CRON_SECRET` é obrigatório — sem ele, qualquer um na internet
  * conseguiria disparar notificação para todos os alunos.
@@ -222,5 +235,35 @@ export async function GET(request: Request) {
     if (ok) enviados.aulas += 1;
   }
 
-  return NextResponse.json({ ok: true, hoje, agora, enviados });
+  // ── 5. Rotinas do dia ─────────────────────────────────────────────
+  // Cada uma roda nas quatro voltas da sua hora; a chave do aviso e a
+  // checagem de alerta aberto seguram a repetição. Uma falha não derruba as
+  // outras nem os lembretes acima.
+  const hora = horaCheiaAtual();
+  const rotinas: Record<string, number | string> = {};
+
+  async function rodar(nome: string, tarefa: () => Promise<number>) {
+    try {
+      rotinas[nome] = await tarefa();
+    } catch (erro) {
+      console.error(`rotina ${nome}:`, erro);
+      rotinas[nome] = "erro";
+    }
+  }
+
+  if (hora === 8) {
+    await rodar("sumidos", () => alertarSumidos(supabase));
+    await rodar("doses", () => alertarDosesEsquecidas(supabase));
+    if (diaSemana === "seg") await rodar("resumoSemanal", () => enviarResumoSemanal(supabase));
+  }
+  if (hora === 9) {
+    await rodar("conquistas", () => avisarConquistas(supabase));
+    if (hoje.endsWith("-01")) await rodar("resumoMensal", () => enviarResumoMensal(supabase));
+  }
+
+  // ── 6. Fila de notificações ───────────────────────────────────────
+  // O banco já chama a entrega na hora; aqui é a rede de segurança.
+  const fila = await despacharPendentes(100);
+
+  return NextResponse.json({ ok: true, hoje, agora, enviados, rotinas, fila });
 }

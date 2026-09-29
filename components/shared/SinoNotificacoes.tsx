@@ -13,16 +13,24 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { format } from "date-fns";
 import {
+  Award,
   Bell,
   BellRing,
   CalendarClock,
   CalendarDays,
   CalendarX,
+  ClipboardList,
+  Dumbbell,
+  FileText,
   HeartPulse,
   Megaphone,
   MessageCircle,
   Pill,
+  Ruler,
   Smile,
+  Trophy,
+  UserPlus,
+  Users,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -44,6 +52,14 @@ const ICONE: Record<TipoNotificacao, LucideIcon> = {
   indicador: HeartPulse,
   humor: Smile,
   frequencia: CalendarX,
+  treino: Dumbbell,
+  avaliacao: Ruler,
+  desafio: Trophy,
+  conquista: Award,
+  familia: Users,
+  exame: FileText,
+  anamnese: ClipboardList,
+  equipe: UserPlus,
 };
 
 /*
@@ -320,6 +336,16 @@ export function SinoNotificacoes({ itens, usuarioId, papel }: SinoNotificacoesPr
     }
 
     canal
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notificacoes_usuario",
+          filter: `usuario_id=eq.${usuarioId}`,
+        },
+        recarregar
+      )
       .on(
         "postgres_changes",
         {

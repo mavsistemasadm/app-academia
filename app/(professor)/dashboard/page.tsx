@@ -7,6 +7,7 @@ import { ArrowRight, Users } from "lucide-react";
 import { AlertasRealtime } from "@/components/professor/AlertasRealtime";
 import { CardAluno } from "@/components/professor/CardAluno";
 import { CabecalhoPagina } from "@/components/shared/CabecalhoPagina";
+import { GerenciarNotificacoes } from "@/components/shared/GerenciarNotificacoes";
 import { getPainelProfessor } from "@/lib/supabase/painel-professor";
 import { getPerfilAtual } from "@/lib/supabase/perfil";
 import { cn } from "@/lib/utils";
@@ -117,6 +118,11 @@ export default async function DashboardPage() {
               ))}
             </ul>
           )}
+        </section>
+
+        {/* Sem isto o professor só vê alerta crítico com o painel aberto. */}
+        <section aria-label="Alertas no celular" className="overflow-hidden rounded-2xl bg-card ring-1 ring-neutral-200/90">
+          <GerenciarNotificacoes publico="professor" />
         </section>
       </div>
     </main>

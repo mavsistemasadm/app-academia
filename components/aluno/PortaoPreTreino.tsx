@@ -187,6 +187,9 @@ export function PortaoPreTreino({
           <Button
             type="button"
             onClick={() => {
+              // O professor já soube da medição; agora fica sabendo que o
+              // aluno seguiu para o treino. Não espera a resposta.
+              void createClient().rpc("avisar_treino_no_vermelho");
               setLiberado(true);
               router.refresh();
             }}

@@ -114,6 +114,17 @@ export async function getExamesCompartilhados(
 
   const alunoId = (link as ExameCompartilhamento).aluno_id
 
+  // O paciente fica sabendo que o link foi aberto, uma vez por dia por link.
+  await servico.rpc('notificar', {
+    p_usuario: alunoId,
+    p_tipo: 'exame_link',
+    p_titulo: 'O link dos seus exames foi aberto',
+    p_corpo: 'Alguém com o link acabou de ver seus exames e medições. Se não foi o seu médico, cancele o link pelo app.',
+    p_url: '/exames',
+    p_canais: ['sino', 'push'],
+    p_chave: `exame-link:${(link as ExameCompartilhamento).id}:${hojeISO()}`,
+  })
+
   const inicioMedicoes = somarDiasISO(hojeISO(), -DIAS_DE_MEDICOES)
 
   const [perfil, exames, indicadores, medicamentos, avaliacao, anamnese, perguntas] =

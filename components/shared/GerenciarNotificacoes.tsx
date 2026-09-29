@@ -21,7 +21,25 @@ function base64ParaBytes(base64: string): ArrayBuffer {
   return buffer;
 }
 
-export function GerenciarNotificacoes() {
+const TEXTOS = {
+  aluno: {
+    titulo: "Lembretes no celular",
+    ativo: "Você recebe aviso de medicamento, água, aulas, mensagens e conquistas.",
+    inativo: "Medicamento na hora certa, água ao longo do dia, aula e mensagem do professor.",
+  },
+  professor: {
+    titulo: "Alertas no celular",
+    ativo: "Você recebe indicador crítico, mensagens e avisos dos alunos na hora.",
+    inativo: "Indicador crítico, mensagem de aluno e sumidos, mesmo com o app fechado.",
+  },
+};
+
+export function GerenciarNotificacoes({
+  publico = "aluno",
+}: {
+  publico?: "aluno" | "professor";
+} = {}) {
+  const textos = TEXTOS[publico];
   const [estado, setEstado] = useState<Estado>("carregando");
   const [ocupado, setOcupado] = useState(false);
 
@@ -109,14 +127,14 @@ export function GerenciarNotificacoes() {
 
       <div className="min-w-0 flex-1">
         <p id="rotulo-lembretes" className="text-[15px] font-semibold text-neutral-950">
-          Lembretes no celular
+          {textos.titulo}
         </p>
         <p className="text-sm text-neutral-500">
           {ativo
-            ? "Você recebe aviso de medicamento, água e eventos."
+            ? textos.ativo
             : estado === "bloqueado"
               ? "Bloqueados nas configurações do navegador. Libere por lá para ativar."
-              : "Medicamento na hora certa, água ao longo do dia e lembrete de evento."}
+              : textos.inativo}
         </p>
       </div>
 
