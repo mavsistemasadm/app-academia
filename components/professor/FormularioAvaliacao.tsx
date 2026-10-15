@@ -13,6 +13,14 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { alturaEmMetros, lerNumero } from "@/lib/utils/indicadores";
 import { hojeISO } from "@/lib/utils/datas";
+import {
+  avisosDobras,
+  calcularDobras,
+  DOBRAS,
+  idadeNaData,
+  type DobraId,
+  type Sexo,
+} from "@/lib/utils/dobras";
 import { calcularSemaforo, SEMAFORO_CONFIG } from "@/lib/utils/semaforo";
 
 const CAMPOS = [
@@ -51,16 +59,31 @@ const TITULO_CARD = "text-lg font-semibold tracking-[-0.02em] text-neutral-950";
 const TEXTAREA =
   "w-full resize-none rounded-[14px] border border-input bg-card px-3.5 py-3 text-base transition-colors outline-none placeholder:text-neutral-400 hover:border-neutral-300 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-60";
 
+const DOBRAS_VAZIAS = Object.fromEntries(DOBRAS.map(({ id }) => [id, ""])) as Record<
+  DobraId,
+  string
+>;
+
+function numeroBR(valor: number, casas = 1) {
+  return valor.toFixed(casas).replace(".", ",");
+}
+
 interface FormularioAvaliacaoProps {
   professorId: string;
   alunoId: string;
   alunoNome: string;
+  /** `YYYY-MM-DD` do cadastro, para sugerir a idade das dobras. */
+  nascimento?: string | null;
+  /** Sexo lançado na última avaliação com dobras, se houver. */
+  sexoAnterior?: Sexo | null;
 }
 
 export function FormularioAvaliacao({
   professorId,
   alunoId,
   alunoNome,
+  nascimento = null,
+  sexoAnterior = null,
 }: FormularioAvaliacaoProps) {
   const router = useRouter();
 
@@ -84,6 +107,42 @@ export function FormularioAvaliacao({
   const imc = peso && metros ? peso / (metros * metros) : null;
   const statusImc = imc ? calcularSemaforo("peso", imc) : null;
 
+  // ── Dobras cutâneas (opcional) ──────────────────────────────────
+  const [comDobras, setComDobras] = useState(false);
+  const [sexo, setSexo] = useState<Sexo | null>(sexoAnterior);
+  // null = segue a idade calculada pelo nascimento; texto = o professor corrigiu.
+  const [idadeDigitada, setIdadeDigitada] = useState<string | null>(null);
+  const [dobras, setDobras] = useState<Record<DobraId, string>>(DOBRAS_VAZIAS);
+
+  const idadeCadastro = nascimento && data ? idadeNaData(nascimento, data) : null;
+  const idadeTexto = idadeDigitada ?? (idadeCadastro !== null ? String(idadeCadastro) : "");
+  const idadeLida = lerNumero(idadeTexto);
+  const idade =
+    idadeLida !== null && Number.isInteger(idadeLida) && idadeLida > 0 ? idadeLida : null;
+
+  const dobrasLidas = Object.fromEntries(
+    DOBRAS.map(({ id }) => {
+      const n = lerNumero(dobras[id]);
+      return [id, n !== null && n > 0 ? n : null];
+    })
+  ) as Record<DobraId, number | null>;
+  const todasAsDobras = DOBRAS.every(({ id }) => dobrasLidas[id] !== null);
+
+  const resultado =
+    comDobras && todasAsDobras && idade !== null && sexo
+      ? calcularDobras(
+          DOBRAS.map(({ id }) => dobrasLidas[id] as number),
+          idade,
+          sexo,
+          peso
+        )
+      : null;
+  const avisos = comDobras
+    ? avisosDobras({ valores: dobrasLidas, idade, sexo, peso, resultado })
+    : [];
+  // Com as dobras completas, o % de gordura vem do cálculo e o campo trava.
+  const gorduraCalculada = resultado ? Number(resultado.percentualGordura.toFixed(1)) : null;
+
   async function salvar(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setErro(null);
@@ -95,6 +154,7 @@ export function FormularioAvaliacao({
 
     // Campo preenchido com algo que não é número positivo sumiria calado.
     const invalido = CAMPOS.find((c) => {
+      if (c.id === "percentual_gordura" && gorduraCalculada !== null) return false;
       const texto = valores[c.id as CampoId].trim();
       if (!texto) return false;
       const n = lerNumero(texto);
@@ -105,7 +165,21 @@ export function FormularioAvaliacao({
       return;
     }
 
-    const preenchidos = Object.values(valores).some((v) => v.trim());
+    if (comDobras) {
+      const invalida = DOBRAS.find(({ id }) => dobras[id].trim() && dobrasLidas[id] === null);
+      if (invalida) {
+        setErro(`Dobra ${invalida.rotulo.toLowerCase()}: use só o número em mm, por exemplo 12,5.`);
+        return;
+      }
+      if (!resultado) {
+        setErro(
+          "Para calcular pelas dobras, preencha sexo, idade e as 7 dobras. Ou desligue a seção Dobras cutâneas."
+        );
+        return;
+      }
+    }
+
+    const preenchidos = Object.values(valores).some((v) => v.trim()) || resultado !== null;
     if (!preenchidos && !testeForca.trim()) {
       setErro("Preencha ao menos uma medida.");
       return;
@@ -115,6 +189,23 @@ export function FormularioAvaliacao({
 
     const numerico = (id: CampoId) => lerNumero(valores[id]);
 
+    // Colunas da migração 020: só entram quando as dobras foram medidas, para
+    // a avaliação sem dobras continuar gravando mesmo antes da migração.
+    const camposDobras = resultado
+      ? {
+          protocolo_dobras: "jp7",
+          sexo,
+          idade,
+          ...Object.fromEntries(DOBRAS.map(({ id }) => [id, dobrasLidas[id]])),
+          soma_dobras: Number(resultado.soma.toFixed(1)),
+          densidade_corporal: Number(resultado.densidade.toFixed(5)),
+          massa_gorda:
+            resultado.massaGorda !== null ? Number(resultado.massaGorda.toFixed(1)) : null,
+          massa_magra:
+            resultado.massaMagra !== null ? Number(resultado.massaMagra.toFixed(1)) : null,
+        }
+      : {};
+
     const { error } = await createClient().from("avaliacoes_fisicas").insert({
       aluno_id: alunoId,
       professor_id: professorId,
@@ -123,17 +214,23 @@ export function FormularioAvaliacao({
       // Grava sempre em metros, para o IMC não depender de quem digitou.
       altura: metros,
       imc: imc ? Number(imc.toFixed(1)) : null,
-      percentual_gordura: numerico("percentual_gordura"),
+      percentual_gordura: gorduraCalculada ?? numerico("percentual_gordura"),
       massa_muscular: numerico("massa_muscular"),
       circunferencia_cintura: numerico("circunferencia_cintura"),
       circunferencia_quadril: numerico("circunferencia_quadril"),
       teste_forca: testeForca.trim() || null,
       observacoes: observacoes.trim() || null,
+      ...camposDobras,
     });
 
     if (error) {
       setSalvando(false);
-      setErro("Não conseguimos salvar a avaliação. Confira a conexão e tente de novo.");
+      // PGRST204: coluna que o banco não conhece, ou seja, falta a migração 020.
+      setErro(
+        resultado && error.code === "PGRST204"
+          ? "O banco ainda não está pronto para dobras cutâneas (falta a migração 020). Desligue a seção para salvar só as medidas."
+          : "Não conseguimos salvar a avaliação. Confira a conexão e tente de novo."
+      );
       return;
     }
     // Sem liberar o botão: a navegação já começou e um segundo toque duplicaria.
@@ -174,30 +271,201 @@ export function FormularioAvaliacao({
           </div>
 
           <div className="grid grid-cols-2 gap-x-3 gap-y-4 md:grid-cols-3">
-            {CAMPOS.map(({ id, rotulo, unidade, exemplo }) => (
+            {CAMPOS.map(({ id, rotulo, unidade, exemplo }) => {
+              const calculado = id === "percentual_gordura" && gorduraCalculada !== null;
+              return (
               <div key={id} className="flex flex-col gap-2">
                 <Label htmlFor={`av-${id}`} className="text-neutral-700">
                   {rotulo}
+                  {calculado && (
+                    <span className="font-normal text-neutral-400">(pelas dobras)</span>
+                  )}
                 </Label>
                 <div className="relative">
                   <Input
                     id={`av-${id}`}
                     inputMode="decimal"
-                    value={valores[id]}
+                    value={calculado ? numeroBR(gorduraCalculada ?? 0) : valores[id]}
                     onChange={(e) =>
                       setValores((atuais) => ({ ...atuais, [id]: e.target.value }))
                     }
                     placeholder={exemplo}
                     disabled={salvando}
-                    className="numero h-12 pr-16 pl-3.5 text-base"
+                    readOnly={calculado}
+                    className={cn(
+                      "numero h-12 pr-16 pl-3.5 text-base",
+                      calculado && "bg-neutral-50 text-neutral-700"
+                    )}
                   />
                   <span className="pointer-events-none absolute top-1/2 right-3.5 -translate-y-1/2 text-xs font-medium text-neutral-400">
                     {unidade}
                   </span>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
+        </section>
+
+        {/* ── Dobras cutâneas (opcional) ───────────────────────────── */}
+        <section className={CARD}>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className={TITULO_CARD}>
+                Dobras cutâneas{" "}
+                <span className="text-sm font-normal tracking-normal text-neutral-400">
+                  (opcional)
+                </span>
+              </h2>
+              <p className="mt-0.5 text-sm text-neutral-500">
+                Jackson & Pollock, 7 dobras. Calcula o % de gordura sozinho.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setComDobras((atual) => !atual)}
+              disabled={salvando}
+              aria-expanded={comDobras}
+              className="h-10 rounded-full px-4 text-sm font-semibold"
+            >
+              {comDobras ? "Não medir dobras" : "Medir dobras"}
+            </Button>
+          </div>
+
+          {comDobras && (
+            <>
+              <div className="grid grid-cols-2 gap-x-3 gap-y-4 md:grid-cols-3">
+                <fieldset className="col-span-2 flex flex-col gap-2 md:col-span-2">
+                  <legend className="mb-2 text-sm font-medium text-neutral-700">Sexo</legend>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(
+                      [
+                        ["masculino", "Masculino"],
+                        ["feminino", "Feminino"],
+                      ] as const
+                    ).map(([valor, rotulo]) => (
+                      <button
+                        key={valor}
+                        type="button"
+                        onClick={() => setSexo(valor)}
+                        disabled={salvando}
+                        aria-pressed={sexo === valor}
+                        className={cn(
+                          "h-12 rounded-[14px] border text-base font-medium transition-colors",
+                          sexo === valor
+                            ? "border-neutral-950 bg-neutral-950 text-white"
+                            : "border-input bg-card text-neutral-700 hover:border-neutral-300"
+                        )}
+                      >
+                        {rotulo}
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+
+                <div className="col-span-2 flex flex-col gap-2 md:col-span-1">
+                  <Label htmlFor="av-idade" className="text-neutral-700">
+                    Idade
+                    {idadeDigitada === null && idadeCadastro !== null && (
+                      <span className="font-normal text-neutral-400">(do cadastro)</span>
+                    )}
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="av-idade"
+                      inputMode="numeric"
+                      value={idadeTexto}
+                      onChange={(e) => setIdadeDigitada(e.target.value)}
+                      placeholder="35"
+                      disabled={salvando}
+                      className="numero h-12 pr-16 pl-3.5 text-base"
+                    />
+                    <span className="pointer-events-none absolute top-1/2 right-3.5 -translate-y-1/2 text-xs font-medium text-neutral-400">
+                      anos
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-x-3 gap-y-4 md:grid-cols-3">
+                {DOBRAS.map(({ id, rotulo }) => (
+                  <div key={id} className="flex flex-col gap-2">
+                    <Label htmlFor={`av-${id}`} className="text-neutral-700">
+                      {rotulo}
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id={`av-${id}`}
+                        inputMode="decimal"
+                        value={dobras[id]}
+                        onChange={(e) =>
+                          setDobras((atuais) => ({ ...atuais, [id]: e.target.value }))
+                        }
+                        placeholder="12"
+                        disabled={salvando}
+                        className="numero h-12 pr-12 pl-3.5 text-base"
+                      />
+                      <span className="pointer-events-none absolute top-1/2 right-3.5 -translate-y-1/2 text-xs font-medium text-neutral-400">
+                        mm
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {resultado && (
+                <dl
+                  aria-live="polite"
+                  className="grid grid-cols-2 gap-x-4 gap-y-4 rounded-[14px] bg-neutral-50 p-4 md:grid-cols-3"
+                >
+                  {(
+                    [
+                      ["Soma das dobras", numeroBR(resultado.soma), "mm"],
+                      ["Densidade", numeroBR(resultado.densidade, 4), "g/cm³"],
+                      ["% de gordura", numeroBR(resultado.percentualGordura), "%"],
+                      [
+                        "Massa gorda",
+                        resultado.massaGorda !== null ? numeroBR(resultado.massaGorda) : "-",
+                        "kg",
+                      ],
+                      [
+                        "Massa magra",
+                        resultado.massaMagra !== null ? numeroBR(resultado.massaMagra) : "-",
+                        "kg",
+                      ],
+                    ] as const
+                  ).map(([rotulo, valor, unidade]) => (
+                    <div key={rotulo} className="flex flex-col gap-1">
+                      <dt className="rotulo text-neutral-400">{rotulo}</dt>
+                      <dd className="numero text-xl leading-none font-semibold text-neutral-950">
+                        {valor}
+                        {valor !== "-" && (
+                          <span className="ml-1 font-sans text-xs font-medium tracking-normal text-neutral-400">
+                            {unidade}
+                          </span>
+                        )}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+
+              {avisos.length > 0 && (
+                <ul className="flex flex-col gap-1.5">
+                  {avisos.map((aviso) => (
+                    <li
+                      key={aviso}
+                      className="flex items-start gap-2 text-sm text-saude-amarelo"
+                    >
+                      <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+                      {aviso}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
+          )}
         </section>
 
         {/* ── Observações ──────────────────────────────────────────── */}

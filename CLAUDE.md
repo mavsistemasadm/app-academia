@@ -256,7 +256,10 @@ presença · [x] push uma hora antes
 · [x] lista com busca e filtros · [x] ficha completa do aluno
 
 **11. Avaliação física** — [x] lançamento pelo professor com IMC ao vivo ·
-[x] comparativo na evolução do aluno
+[x] comparativo na evolução do aluno · [x] seção opcional "Dobras
+cutâneas" (Jackson & Pollock 7 dobras + Siri, `lib/utils/dobras.ts`): calcula
+e trava o % de gordura, grava massa gorda e magra; dobras, soma e densidade só
+aparecem na ficha do professor · [~] depende da migração 020
 
 **12. Check-in** — [x] entrada e saída num toque · [x] painel de presentes ·
 [x] lista de sumidos há 5+ dias · [x] movimento de 30 dias
@@ -399,6 +402,9 @@ sequência · [x] cronômetro e duração do treino para o professor ·
      criou); aula reaberta avisa a turma; aceite de convite de familiar por
      `aceitar_convite_familiar()`; teto de 200 no registro de km; textos dos
      avisos sem "seu professor". **Aplicar antes de entregar.**
+   - 020 dobras cutâneas: só colunas novas em `avaliacoes_fisicas` (sexo,
+     idade, as 7 dobras, soma, densidade, massa gorda e magra). Antes dela a
+     avaliação sem dobras grava normal; com dobras a tela avisa que falta.
    - 011 anamnese editável: tabela `anamnese_perguntas` + `anamneses.respostas`
      (jsonb por id da pergunta). Sem ela o formulário usa `PERGUNTAS_PADRAO`
      de `lib/utils/anamnese.ts` e o editor fica só leitura. As colunas antigas

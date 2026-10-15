@@ -25,6 +25,7 @@ import { getPerfilAtual } from "@/lib/supabase/perfil";
 import { getTreinosRecentes } from "@/lib/supabase/professor";
 import { respostasParaLeitura } from "@/lib/utils/anamnese";
 import { AVATAR_CONFIG } from "@/lib/utils/avatares";
+import { DOBRAS } from "@/lib/utils/dobras";
 import { formatarDuracao } from "@/lib/utils/duracao";
 import { hojeISO, horaAtual } from "@/lib/utils/datas";
 import { CONFIG_INDICADORES } from "@/lib/utils/indicadores";
@@ -457,6 +458,8 @@ export default async function DetalheAlunoPage({
                           ["Peso", avaliacao.peso, "kg"],
                           ["Altura", avaliacao.altura, "m"],
                           ["Gordura", avaliacao.percentual_gordura, "%"],
+                          ["Massa gorda", avaliacao.massa_gorda, "kg"],
+                          ["Massa magra", avaliacao.massa_magra, "kg"],
                         ] as const
                       )
                         .filter(([, valor]) => valor)
@@ -472,6 +475,23 @@ export default async function DetalheAlunoPage({
                           </div>
                         ))}
                     </div>
+                    {avaliacao.soma_dobras != null && (
+                      <p className="text-sm leading-relaxed text-neutral-500 tabular-nums">
+                        <span className="font-medium text-neutral-700">Dobras (mm): </span>
+                        {DOBRAS.filter(({ id }) => avaliacao[id] != null)
+                          .map(({ id, rotulo }) => `${rotulo} ${String(avaliacao[id]).replace(".", ",")}`)
+                          .join(" · ")}
+                        {" · "}
+                        <span className="font-medium text-neutral-700">
+                          soma {String(avaliacao.soma_dobras).replace(".", ",")}
+                        </span>
+                        {avaliacao.densidade_corporal != null &&
+                          ` · densidade ${String(avaliacao.densidade_corporal).replace(".", ",")} g/cm³`}
+                        {avaliacao.sexo &&
+                          avaliacao.idade != null &&
+                          ` · ${avaliacao.sexo}, ${avaliacao.idade} anos`}
+                      </p>
+                    )}
                   </li>
                 );
               })}

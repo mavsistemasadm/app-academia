@@ -201,6 +201,21 @@ export interface AvaliacaoFisica {
   circunferencia_quadril?: number
   teste_forca?: string
   observacoes?: string
+  // Dobras cutâneas (migração 020). Dobras, soma e densidade são só do professor.
+  protocolo_dobras?: string
+  sexo?: 'masculino' | 'feminino'
+  idade?: number
+  dobra_peitoral?: number
+  dobra_axilar_media?: number
+  dobra_triceps?: number
+  dobra_subescapular?: number
+  dobra_abdominal?: number
+  dobra_suprailiaca?: number
+  dobra_coxa?: number
+  soma_dobras?: number
+  densidade_corporal?: number
+  massa_gorda?: number
+  massa_magra?: number
   created_at: string
 }
 

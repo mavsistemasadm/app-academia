@@ -259,19 +259,30 @@ function Variacao({
   );
 }
 
-function Delta({ atual, anterior, unidade }: { atual?: number; anterior?: number; unidade: string }) {
+function Delta({
+  atual,
+  anterior,
+  unidade,
+  subirEMelhor = false,
+}: {
+  atual?: number;
+  anterior?: number;
+  unidade: string;
+  subirEMelhor?: boolean;
+}) {
   if (atual == null || anterior == null) return null;
   const diferenca = atual - anterior;
   if (Math.abs(diferenca) < 0.05) {
     return <span className="text-[13px] text-neutral-400">igual à anterior</span>;
   }
 
-  // Peso, IMC, gordura e cintura: baixar é o sentido bom.
+  // Peso, IMC, gordura e cintura: baixar é o sentido bom. Massa magra: subir.
+  const melhorou = subirEMelhor ? diferenca > 0 : diferenca < 0;
   return (
     <span
       className={cn(
         "text-[13px] font-medium",
-        diferenca < 0 ? "text-saude-verde" : "text-neutral-400"
+        melhorou ? "text-saude-verde" : "text-neutral-400"
       )}
     >
       {diferenca > 0 ? "+" : "−"}
@@ -292,6 +303,7 @@ function ComparativoAvaliacoes({ avaliacoes }: { avaliacoes: AvaliacaoFisica[] }
     anterior?: number;
     unidade: string;
     unidadeDelta: string;
+    subirEMelhor?: boolean;
   }[] = [
     { label: "Peso", valor: atual.peso, anterior: anterior?.peso, unidade: "kg", unidadeDelta: " kg" },
     { label: "IMC", valor: atual.imc, anterior: anterior?.imc, unidade: "", unidadeDelta: "" },
@@ -311,13 +323,40 @@ function ComparativoAvaliacoes({ avaliacoes }: { avaliacoes: AvaliacaoFisica[] }
     },
   ];
 
+  // Massa gorda e magra só existem quando a avaliação teve dobras cutâneas.
+  // As dobras em si e a densidade ficam só na ficha do professor.
+  if (atual.massa_gorda != null || atual.massa_magra != null) {
+    metricas.push(
+      {
+        label: "Massa gorda",
+        valor: atual.massa_gorda,
+        anterior: anterior?.massa_gorda,
+        unidade: "kg",
+        unidadeDelta: " kg",
+      },
+      {
+        label: "Massa magra",
+        valor: atual.massa_magra,
+        anterior: anterior?.massa_magra,
+        unidade: "kg",
+        unidadeDelta: " kg",
+        subirEMelhor: true,
+      }
+    );
+  }
+
   return (
     <div className={cn(CARD, "flex flex-col divide-y divide-neutral-200/80 overflow-hidden")}>
       <div className="flex flex-col gap-4 p-5">
         <p className="rotulo text-neutral-400">Última avaliação · {dataCurta(atual.data)}</p>
 
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-5 md:grid-cols-4">
-          {metricas.map(({ label, valor, anterior: valorAnterior, unidade, unidadeDelta }) => (
+        <dl
+          className={cn(
+            "grid grid-cols-2 gap-x-4 gap-y-5",
+            metricas.length > 4 ? "md:grid-cols-3" : "md:grid-cols-4"
+          )}
+        >
+          {metricas.map(({ label, valor, anterior: valorAnterior, unidade, unidadeDelta, subirEMelhor }) => (
             <div key={label} className="flex min-w-0 flex-col gap-1">
               <dt className="text-[13px] font-medium text-neutral-500">{label}</dt>
               <dd className="numero text-[28px] leading-none font-semibold text-neutral-950">
@@ -329,7 +368,12 @@ function ComparativoAvaliacoes({ avaliacoes }: { avaliacoes: AvaliacaoFisica[] }
                 )}
               </dd>
               <dd>
-                <Delta atual={valor} anterior={valorAnterior} unidade={unidadeDelta} />
+                <Delta
+                  atual={valor}
+                  anterior={valorAnterior}
+                  unidade={unidadeDelta}
+                  subirEMelhor={subirEMelhor}
+                />
               </dd>
             </div>
           ))}

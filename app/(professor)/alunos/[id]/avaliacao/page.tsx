@@ -18,11 +18,23 @@ export default async function NovaAvaliacaoPage({
   const { id } = await params;
 
   const supabase = await createClient();
-  const { data: aluno } = await supabase
-    .from("profiles")
-    .select("id, nome")
-    .eq("id", id)
-    .maybeSingle();
+  const [{ data: aluno }, { data: ultimaComSexo }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, nome, data_nascimento")
+      .eq("id", id)
+      .maybeSingle(),
+    // Repete o sexo da última avaliação com dobras. Antes da migração 020 a
+    // coluna não existe, a consulta volta com erro e o campo só fica vazio.
+    supabase
+      .from("avaliacoes_fisicas")
+      .select("sexo")
+      .eq("aluno_id", id)
+      .not("sexo", "is", null)
+      .order("data", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
 
   if (!aluno) notFound();
 
@@ -48,6 +60,8 @@ export default async function NovaAvaliacaoPage({
         professorId={professor.id}
         alunoId={aluno.id}
         alunoNome={aluno.nome}
+        nascimento={aluno.data_nascimento ?? null}
+        sexoAnterior={ultimaComSexo?.sexo ?? null}
       />
     </main>
   );
